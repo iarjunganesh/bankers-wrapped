@@ -1,0 +1,40 @@
+date,description,amount,currency,category
+2025-10-01,Salary Deposit,6500.00,USD,income
+2025-10-03,ICA Maxi Grocery,-112.00,USD,food
+2025-10-05,Mortgage Payment,-1200.00,USD,housing
+2025-10-08,Savings Transfer,-800.00,USD,savings
+2025-10-10,Spotify Premium,-9.99,USD,entertainment
+2025-10-12,Vattenfall Electricity,-82.00,USD,utilities
+2025-10-14,Restaurant,-65.00,USD,food
+2025-10-15,Salary Deposit,6500.00,USD,income
+2025-10-18,Telia Mobile,-49.00,USD,utilities
+2025-10-20,Train Stockholm-Gothenburg,-185.00,USD,travel
+2025-10-22,Hotel Gothenburg,-145.00,USD,travel
+2025-10-25,Loan Repayment,-250.00,USD,debt
+2025-10-28,ICA Grocery,-98.00,USD,food
+2025-11-01,Salary Deposit,6500.00,USD,income
+2025-11-03,Mortgage Payment,-1200.00,USD,housing
+2025-11-05,Netflix,-15.99,USD,entertainment
+2025-11-07,ICA Grocery,-134.00,USD,food
+2025-11-10,Avanza Investment,-750.00,USD,investment
+2025-11-12,Savings Transfer,-1000.00,USD,savings
+2025-11-15,Salary Deposit,6500.00,USD,income
+2025-11-18,Vattenfall Electricity,-91.00,USD,utilities
+2025-11-20,Gym,-45.00,USD,utilities
+2025-11-22,Restaurant,-72.00,USD,food
+2025-11-25,Loan Repayment,-250.00,USD,debt
+2025-11-28,Coffee Shop,-22.00,USD,food
+2025-12-01,Salary Deposit,6500.00,USD,income
+2025-12-03,Christmas Shopping,-380.00,USD,entertainment
+2025-12-05,Mortgage Payment,-1200.00,USD,housing
+2025-12-08,Lufthansa Stockholm-London,-420.00,USD,travel
+2025-12-10,Hotel London 3 nights,-310.00,USD,travel
+2025-12-12,Year-End Bonus,3000.00,USD,income
+2025-12-14,Savings Transfer,-1500.00,USD,savings
+2025-12-15,Salary Deposit,6500.00,USD,income
+2025-12-18,ICA Grocery,-156.00,USD,food
+2025-12-20,Restaurant Christmas Dinner,-120.00,USD,food
+2025-12-22,Avanza Investment,-1000.00,USD,investment
+2025-12-25,Loan Repayment,-250.00,USD,debt
+2025-12-28,Vattenfall Electricity,-95.00,USD,utilities
+2025-12-30,Telia Mobile,-49.00,USD,utilities

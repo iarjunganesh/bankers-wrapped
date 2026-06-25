@@ -1,0 +1,23 @@
+date,description,amount,currency,category
+2026-01-02,Salary Deposit,6500.00,USD,income
+2026-01-03,Freelance Payment,850.00,USD,income
+2026-01-05,ICA Maxi Grocery,-128.40,USD,food
+2026-01-07,Telia Mobile Plan,-49.00,USD,utilities
+2026-01-08,Netflix Subscription,-15.99,USD,entertainment
+2026-01-09,Spotify Premium,-9.99,USD,entertainment
+2026-01-10,Mortgage Payment,-1200.00,USD,housing
+2026-01-12,Restaurant - Omakase,-89.00,USD,food
+2026-01-13,Vattenfall Electricity,-78.50,USD,utilities
+2026-01-15,Savings Transfer to ISK,-1200.00,USD,savings
+2026-01-16,Lufthansa Stockholm-Berlin,-312.00,USD,travel
+2026-01-17,Hotel Berlin 2 nights,-198.00,USD,travel
+2026-01-18,Uber Berlin,-24.00,USD,travel
+2026-01-20,ICA Maxi Grocery,-95.20,USD,food
+2026-01-22,Salary Deposit,6500.00,USD,income
+2026-01-23,Amazon Purchase,-67.00,USD,entertainment
+2026-01-25,Gym Membership,-45.00,USD,utilities
+2026-01-26,Student Loan Repayment,-250.00,USD,debt
+2026-01-27,Coffee Shop,-18.50,USD,food
+2026-01-28,Avanza Investment Transfer,-500.00,USD,investment
+2026-01-30,Internet Broadband,-39.00,USD,utilities
+2026-01-31,Pharmacy,-32.80,USD,other

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make:*)",
+      "Bash(poetry run *)",
+      "Bash(poetry install*)",
+      "Bash(python -m pytest*)",
+      "Bash(pytest*)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add *)",
+      "Bash(git commit*)",
+      "Bash(git push)",
+      "Bash(uvicorn*)",
+      "Bash(curl -X GET http://localhost*)",
+      "Bash(curl -X POST http://localhost*)"
+    ]
+  }
+}
