@@ -62,7 +62,7 @@ jobs:
 
       - name: Run Test Suite & Enforce Code Coverage Gate
         run: |
-          poetry run pytest tests/unit \
+          poetry run pytest tests/unit tests/integration \
             --cov=backend \
             --cov-report=xml \
             --cov-fail-under=70
