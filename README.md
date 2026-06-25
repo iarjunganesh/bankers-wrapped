@@ -11,7 +11,7 @@ Backblaze Generative Media Hackathon 2026 — Built with Genblaze on B2
 [![Genblaze](https://img.shields.io/badge/Media-Genblaze%20SDK-7C3AED)](https://github.com/backblaze-labs/genblaze)
 [![NVIDIA NIM](https://img.shields.io/badge/LLM-NVIDIA%20NIM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/)
 [![GMI Cloud](https://img.shields.io/badge/Hosted%20on-GMI%20Cloud-0066CC)](https://cloud.gmi.ai/)
-[![Coverage](https://codecov.io/gh/iarjunganesh/bankers-wrapped/badge.svg)](https://codecov.io/gh/iarjunganesh/bankers-wrapped)
+[![Coverage](https://codecov.io/gh/iarjunganesh/bankers-wrapped/graph/badge.svg)](https://codecov.io/gh/iarjunganesh/bankers-wrapped)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
