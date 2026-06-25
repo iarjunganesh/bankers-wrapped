@@ -1,9 +1,6 @@
 """Integration tests for POST /api/v1/recap/generate endpoint."""
 
-from io import BytesIO
 from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
 
 from tests.conftest import SYNTHETIC_CSV
 
@@ -127,7 +124,8 @@ def _setup_narrative_mock(MockNarrative):
 
 
 def _setup_media_mock(MockMedia):
-    from datetime import datetime, timezone
+    from datetime import UTC, datetime
+
     from backend.models.session import PipelineMetadata
 
     mock_instance = MagicMock()
@@ -137,7 +135,7 @@ def _setup_media_mock(MockMedia):
         metadata=PipelineMetadata(
             session_id="test-session",
             user_id="test-user",
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             pipeline_version="1.0.0",
             models_used={"llm": "nvidia-nim/meta/llama-3.1-70b-instruct",
                          "tts": "elevenlabs/eleven_multilingual_v2",

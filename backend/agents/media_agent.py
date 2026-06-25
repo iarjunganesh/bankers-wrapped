@@ -17,7 +17,7 @@ import json
 import tempfile
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import structlog
@@ -150,7 +150,7 @@ class MediaAgent(BaseAgent):
             metadata = PipelineMetadata(
                 session_id=session_id,
                 user_id=user_id,
-                created_at=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
                 pipeline_version=self.settings.pipeline_version,
                 models_used={
                     "llm": (

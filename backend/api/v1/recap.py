@@ -21,7 +21,7 @@ from backend.agents.media_agent import MediaAgent, MediaAgentInput
 from backend.agents.narrative_agent import NarrativeAgent
 from backend.config import Settings, get_settings
 from backend.media.genblaze_client import GenblazeClient
-from backend.models.insights import FinancialPersonality
+
 from backend.storage.b2_client import B2Client
 from backend.storage.session_store import SessionStore
 

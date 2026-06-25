@@ -6,9 +6,10 @@ using GPT-4o. The script is the input to the Media Agent.
 """
 
 import json
-import structlog
 from dataclasses import dataclass
 from pathlib import Path
+
+import structlog
 
 from openai import AsyncOpenAI
 

@@ -70,8 +70,7 @@ class TestFFmpegComposer:
         with patch(
             "backend.media.ffmpeg_composer.asyncio.to_thread",
             _make_thread_mock(returncode=1, stderr="Error: Invalid input file"),
-        ):
-            with pytest.raises(RuntimeError, match="FFmpeg failed"):
+        ), pytest.raises(RuntimeError, match="FFmpeg failed"):
                 await composer.compose(
                     scene_image_paths=fake_scene_images,
                     audio_path=fake_audio,

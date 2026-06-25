@@ -11,7 +11,7 @@ from __future__ import annotations
 import contextlib
 import json
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import structlog
@@ -22,7 +22,7 @@ DB_PATH = Path("bankers_wrapped.db")
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def init_db(db_path: Path = DB_PATH) -> None:
@@ -55,8 +55,7 @@ class SessionStore:
 
     def create(self, session_id: str, user_id: str) -> None:
         now = _now()
-        with contextlib.closing(self._conn()) as conn:
-            with conn:
+        with contextlib.closing(self._conn()) as conn, conn:
                 conn.execute(
                     """INSERT INTO sessions
                        (session_id, user_id, status, created_at, updated_at)
@@ -65,8 +64,7 @@ class SessionStore:
                 )
 
     def set_processing(self, session_id: str) -> None:
-        with contextlib.closing(self._conn()) as conn:
-            with conn:
+        with contextlib.closing(self._conn()) as conn, conn:
                 conn.execute(
                     "UPDATE sessions SET status='processing', updated_at=? WHERE session_id=?",
                     (_now(), session_id),
@@ -75,8 +73,7 @@ class SessionStore:
     def set_complete(
         self, session_id: str, output_url: str, metadata: dict  # type: ignore[type-arg]
     ) -> None:
-        with contextlib.closing(self._conn()) as conn:
-            with conn:
+        with contextlib.closing(self._conn()) as conn, conn:
                 conn.execute(
                     """UPDATE sessions
                        SET status='complete', output_url=?, metadata=?, updated_at=?
@@ -85,8 +82,7 @@ class SessionStore:
                 )
 
     def set_failed(self, session_id: str, error: str) -> None:
-        with contextlib.closing(self._conn()) as conn:
-            with conn:
+        with contextlib.closing(self._conn()) as conn, conn:
                 conn.execute(
                     "UPDATE sessions SET status='failed', error=?, updated_at=? WHERE session_id=?",
                     (error[:1000], _now(), session_id),

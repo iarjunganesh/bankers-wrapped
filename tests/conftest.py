@@ -1,7 +1,6 @@
 """Shared pytest fixtures for Banker's Wrapped test suite."""
 
 from datetime import date
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -119,8 +118,8 @@ def mock_ffmpeg_composer():
 @pytest.fixture
 def api_client(test_settings):
     """FastAPI test client with settings override."""
-    from backend.main import app
     from backend.config import get_settings
+    from backend.main import app
 
     app.dependency_overrides[get_settings] = lambda: test_settings
     with TestClient(app) as client:

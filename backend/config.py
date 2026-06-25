@@ -47,6 +47,6 @@ class Settings(BaseSettings):
     nvidia_nim_model: str = "meta/llama-3.1-70b-instruct"
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     return Settings()
