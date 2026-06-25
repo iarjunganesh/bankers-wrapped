@@ -12,7 +12,6 @@ from backend.models.insights import (
     FinancialPersonality,
 )
 
-
 MOCK_GPT_RESPONSE = json.dumps({
     "title": "Your January Financial Journey",
     "personality": "Financial Builder",

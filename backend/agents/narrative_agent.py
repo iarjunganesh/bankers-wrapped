@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import structlog
-
 from openai import AsyncOpenAI
 
 from backend.agents.analytics_agent import AnalyticsAgentOutput

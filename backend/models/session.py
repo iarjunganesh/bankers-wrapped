@@ -1,10 +1,10 @@
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel
 
 
-class SessionStatus(str, Enum):
+class SessionStatus(StrEnum):
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETE = "complete"

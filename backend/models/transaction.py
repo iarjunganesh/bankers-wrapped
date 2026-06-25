@@ -1,10 +1,10 @@
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, field_validator
 
 
-class TransactionCategory(str, Enum):
+class TransactionCategory(StrEnum):
     INCOME = "income"
     SAVINGS = "savings"
     HOUSING = "housing"

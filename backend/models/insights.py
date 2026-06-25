@@ -1,9 +1,9 @@
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel
 
 
-class FinancialPersonality(str, Enum):
+class FinancialPersonality(StrEnum):
     BUILDER = "Financial Builder"
     OPTIMIZER = "Financial Optimizer"
     EXPLORER = "Financial Explorer"

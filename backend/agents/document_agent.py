@@ -5,15 +5,14 @@ Parses and normalises uploaded CSV transaction data into structured
 Transaction records. MVP: CSV only. PDF is a future roadmap item.
 """
 
-from dataclasses import dataclass
 import hashlib
 import io
+from dataclasses import dataclass
 
 import pandas as pd
 
 from backend.agents.base import BaseAgent
 from backend.models.transaction import Transaction, TransactionCategory
-
 
 CATEGORY_KEYWORDS: dict[str, list[str]] = {
     TransactionCategory.INCOME: ["salary", "payroll", "wage", "deposit", "refund", "bonus"],
