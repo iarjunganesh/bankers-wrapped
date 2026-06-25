@@ -7,6 +7,7 @@ The personality is the emotional centrepiece of the recap video.
 """
 
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from backend.agents.base import BaseAgent
@@ -66,9 +67,9 @@ class AnalyticsAgent(BaseAgent):
         return AnalyticsAgentOutput(insights=insights)
 
     def _sum_by_filter(
-        self, transactions: list[Transaction], fn: object
+        self, transactions: list[Transaction], fn: Callable[[Transaction], bool]
     ) -> float:
-        return sum(t.amount for t in transactions if fn(t))  # type: ignore[operator]
+        return sum(t.amount for t in transactions if fn(t))
 
     def _savings_amount(self, transactions: list[Transaction]) -> float:
         return sum(

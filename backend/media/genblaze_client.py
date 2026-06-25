@@ -89,7 +89,7 @@ class GenblazeClient:
         Returns AudioResult containing raw audio bytes and provenance manifest hash.
         """
         from genblaze_core import Modality, Pipeline
-        from genblaze_elevenlabs import ElevenLabsProvider
+        from genblaze_elevenlabs import ElevenLabsTTSProvider as ElevenLabsProvider
 
         with tempfile.TemporaryDirectory() as tmpdir:
             run, manifest = (
