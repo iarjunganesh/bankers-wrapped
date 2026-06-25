@@ -62,6 +62,7 @@ class RecapResponse(BaseModel):
     video_url: str
     insights: InsightsSummary
     processing_time_ms: int
+    b2_keys: dict[str, str]
 
 
 # ── Dependencies ──────────────────────────────────────────────────────────────
@@ -159,6 +160,7 @@ async def generate_recap(
         response = RecapResponse(
             session_id=session_id,
             video_url=media_output.video_url,
+            b2_keys=media_output.b2_keys,
             insights=InsightsSummary(
                 period_label=insights.period_label,
                 total_income=insights.total_income,

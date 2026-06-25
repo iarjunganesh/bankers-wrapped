@@ -109,8 +109,7 @@ class TestRecapEndpoint:
 def _setup_narrative_mock(MockNarrative):
     from backend.models.narrative import NarrativeScript, Scene
 
-    mock_instance = MagicMock()
-    mock_instance.__call__ = AsyncMock(return_value=MagicMock(
+    MockNarrative.return_value = AsyncMock(return_value=MagicMock(
         script=NarrativeScript(
             title="Your January Journey",
             personality="Financial Builder",
@@ -120,7 +119,6 @@ def _setup_narrative_mock(MockNarrative):
             ],
         )
     ))
-    MockNarrative.return_value = mock_instance
 
 
 def _setup_media_mock(MockMedia):
@@ -128,8 +126,7 @@ def _setup_media_mock(MockMedia):
 
     from backend.models.session import PipelineMetadata
 
-    mock_instance = MagicMock()
-    mock_instance.__call__ = AsyncMock(return_value=MagicMock(
+    MockMedia.return_value = AsyncMock(return_value=MagicMock(
         video_url="https://f000.backblazeb2.com/recap.mp4?token=test",
         b2_keys={"video": "user/sess/output/recap.mp4", "audio": "user/sess/pipeline/narration.mp3"},
         metadata=PipelineMetadata(
@@ -137,13 +134,15 @@ def _setup_media_mock(MockMedia):
             user_id="test-user",
             created_at=datetime.now(UTC),
             pipeline_version="1.0.0",
-            models_used={"llm": "nvidia-nim/meta/llama-3.1-70b-instruct",
-                         "tts": "elevenlabs/eleven_multilingual_v2",
-                         "image": "gmi-cloud/Flux2-Dev", "compositor": "ffmpeg"},
+            models_used={
+                "llm": "nvidia-nim/meta/llama-3.1-70b-instruct",
+                "tts": "elevenlabs/eleven_multilingual_v2",
+                "image": "gmi-cloud/Flux2-Dev",
+                "compositor": "ffmpeg",
+            },
             input_filename="jan.csv",
             input_hash="abc123",
             output_url="https://f000.backblazeb2.com/recap.mp4?token=test",
             processing_time_ms=12345,
         ),
     ))
-    MockMedia.return_value = mock_instance

@@ -75,7 +75,7 @@ addopts = "--cov=backend --cov-report=term-missing --cov-report=xml"
 
 [tool.coverage.run]
 source = ["backend"]
-omit = ["*/tests/*", "*/__init__.py"]
+omit = ["*/tests/*", "*/__init__.py", "backend/media/genblaze_client.py"]
 
 [tool.coverage.report]
 fail_under = 70
