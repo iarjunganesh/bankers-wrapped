@@ -9,8 +9,10 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 WORKDIR /app
 
 # Dependencies first — cached unless pyproject.toml changes
+# --no-install-project: install deps only, skip building the local package
+# (PYTHONPATH=/app makes backend/ importable without hatchling needing README.md)
 COPY pyproject.toml uv.lock* ./
-RUN uv sync --no-dev --frozen
+RUN uv sync --no-dev --frozen --no-install-project
 
 # Application code
 COPY backend/ ./backend/
