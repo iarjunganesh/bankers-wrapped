@@ -178,7 +178,9 @@ export default function Home() {
     <main className="bw-main">
       <div className="bw-card">
         <div className="bw-header">
-          <h1 className="bw-title">Banker&apos;s Wrapped</h1>
+          <img src="/icon.svg" alt="" aria-hidden="true" className="bw-logo-icon" width="72" height="72" />
+          <span className="bw-brand-label">BANKER&apos;S</span>
+          <h1 className="bw-title">Wrapped</h1>
           <p className="bw-subtitle">Your financial year, told as a story.</p>
         </div>
 

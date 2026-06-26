@@ -6,7 +6,7 @@ AI-powered financial storytelling platform entered in the **Backblaze Generative
 
 Upload a CSV → 4-agent pipeline → personalized 60-second narrated MP4 recap video stored on Backblaze B2.
 
-**Current phase**: Phase 2 — Submission hardening. Core pipeline is complete (89% test coverage). Now adding voice narration, SSE progress, frontend polish, production hardening, and deployment.
+**Current phase**: Phase 2 complete — pipeline live in production. Remaining work: demo video (≤3 min) + Devpost form submission.
 
 ## Key Commands
 
@@ -54,13 +54,13 @@ OpenAI TTS is wrapped inside `GenblazeClient.generate_narration_audio()` — no 
 ```
 {user_id}/{session_id}/input/transactions.csv
 {user_id}/{session_id}/pipeline/script.json
-{user_id}/{session_id}/pipeline/narration.mp3       ← NEW (Phase 2)
+{user_id}/{session_id}/pipeline/narration.mp3
 {user_id}/{session_id}/pipeline/scenes/scene_00.png … scene_03.png
 {user_id}/{session_id}/output/recap_{session_id}.mp4
 {user_id}/{session_id}/metadata/session_metadata.json
 ```
 
-## Session Metadata — models_used (Phase 2)
+## Session Metadata — models_used
 
 ```json
 {
@@ -71,16 +71,23 @@ OpenAI TTS is wrapped inside `GenblazeClient.generate_narration_audio()` — no 
 }
 ```
 
-## SSE Progress Endpoint (Phase 2)
+## SSE Progress Endpoint
 
 `GET /api/v1/recap/{session_id}/progress` — Server-Sent Events stream.  
-Events emitted (in order): `parsing` → `analyzing` → `scripting` → `generating_images` → `composing` → `uploading` → `complete` / `failed`.  
-SessionStore has a new `events` JSON column storing the event log.
+Events emitted (in order): `parsing` → `analyzing` → `scripting` → `generating_images` → `uploading` → `complete` / `failed`.  
+SessionStore has an `events` JSON column storing the event log.
 
-## Frontend Routes (Phase 2)
+## API Endpoints
 
-- `/` — CSV upload portal (existing, polished with Tailwind)
-- `/recap/{session_id}` — Share page: personality, stats, video player, B2 artifact links
+- `POST /api/v1/recap/generate` — run full pipeline; rate-limited 5/hr/IP; returns `RecapResponse`
+- `GET  /api/v1/recap/{session_id}` — fetch completed recap by session ID (used by share page)
+- `GET  /api/v1/recap/{session_id}/progress` — SSE stream of pipeline stage events
+- `GET  /api/v1/health` — health check; returns version + status
+
+## Frontend Routes
+
+- `/` — CSV upload portal with live SSE progress + personality result + share button
+- `/recap/{session_id}` — Public share page: personality badge, stats, video player, B2 artifact list
 
 ## Personality Themes (for UI)
 

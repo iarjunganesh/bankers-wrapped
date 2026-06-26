@@ -43,11 +43,12 @@
 
 1. Open `https://bankers-wrapped.vercel.app`
 2. Upload `data/synthetic/transactions_jan_2026.csv` (Financial Builder personality)
-3. Show the **live SSE step-by-step progress** while the 4-agent pipeline runs
-4. Play the generated **narrated MP4 recap video** (H.264 + AAC audio)
-5. Open the **B2 bucket** in the Backblaze console — show the structured artifact layout
-6. Open `session_metadata.json` — show provenance trail (models used, SHA-256 hash, processing time)
-7. Repeat with `data/synthetic/transactions_q4_2025.csv` — show a different personality (Financial Explorer)
+3. Show the **live SSE step-by-step progress** while the 4-agent pipeline runs *(jump-cut the 3-min generation wait)*
+4. Play the generated **narrated MP4 recap video** (H.264 + AAC audio with OpenAI TTS voice)
+5. Click **"Share your recap →"** — open the public share page at `/recap/{session_id}`
+6. Open the **B2 bucket** in the Backblaze console — show the structured artifact layout (7 artifacts)
+7. Open `session_metadata.json` — show provenance trail (models used, SHA-256 hash, processing time)
+8. *(Optional)* Repeat with `data/synthetic/transactions_q4_2025.csv` to show a different personality
 
 ---
 

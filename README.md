@@ -1,5 +1,9 @@
 # Banker's Wrapped
 
+<p align="center">
+  <img src="frontend/public/logo.svg" width="420" alt="Banker's Wrapped — Your financial year, told as a story."/>
+</p>
+
 > **Backblaze Generative Media Hackathon 2026 — Built with Genblaze on B2**
 
 [![CI](https://github.com/iarjunganesh/bankers-wrapped/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/iarjunganesh/bankers-wrapped/actions/workflows/ci.yml)
@@ -108,15 +112,16 @@ Measured on a live run against `transactions_jan_2026.csv` (22 transactions, 4 s
 
 | Step | Agent / Service | Time |
 | --- | --- | --- |
-| CSV parse + normalise | DocumentAgent | < 5 ms |
-| Spending analytics + personality | AnalyticsAgent | < 1 ms |
-| Narrative script (4 scenes) | NarrativeAgent · NVIDIA NIM Llama 3.1 70B | ~31 s |
-| Scene images × 4 **in parallel** | MediaAgent · Genblaze → GMI Cloud Seedream | ~155 s |
-| MP4 composition | FFmpeg (H.264, 1792×1024, 25 fps) | ~1 s |
-| B2 uploads (CSV + script + 4 PNG + MP4 + metadata) | Backblaze B2 eu-central-003 | ~2 s |
-| **Total wall-clock** | | **~195 s** |
+| CSV parse + normalise | DocumentAgent | < 1 s |
+| Spending analytics + personality | AnalyticsAgent | < 1 s |
+| Narrative script (4 scenes) | NarrativeAgent · NVIDIA NIM Llama 3.1 70B | ~30 s |
+| Scene images × 4 | MediaAgent · Genblaze → GMI Cloud Seedream | ~168 s |
+| Voice narration | GenblazeClient → OpenAI TTS (tts-1, alloy) | ~7 s |
+| MP4 composition | FFmpeg (H.264/AAC) | ~2 s |
+| B2 uploads (7 artifacts) | Backblaze B2 | ~2 s |
+| **Total wall-clock** | | **~210 s** |
 
-Image generation dominates. Generating all 4 scenes concurrently with `asyncio.gather` keeps total time bounded by the slowest single scene rather than their sum — a 4× speedup over sequential.
+Image generation dominates. `asyncio.gather` dispatches all 4 scenes concurrently — GMI Cloud queues them server-side per API key, so wall time reflects their queue depth rather than true parallel execution.
 
 ### B2 Storage Layout
 
@@ -261,22 +266,34 @@ python scripts\demo_run.py
 bankers-wrapped/
 ├── backend/
 │   ├── agents/          # 4 Semantic Kernel agents
-│   ├── media/           # Genblaze client + FFmpeg compositor
-│   ├── storage/         # B2 client + SQLite session store
+│   ├── api/
+│   │   ├── limiter.py   # slowapi rate limiter (5 req/hr/IP)
+│   │   ├── middleware/  # Request logging
+│   │   └── v1/
+│   │       ├── recap.py    # POST /generate · GET /{session_id}
+│   │       ├── progress.py # GET /{session_id}/progress (SSE)
+│   │       └── health.py
+│   ├── media/           # GenblazeClient (images + TTS) · FFmpegComposer
+│   ├── storage/         # B2Client · SessionStore (SQLite)
 │   ├── models/          # Pydantic models (Transaction, Insights, Script, Session)
-│   ├── api/v1/          # FastAPI endpoints (recap, health)
 │   └── config.py        # Pydantic Settings
-├── frontend/            # Next.js upload portal + video player
+├── frontend/
+│   └── app/
+│       ├── page.tsx                    # Upload portal + live SSE progress
+│       └── recap/[session_id]/page.tsx # Public share page
 ├── tests/
-│   ├── unit/            # Per-agent unit tests (mocked providers)
+│   ├── unit/            # Per-agent unit tests (all providers mocked)
 │   └── integration/     # API end-to-end tests
 ├── data/synthetic/      # Demo CSVs — committed, no PII
 ├── prompts/             # LLM system prompts (narrative_agent.txt)
 ├── docs/adr/            # 6 Architecture Decision Records
+├── Dockerfile           # python:3.14-slim + FFmpeg + uv
+├── railway.json         # Railway backend deployment
+├── render.yaml          # Render backend deployment (alternative)
 ├── CLAUDE.md            # Claude Code project context
 └── .github/
-    ├── workflows/ci.yml # Lint → type-check → test → coverage
-    └── prompts/         # Development prompt history
+    ├── workflows/ci.yml # Lint → type-check → test (≥80% coverage) → Codecov
+    └── prompts/         # Phase 1–2 development prompt history
 ```
 
 ---

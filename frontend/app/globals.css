@@ -29,7 +29,34 @@ body { margin: 0; padding: 0; }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
 .bw-header { text-align: center; margin-bottom: 32px; }
-.bw-title  { font-size: 36px; font-weight: 800; color: #fff; margin: 0; letter-spacing: -0.02em; }
+
+.bw-logo-icon {
+  display: block;
+  margin: 0 auto 14px;
+  border-radius: 18px;
+}
+
+.bw-brand-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin: 0 0 2px;
+}
+
+.bw-title {
+  font-size: 40px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.03em;
+  background: linear-gradient(90deg, #F59E0B, #14B8A6, #8B5CF6, #3B82F6, #6366f1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 .bw-subtitle { color: #666; margin-top: 8px; font-size: 15px; }
 
 /* ── Drop zone ───────────────────────────────────────────────────────────── */

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Dark rounded background -->
+  <rect width="32" height="32" rx="7" fill="#0d0d1a"/>
+
+  <!--
+    5 bars in W formation, bottom-aligned at y=28.
+    Each 4px wide, 2px gap → 5×4 + 4×2 = 28px span, start x=2.
+  -->
+  <rect x="2"  y="8"  width="4" height="20" rx="1" fill="#F59E0B"/>
+  <rect x="8"  y="18" width="4" height="10" rx="1" fill="#14B8A6"/>
+  <rect x="14" y="13" width="4" height="15" rx="1" fill="#8B5CF6"/>
+  <rect x="20" y="18" width="4" height="10" rx="1" fill="#3B82F6"/>
+  <rect x="26" y="8"  width="4" height="20" rx="1" fill="#6366f1"/>
+</svg>

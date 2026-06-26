@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1b1b2e"/>
+      <stop offset="100%" stop-color="#0d0d1a"/>
+    </linearGradient>
+    <!-- Arc gradient aligned to bar centers (x: 16→104) in userSpace -->
+    <linearGradient id="arc" x1="16" y1="0" x2="104" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#F59E0B"/>
+      <stop offset="25%"  stop-color="#14B8A6"/>
+      <stop offset="50%"  stop-color="#8B5CF6"/>
+      <stop offset="75%"  stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Card background -->
+  <rect width="120" height="120" rx="26" fill="url(#bg)"/>
+
+  <!--
+    5 bars forming a "W" — one per financial personality + indigo primary.
+    Width=16px, gap=6px, total=104px, offset=8px each side.
+    Bottom-aligned at y=104; heights create the W silhouette.
+  -->
+  <rect x="8"  y="32" width="16" height="72" rx="4" fill="#F59E0B"/>
+  <rect x="30" y="68" width="16" height="36" rx="4" fill="#14B8A6"/>
+  <rect x="52" y="50" width="16" height="54" rx="4" fill="#8B5CF6"/>
+  <rect x="74" y="68" width="16" height="36" rx="4" fill="#3B82F6"/>
+  <rect x="96" y="32" width="16" height="72" rx="4" fill="#6366f1"/>
+
+  <!--
+    Gradient W-arc connecting bar tops.
+    Smooth cubic bezier through all 5 center-top points.
+    Colors transition from Amber→Teal→Purple→Blue→Indigo — same order as bars.
+  -->
+  <path d="M 16,32 C 27,32 27,68 38,68 C 49,68 49,50 60,50 C 71,50 71,68 82,68 C 93,68 93,32 104,32"
+        stroke="url(#arc)" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+</svg>
