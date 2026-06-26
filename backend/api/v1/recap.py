@@ -170,32 +170,37 @@ async def generate_recap(
 
         # ── Persist session ──────────────────────────────────────────────────
         store.append_event(session_id, "uploading", "Uploading to Backblaze B2")
+        insights = analytics_output.insights
+        insights_summary = InsightsSummary(
+            period_label=insights.period_label,
+            total_income=insights.total_income,
+            total_expenses=insights.total_expenses,
+            savings_amount=insights.savings_amount,
+            savings_rate=insights.savings_rate,
+            top_categories=[
+                CategorySpendResponse(**c.model_dump())
+                for c in insights.top_categories
+            ],
+            achievements=insights.achievements,
+            personality=insights.personality.value,
+            personality_reason=insights.personality_reason,
+            currency=insights.currency,
+        )
         store.set_complete(
             session_id,
             output_url=media_output.video_url,
-            metadata={"b2_keys": media_output.b2_keys},
+            metadata={
+                "b2_keys": media_output.b2_keys,
+                "insights": insights_summary.model_dump(),
+                "processing_time_ms": media_output.metadata.processing_time_ms,
+            },
         )
 
-        insights = analytics_output.insights
         response = RecapResponse(
             session_id=session_id,
             video_url=media_output.video_url,
             b2_keys=media_output.b2_keys,
-            insights=InsightsSummary(
-                period_label=insights.period_label,
-                total_income=insights.total_income,
-                total_expenses=insights.total_expenses,
-                savings_amount=insights.savings_amount,
-                savings_rate=insights.savings_rate,
-                top_categories=[
-                    CategorySpendResponse(**c.model_dump())
-                    for c in insights.top_categories
-                ],
-                achievements=insights.achievements,
-                personality=insights.personality.value,
-                personality_reason=insights.personality_reason,
-                currency=insights.currency,
-            ),
+            insights=insights_summary,
             processing_time_ms=media_output.metadata.processing_time_ms,
         )
 
@@ -212,3 +217,28 @@ async def generate_recap(
         store.set_failed(session_id, str(exc))
         log.error("recap.generate.failed", session_id=session_id, error=str(exc), exc_info=True)
         raise HTTPException(status_code=500, detail="Pipeline processing failed. Please try again.") from exc
+
+
+@router.get("/{session_id}", response_model=RecapResponse)
+async def get_recap(
+    session_id: str,
+    store: SessionStore = Depends(get_session_store),
+) -> RecapResponse:
+    """Fetch a completed recap by session ID — used by the share page."""
+    session = store.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Recap not found")
+    if session["status"] != "complete":
+        raise HTTPException(status_code=404, detail="Recap not ready")
+    meta = session["metadata"]
+    try:
+        insights = InsightsSummary(**meta["insights"])
+    except (KeyError, TypeError):
+        raise HTTPException(status_code=404, detail="Recap data unavailable") from None
+    return RecapResponse(
+        session_id=session_id,
+        video_url=session["output_url"],
+        b2_keys=meta.get("b2_keys", {}),
+        insights=insights,
+        processing_time_ms=meta.get("processing_time_ms", 0),
+    )
