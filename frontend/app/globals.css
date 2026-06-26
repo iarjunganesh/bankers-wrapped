@@ -1,3 +1,168 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body { margin: 0; padding: 0; }
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.bw-main {
+  min-height: 100vh;
+  background: #0a0a0f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.bw-card {
+  background: #13131f;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  border: 1px solid #1e1e30;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.bw-header { text-align: center; margin-bottom: 32px; }
+.bw-title  { font-size: 36px; font-weight: 800; color: #fff; margin: 0; letter-spacing: -0.02em; }
+.bw-subtitle { color: #666; margin-top: 8px; font-size: 15px; }
+
+/* ── Drop zone ───────────────────────────────────────────────────────────── */
+.bw-dropzone {
+  border: 2px dashed #252535;
+  border-radius: 16px;
+  padding: 56px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #0f0f1a;
+}
+.bw-dropzone:hover,
+.bw-dropzone-active { border-color: #6366f1; background: #15152a; }
+.bw-drop-icon  { font-size: 48px; margin-bottom: 16px; }
+.bw-drop-text  { color: #bbb; font-size: 16px; margin: 0 0 6px; }
+.bw-drop-hint  { color: #444; font-size: 13px; margin: 0 0 28px; }
+.bw-demo-btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: #777;
+  padding: 8px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* ── Processing ──────────────────────────────────────────────────────────── */
+.bw-processing       { text-align: center; padding: 24px 0; }
+.bw-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid #1e1e30;
+  border-top: 3px solid #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+.bw-processing-text  { color: #bbb; font-size: 15px; margin-bottom: 24px; }
+.bw-steps            { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; max-width: 300px; margin: 0 auto; }
+.bw-step-row         { display: flex; align-items: center; gap: 10px; }
+.bw-step-icon        { font-size: 16px; width: 20px; text-align: center; }
+.bw-step-label       { font-size: 13px; }
+
+.bw-step-done   { color: #34d399; }
+.bw-step-active { color: #6366f1; }
+.bw-step-idle   { color: #444; }
+.bw-label-done   { color: #ccc; }
+.bw-label-active { color: #fff; }
+.bw-label-idle   { color: #555; }
+
+/* ── Error ───────────────────────────────────────────────────────────────── */
+.bw-error-box  { text-align: center; padding: 32px 0; }
+.bw-error-text { color: #f87171; margin-bottom: 16px; font-size: 14px; }
+
+/* ── Result ──────────────────────────────────────────────────────────────── */
+.bw-result { display: flex; flex-direction: column; gap: 20px; }
+
+.bw-personality-badge {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  border: 1px solid var(--badge-color, #6366f1);
+  background: var(--badge-bg, rgba(99,102,241,0.15));
+}
+.bw-personality-icon    { font-size: 36px; line-height: 1; }
+.bw-personality-name    { font-weight: 700; font-size: 20px; color: var(--badge-color, #6366f1); }
+.bw-personality-tagline { color: #888; font-size: 13px; font-style: italic; margin-top: 2px; }
+
+/* Per-personality colour tokens — avoids any inline style={{}} */
+.bw-theme--builder   { --badge-color: #F59E0B; --badge-bg: rgba(245,158,11,0.15); }
+.bw-theme--explorer  { --badge-color: #14B8A6; --badge-bg: rgba(20,184,166,0.15); }
+.bw-theme--achiever  { --badge-color: #8B5CF6; --badge-bg: rgba(139,92,246,0.15); }
+.bw-theme--optimizer { --badge-color: #3B82F6; --badge-bg: rgba(59,130,246,0.15); }
+
+.bw-period-label { color: #ddd; text-align: center; margin: 0; font-size: 18px; font-weight: 600; }
+
+.bw-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.bw-metric  { background: #0d0d1a; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 6px; border: 1px solid #1a1a2e; }
+.bw-metric-label { color: #555; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+.bw-metric-value { color: #ccc; font-size: 17px; font-weight: 700; }
+.bw-metric-accent { color: var(--badge-color, #34d399); }
+
+.bw-achievements { display: flex; flex-direction: column; gap: 6px; background: #0d0d1a; border-radius: 10px; padding: 14px; border: 1px solid #1a1a2e; }
+.bw-achievement  { font-size: 13px; color: var(--badge-color, #34d399); }
+
+.bw-video-section { display: flex; flex-direction: column; gap: 8px; }
+.bw-video         { width: 100%; border-radius: 10px; background: #000; }
+.bw-download-link { color: #666; font-size: 12px; text-align: center; text-decoration: none; display: block; }
+
+.bw-share-btn {
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  background: var(--badge-color, #6366f1);
+  color: #fff;
+  width: 100%;
+}
+
+.bw-artifacts         { border-radius: 10px; background: #0d0d1a; border: 1px solid #1a1a2e; padding: 12px 16px; }
+.bw-artifacts-summary { color: #555; font-size: 12px; cursor: pointer; list-style: none; -webkit-user-select: none; user-select: none; }
+.bw-artifacts-summary::-webkit-details-marker { display: none; }
+.bw-artifacts-list    { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+.bw-artifact-item     { display: flex; align-items: center; gap: 8px; }
+.bw-artifact-key      { color: #444; font-size: 11px; font-family: monospace; }
+
+.bw-meta { color: #333; font-size: 11px; text-align: center; }
+
+.bw-btn {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  width: 100%;
+}
+.bw-btn-secondary {
+  background: transparent;
+  color: #555;
+  border: 1px solid #222;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: center;
+  width: 100%;
+}

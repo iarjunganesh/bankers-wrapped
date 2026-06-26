@@ -67,17 +67,27 @@ FAKE_PNG_BYTES = (
 )
 
 
+FAKE_MP3_BYTES = b"\xff\xe3" + b"\x00" * 256  # Minimal MP3 header bytes
+
+
 @pytest.fixture
 def mock_genblaze_client():
-    """Mock GenblazeClient — no real Genblaze/GMI calls made."""
+    """Mock GenblazeClient — no real Genblaze/GMI or OpenAI TTS calls made."""
     with patch("backend.agents.media_agent.GenblazeClient") as MockClass:
         instance = MockClass.return_value
-        from backend.media.genblaze_client import ImageResult
+        from backend.media.genblaze_client import AudioResult, ImageResult
 
         instance.generate_scene_image = AsyncMock(
             return_value=ImageResult(
                 image_bytes=FAKE_PNG_BYTES,
                 manifest_hash="sha256:fake-image-hash",
+            )
+        )
+        instance.generate_narration_audio = AsyncMock(
+            return_value=AudioResult(
+                audio_bytes=FAKE_MP3_BYTES,
+                model="tts-1",
+                voice="alloy",
             )
         )
         yield instance
@@ -101,7 +111,7 @@ def mock_ffmpeg_composer():
     """Mock FFmpegComposer — no real ffmpeg calls made."""
     with patch("backend.agents.media_agent.FFmpegComposer") as MockClass:
         instance = MockClass.return_value
-        instance.compose = MagicMock(side_effect=lambda **kwargs: kwargs["output_path"])
+        instance.compose = AsyncMock(side_effect=lambda **kwargs: kwargs["output_path"])
         yield instance
 
 
@@ -109,11 +119,14 @@ def mock_ffmpeg_composer():
 
 @pytest.fixture
 def api_client(test_settings):
-    """FastAPI test client with settings override."""
+    """FastAPI test client with settings override and rate limiting disabled."""
+    from backend.api.limiter import limiter
     from backend.config import get_settings
     from backend.main import app
 
     app.dependency_overrides[get_settings] = lambda: test_settings
+    limiter.enabled = False
     with TestClient(app) as client:
         yield client
+    limiter.enabled = True
     app.dependency_overrides.clear()

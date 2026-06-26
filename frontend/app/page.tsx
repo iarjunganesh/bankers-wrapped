@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -22,16 +22,56 @@ interface RecapResult {
   video_url: string;
   insights: Insights;
   processing_time_ms: number;
+  b2_keys: Record<string, string>;
+}
+
+interface ProgressEvent {
+  event: string;
+  detail: string;
+  ts: number;
 }
 
 type Stage = "idle" | "uploading" | "processing" | "done" | "error";
+
+const PIPELINE_STEPS = [
+  { key: "parsing",           label: "Parsing transactions" },
+  { key: "analyzing",         label: "Calculating insights" },
+  { key: "scripting",         label: "Writing narrative script" },
+  { key: "generating_images", label: "Generating scene images + narration" },
+  { key: "uploading",         label: "Uploading to Backblaze B2" },
+];
+
+const PERSONALITY_THEMES: Record<string, { color: string; bg: string; icon: string; tagline: string }> = {
+  "Financial Builder":   { color: "#F59E0B", bg: "rgba(245,158,11,0.15)",  icon: "🏗️", tagline: "Laying the foundation — brick by brick." },
+  "Financial Explorer":  { color: "#14B8A6", bg: "rgba(20,184,166,0.15)",  icon: "🌍", tagline: "You invest in experiences that last a lifetime." },
+  "Financial Achiever":  { color: "#8B5CF6", bg: "rgba(139,92,246,0.15)", icon: "🏆", tagline: "Your discipline is paying off — literally." },
+  "Financial Optimizer": { color: "#3B82F6", bg: "rgba(59,130,246,0.15)", icon: "⚙️", tagline: "Every dollar has a purpose in your world." },
+};
+
+function getTheme(personality: string) {
+  return PERSONALITY_THEMES[personality] ?? { color: "#6366f1", bg: "rgba(99,102,241,0.15)", icon: "💰", tagline: "" };
+}
+
+const PERSONALITY_CLASS: Record<string, string> = {
+  "Financial Builder":   "bw-theme--builder",
+  "Financial Explorer":  "bw-theme--explorer",
+  "Financial Achiever":  "bw-theme--achiever",
+  "Financial Optimizer": "bw-theme--optimizer",
+};
 
 export default function Home() {
   const [stage, setStage] = useState<Stage>("idle");
   const [result, setResult] = useState<RecapResult | null>(null);
   const [error, setError] = useState("");
   const [dragging, setDragging] = useState(false);
+  const [progressEvents, setProgressEvents] = useState<ProgressEvent[]>([]);
+  const [artifactsOpen, setArtifactsOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const sseRef = useRef<EventSource | null>(null);
+
+  useEffect(() => {
+    return () => { sseRef.current?.close(); };
+  }, []);
 
   const handleFile = async (file: File) => {
     if (!file.name.endsWith(".csv")) {
@@ -40,12 +80,26 @@ export default function Home() {
     }
     setStage("uploading");
     setError("");
+    setProgressEvents([]);
+
+    const sessionId = crypto.randomUUID();
+
+    sseRef.current?.close();
+    const sse = new EventSource(`${API_URL}/api/v1/recap/${sessionId}/progress`);
+    sseRef.current = sse;
+    sse.onmessage = (e) => {
+      try {
+        const ev: ProgressEvent = JSON.parse(e.data as string);
+        setProgressEvents((prev) => [...prev, ev]);
+      } catch { /* ignore malformed events */ }
+    };
+    sse.onerror = () => sse.close();
 
     const form = new FormData();
     form.append("file", file);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120_000);
+    const timeout = setTimeout(() => controller.abort(), 300_000);
 
     try {
       setStage("processing");
@@ -53,19 +107,22 @@ export default function Home() {
         method: "POST",
         body: form,
         signal: controller.signal,
+        headers: { "X-Session-ID": sessionId },
       });
       clearTimeout(timeout);
+      sse.close();
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.detail || "Pipeline failed");
+        const data = await res.json() as { detail?: string };
+        throw new Error(data.detail ?? "Pipeline failed");
       }
 
-      const data: RecapResult = await res.json();
+      const data = await res.json() as RecapResult;
       setResult(data);
       setStage("done");
     } catch (err: unknown) {
       clearTimeout(timeout);
+      sse.close();
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
       setStage("error");
     }
@@ -79,112 +136,165 @@ export default function Home() {
   };
 
   const reset = () => {
+    sseRef.current?.close();
     setStage("idle");
     setResult(null);
     setError("");
+    setProgressEvents([]);
+    setArtifactsOpen(false);
   };
 
+  const copyShareLink = () => {
+    if (result) {
+      navigator.clipboard.writeText(`${window.location.origin}/recap/${result.session_id}`);
+    }
+  };
+
+  const theme = result ? getTheme(result.insights.personality) : null;
+  const completedKeys = new Set(progressEvents.map((e) => e.event));
+  const currentIdx = (() => {
+    for (let i = PIPELINE_STEPS.length - 1; i >= 0; i--) {
+      if (completedKeys.has(PIPELINE_STEPS[i].key)) return i;
+    }
+    return -1;
+  })();
+
+  const themeClass = result ? (PERSONALITY_CLASS[result.insights.personality] ?? "") : "";
+
   return (
-    <main style={styles.main}>
-      <div style={styles.card}>
-        {/* Header */}
-        <div style={styles.header}>
-          <h1 style={styles.title}>Banker's Wrapped</h1>
-          <p style={styles.subtitle}>Your financial year, told as a story.</p>
+    <main className="bw-main">
+      <div className="bw-card">
+        <div className="bw-header">
+          <h1 className="bw-title">Banker&apos;s Wrapped</h1>
+          <p className="bw-subtitle">Your financial year, told as a story.</p>
         </div>
 
-        {/* Upload Zone */}
+        {/* Upload zone */}
         {stage === "idle" && (
           <div
-            style={{ ...styles.dropzone, ...(dragging ? styles.dropzoneActive : {}) }}
+            className={`bw-dropzone${dragging ? " bw-dropzone-active" : ""}`}
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={onDrop}
             onClick={() => fileRef.current?.click()}
           >
-            <div style={styles.dropIcon}>📊</div>
-            <p style={styles.dropText}>Drop your CSV transaction export here</p>
-            <p style={styles.dropHint}>or click to browse</p>
+            <div className="bw-drop-icon">📊</div>
+            <p className="bw-drop-text">Drop your CSV transaction export here</p>
+            <p className="bw-drop-hint">or click to browse · max 5 MB</p>
             <input
               ref={fileRef}
               type="file"
               accept=".csv"
-              style={{ display: "none" }}
+              hidden
               onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
             />
-            <button style={styles.demoBtn}
+            <button
+              type="button"
+              className="bw-demo-btn"
               onClick={(e) => {
                 e.stopPropagation();
                 fetch("/data/synthetic/transactions_jan_2026.csv")
-                  .then(r => r.blob())
-                  .then(b => handleFile(new File([b], "transactions_jan_2026.csv", { type: "text/csv" })));
-              }}>
+                  .then((r) => r.blob())
+                  .then((b) => handleFile(new File([b], "transactions_jan_2026.csv", { type: "text/csv" })));
+              }}
+            >
               Try demo dataset
             </button>
           </div>
         )}
 
-        {/* Processing */}
+        {/* Live pipeline progress */}
         {(stage === "uploading" || stage === "processing") && (
-          <div style={styles.processing}>
-            <div style={styles.spinner} />
-            <p style={styles.processingText}>
-              {stage === "uploading" ? "Uploading..." : "Generating your recap…"}
-            </p>
-            <div style={styles.steps}>
-              {["Parsing transactions", "Analysing finances", "Writing narrative",
-                "Generating voice & visuals", "Composing video"].map((s, i) => (
-                <div key={i} style={styles.step}>
-                  <span style={styles.stepDot}>●</span> {s}
-                </div>
-              ))}
+          <div className="bw-processing">
+            <div className="bw-spinner" />
+            <p className="bw-processing-text">Generating your recap…</p>
+            <div className="bw-steps">
+              {PIPELINE_STEPS.map((step, i) => {
+                const done   = completedKeys.has(step.key);
+                const active = i === currentIdx + 1 && !done;
+                return (
+                  <div key={step.key} className="bw-step-row">
+                    <span className={`bw-step-icon ${done ? "bw-step-done" : active ? "bw-step-active" : "bw-step-idle"}`}>
+                      {done ? "✅" : active ? "⏳" : "○"}
+                    </span>
+                    <span className={`bw-step-label ${done ? "bw-label-done" : active ? "bw-label-active" : "bw-label-idle"}`}>
+                      {step.label}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
 
         {/* Error */}
         {stage === "error" && (
-          <div style={styles.errorBox}>
-            <p style={styles.errorText}>⚠️ {error}</p>
-            <button style={styles.btn} onClick={reset}>Try again</button>
+          <div className="bw-error-box">
+            <p className="bw-error-text">⚠️ {error}</p>
+            <button type="button" className="bw-btn" onClick={reset}>Try again</button>
           </div>
         )}
 
         {/* Result */}
-        {stage === "done" && result && (
-          <div style={styles.result}>
-            <div style={styles.personalityBadge}>
-              🏅 {result.insights.personality}
+        {stage === "done" && result && theme && (
+          <div className={`bw-result ${themeClass}`}>
+            <div className="bw-personality-badge">
+              <span className="bw-personality-icon">{theme.icon}</span>
+              <div>
+                <div className="bw-personality-name">{result.insights.personality}</div>
+                <div className="bw-personality-tagline">&ldquo;{theme.tagline}&rdquo;</div>
+              </div>
             </div>
-            <h2 style={styles.periodLabel}>{result.insights.period_label}</h2>
 
-            <div style={styles.metrics}>
-              <Metric label="Income" value={fmt(result.insights.total_income, result.insights.currency)} />
+            <h2 className="bw-period-label">{result.insights.period_label}</h2>
+
+            <div className="bw-metrics">
+              <Metric label="Income"   value={fmt(result.insights.total_income, result.insights.currency)} />
               <Metric label="Expenses" value={fmt(result.insights.total_expenses, result.insights.currency)} />
-              <Metric label="Saved" value={`${result.insights.savings_rate.toFixed(1)}%`} highlight />
+              <Metric label="Saved"    value={`${result.insights.savings_rate.toFixed(1)}%`} accent />
             </div>
 
-            <div style={styles.achievementsList}>
-              {result.insights.achievements.map((a, i) => (
-                <div key={i} style={styles.achievement}>✓ {a}</div>
-              ))}
+            {result.insights.achievements.length > 0 && (
+              <div className="bw-achievements">
+                {result.insights.achievements.map((a, i) => (
+                  <div key={i} className="bw-achievement">✓ {a}</div>
+                ))}
+              </div>
+            )}
+
+            <div className="bw-video-section">
+              <video className="bw-video" src={result.video_url} controls autoPlay muted />
+              <a className="bw-download-link" href={result.video_url} download="recap.mp4">
+                ↓ Download MP4
+              </a>
             </div>
 
-            <div style={styles.videoSection}>
-              <video
-                src={result.video_url}
-                controls
-                autoPlay
-                style={styles.video}
-              />
-            </div>
+            <button type="button" className="bw-share-btn" onClick={copyShareLink}>
+              Share your recap →
+            </button>
 
-            <p style={styles.reason}>{result.insights.personality_reason}</p>
-            <p style={styles.meta}>
+            <details
+              className="bw-artifacts"
+              onToggle={(e) => setArtifactsOpen((e.target as HTMLDetailsElement).open)}
+            >
+              <summary className="bw-artifacts-summary">
+                {artifactsOpen ? "▾" : "▸"} Pipeline Artifacts (Backblaze B2)
+              </summary>
+              <div className="bw-artifacts-list">
+                {Object.entries(result.b2_keys).map(([k]) => (
+                  <div key={k} className="bw-artifact-item">
+                    <span className="bw-artifact-key">{k}</span>
+                  </div>
+                ))}
+              </div>
+            </details>
+
+            <p className="bw-meta">
               Generated in {(result.processing_time_ms / 1000).toFixed(1)}s ·
-              Session {result.session_id.slice(0, 8)}
+              Session {result.session_id.slice(0, 8)} ·
+              Powered by Backblaze B2 + Genblaze
             </p>
-            <button style={styles.btn} onClick={reset}>Generate another</button>
+            <button type="button" className="bw-btn-secondary" onClick={reset}>Generate another</button>
           </div>
         )}
       </div>
@@ -192,13 +302,11 @@ export default function Home() {
   );
 }
 
-function Metric({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function Metric({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div style={styles.metric}>
-      <span style={styles.metricLabel}>{label}</span>
-      <span style={{ ...styles.metricValue, ...(highlight ? styles.metricHighlight : {}) }}>
-        {value}
-      </span>
+    <div className="bw-metric">
+      <span className="bw-metric-label">{label}</span>
+      <span className={`bw-metric-value${accent ? " bw-metric-accent" : ""}`}>{value}</span>
     </div>
   );
 }
@@ -206,40 +314,3 @@ function Metric({ label, value, highlight }: { label: string; value: string; hig
 function fmt(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(amount);
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  main: { minHeight: "100vh", background: "#0f0f13", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px", fontFamily: "'Inter', sans-serif" },
-  card: { background: "#1a1a24", borderRadius: "16px", padding: "40px", maxWidth: "580px", width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" },
-  header: { textAlign: "center", marginBottom: "32px" },
-  title: { fontSize: "32px", fontWeight: 700, color: "#fff", margin: 0 },
-  subtitle: { color: "#888", marginTop: "8px", fontSize: "16px" },
-  dropzone: { border: "2px dashed #333", borderRadius: "12px", padding: "48px 24px", textAlign: "center", cursor: "pointer", transition: "all 0.2s" },
-  dropzoneActive: { borderColor: "#6366f1", background: "#1e1e30" },
-  dropIcon: { fontSize: "48px", marginBottom: "16px" },
-  dropText: { color: "#ccc", fontSize: "16px", margin: "0 0 8px" },
-  dropHint: { color: "#555", fontSize: "14px", margin: "0 0 24px" },
-  demoBtn: { background: "transparent", border: "1px solid #444", color: "#888", padding: "8px 20px", borderRadius: "8px", cursor: "pointer", fontSize: "13px" },
-  processing: { textAlign: "center", padding: "32px 0" },
-  spinner: { width: "40px", height: "40px", border: "3px solid #333", borderTop: "3px solid #6366f1", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" },
-  processingText: { color: "#ccc", fontSize: "16px", marginBottom: "24px" },
-  steps: { display: "flex", flexDirection: "column", gap: "8px", alignItems: "flex-start", maxWidth: "240px", margin: "0 auto" },
-  step: { color: "#555", fontSize: "13px" },
-  stepDot: { color: "#6366f1" },
-  errorBox: { textAlign: "center", padding: "32px 0" },
-  errorText: { color: "#f87171", marginBottom: "16px" },
-  result: { display: "flex", flexDirection: "column", gap: "16px" },
-  personalityBadge: { background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#fff", padding: "12px 20px", borderRadius: "12px", fontWeight: 700, fontSize: "18px", textAlign: "center" },
-  periodLabel: { color: "#fff", textAlign: "center", margin: 0, fontSize: "20px" },
-  metrics: { display: "flex", gap: "12px" },
-  metric: { flex: 1, background: "#12121a", borderRadius: "8px", padding: "12px", display: "flex", flexDirection: "column", gap: "4px" },
-  metricLabel: { color: "#666", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em" },
-  metricValue: { color: "#ccc", fontSize: "16px", fontWeight: 600 },
-  metricHighlight: { color: "#34d399" },
-  achievementsList: { display: "flex", flexDirection: "column", gap: "6px" },
-  achievement: { color: "#34d399", fontSize: "13px" },
-  videoSection: { borderRadius: "8px", overflow: "hidden" },
-  video: { width: "100%", borderRadius: "8px" },
-  reason: { color: "#888", fontSize: "13px", textAlign: "center", fontStyle: "italic" },
-  meta: { color: "#444", fontSize: "11px", textAlign: "center" },
-  btn: { background: "#6366f1", color: "#fff", border: "none", padding: "12px 24px", borderRadius: "8px", cursor: "pointer", fontSize: "14px", fontWeight: 600 },
-};

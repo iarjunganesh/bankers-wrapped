@@ -45,8 +45,9 @@ Banker's Wrapped solves this with an agentic pipeline that reads your transactio
 4. **Financial Personality** is assigned: Builder · Optimizer · Explorer · Achiever
 5. **Narrative Agent** (NVIDIA NIM / Llama 3.1 70B) generates a structured 4-scene video script
 6. **Scene images** generated via **Genblaze → GMI Cloud** (Seedream 4.0, 1344×768) — all 4 in parallel
-7. **FFmpeg** composes the final MP4: scene images slideshow
-8. **All artifacts** uploaded to **Backblaze B2**; presigned URL returned to user
+7. **Voice narration** synthesised via **Genblaze → OpenAI TTS** (tts-1, alloy voice) — concatenated scene text
+8. **FFmpeg** composes the final MP4: scene images + narration audio (H.264/AAC)
+9. **All artifacts** uploaded to **Backblaze B2**; presigned URL returned to user
 
 ---
 
@@ -121,7 +122,7 @@ bankers-wrapped-assets/
 └── {user_id}/{session_id}/
     ├── input/     transactions.csv
     ├── pipeline/  script.json · narration.mp3 · scenes/scene_00…03.png
-    ├── output/    recap_{session_id}.mp4
+    ├── output/    recap_{session_id}.mp4           ← H.264 video + AAC narration audio
     └── metadata/  session_metadata.json
 ```
 
@@ -159,6 +160,13 @@ pr = (
     .run(timeout=300, raise_on_failure=True)
 )
 image_bytes = httpx.get(pr.run.steps[0].assets[0].url).content
+
+# Narration audio — OpenAI TTS wrapped inside GenblazeClient (no direct provider calls outside)
+audio_result = await genblaze_client.generate_narration_audio(
+    narration_text=script.full_narration,   # all 4 scene narrations joined
+    model="tts-1",
+    voice="alloy",
+)
 ```
 
 Every run produces a **SHA-256 provenance manifest** stored in B2 metadata — full model traceability per video.
@@ -178,6 +186,7 @@ Every generated video is fully traceable via `session_metadata.json`:
   "models_used": {
     "llm":        "nvidia-nim/meta/llama-3.1-70b-instruct",
     "image":      "gmi-cloud/seedream-4-0-250828",
+    "audio":      "openai/tts-1",
     "compositor": "ffmpeg"
   },
   "input_hash":         "sha256:a3f…",
@@ -199,7 +208,7 @@ Every generated video is fully traceable via `session_metadata.json`:
 | **Agent Framework** | [![Semantic Kernel](https://img.shields.io/badge/Semantic_Kernel-0078D4?logo=microsoft&logoColor=white)](https://learn.microsoft.com/en-us/semantic-kernel/) | Typed plugin contracts, native async |
 | **LLM** | [![NVIDIA NIM](https://img.shields.io/badge/NVIDIA_NIM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/) | Narrative script generation |
 | **Images** | [![GMI Cloud](https://img.shields.io/badge/GMI_Cloud-Seedream-0066CC)](https://cloud.gmi.ai/) | Scene visuals 1344×768, seedream-4-0-250828 (via Genblaze) — 4 parallel |
-| **Video Compose** | [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.1-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/) | Scene images → H.264 MP4 (no audio) |
+| **Video Compose** | [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/) | Scene images + narration audio → H.264/AAC MP4 |
 | **Frontend** | [![Next.js](https://img.shields.io/badge/Next.js-16.2.9-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/) [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/) [![Node.js](https://img.shields.io/badge/Node.js-26.4.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) | Upload portal + video player |
 | **Session State** | [![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/) | Pipeline state tracking (SQLite → PostgreSQL) |
 | **Observability** | [![structlog](https://img.shields.io/badge/structlog-JSON-4A90E2)](https://www.structlog.org/) | Structured request + agent logging |

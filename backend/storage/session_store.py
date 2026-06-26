@@ -11,6 +11,7 @@ from __future__ import annotations
 import contextlib
 import json
 import sqlite3
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -37,9 +38,13 @@ def init_db(db_path: Path = DB_PATH) -> None:
                 updated_at   TEXT NOT NULL,
                 output_url   TEXT DEFAULT '',
                 metadata     TEXT DEFAULT '{}',
-                error        TEXT DEFAULT ''
+                error        TEXT DEFAULT '',
+                events       TEXT DEFAULT '[]'
             )
         """)
+        # Add events column to existing DBs without it
+        with contextlib.suppress(sqlite3.OperationalError):
+            conn.execute("ALTER TABLE sessions ADD COLUMN events TEXT DEFAULT '[]'")
         conn.commit()
 
 
@@ -98,3 +103,28 @@ class SessionStore:
         d = dict(row)
         d["metadata"] = json.loads(d.get("metadata") or "{}")
         return d
+
+    def append_event(self, session_id: str, event: str, detail: str = "") -> None:
+        """Append a progress event to the session's event log."""
+        with contextlib.closing(self._conn()) as conn, conn:
+            row = conn.execute(
+                "SELECT events FROM sessions WHERE session_id=?", (session_id,)
+            ).fetchone()
+            if not row:
+                return
+            events: list[dict[str, object]] = json.loads(row["events"] or "[]")
+            events.append({"event": event, "detail": detail, "ts": time.time()})
+            conn.execute(
+                "UPDATE sessions SET events=?, updated_at=? WHERE session_id=?",
+                (json.dumps(events), _now(), session_id),
+            )
+
+    def get_events(self, session_id: str) -> list[dict[str, object]]:
+        """Return all progress events for a session, in arrival order."""
+        with contextlib.closing(self._conn()) as conn:
+            row = conn.execute(
+                "SELECT events FROM sessions WHERE session_id=?", (session_id,)
+            ).fetchone()
+        if not row:
+            return []
+        return json.loads(row["events"] or "[]")  # type: ignore[no-any-return]

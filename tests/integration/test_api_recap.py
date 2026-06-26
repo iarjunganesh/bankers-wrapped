@@ -23,6 +23,15 @@ class TestRecapEndpoint:
         )
         assert response.status_code == 422
 
+    def test_generate_rejects_binary_disguised_as_csv(self, api_client):
+        png_magic = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
+        response = api_client.post(
+            "/api/v1/recap/generate",
+            files={"file": ("transactions.csv", png_magic, "text/csv")},
+        )
+        assert response.status_code == 422
+        assert "CSV" in response.json()["detail"]
+
     def test_generate_rejects_empty_file(self, api_client):
         response = api_client.post(
             "/api/v1/recap/generate",

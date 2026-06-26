@@ -8,15 +8,17 @@ class Settings(BaseSettings):
 
     # App
     app_name: str = "Banker's Wrapped"
-    app_version: str = "1.0.0"
+    app_version: str = "1.2.0"
     debug: bool = False
 
-    # CORS — set to specific origins in production (e.g. https://bankers-wrapped.vercel.app)
+    # CORS — defaults to wildcard for hackathon; override via CORS_ALLOW_ORIGINS env var in production
     cors_allow_origins: list[str] = ["*"]
 
-    # OpenAI — used only as LLM fallback in NarrativeAgent when NIM key is absent
+    # OpenAI — LLM fallback in NarrativeAgent + TTS narration via GenblazeClient
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
+    openai_tts_model: str = "tts-1"
+    openai_tts_voice: str = "alloy"
 
     # GMI Cloud (via Genblaze) — image generation
     gmi_api_key: str = ""

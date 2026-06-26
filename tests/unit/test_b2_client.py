@@ -69,6 +69,10 @@ class TestB2Client:
         key = B2Client.output_key("user1", "sess1")
         assert key == "user1/sess1/output/recap_sess1.mp4"
 
+    def test_narration_key_format(self):
+        key = B2Client.narration_key("user1", "sess1")
+        assert key == "user1/sess1/pipeline/narration.mp3"
+
     def test_metadata_key_format(self):
         key = B2Client.metadata_key("user1", "sess1")
         assert key == "user1/sess1/metadata/session_metadata.json"

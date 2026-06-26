@@ -12,17 +12,27 @@ import uuid
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Header, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 
 from backend.agents.analytics_agent import AnalyticsAgent
 from backend.agents.document_agent import DocumentAgent, DocumentAgentInput
 from backend.agents.media_agent import MediaAgent, MediaAgentInput
 from backend.agents.narrative_agent import NarrativeAgent
+from backend.api.limiter import limiter
 from backend.config import Settings, get_settings
 from backend.media.genblaze_client import GenblazeClient
 from backend.storage.b2_client import B2Client
 from backend.storage.session_store import SessionStore
+
+# Bytes that indicate a file is binary (not a text CSV)
+_BINARY_MAGIC = [
+    b"\x89PNG",  # PNG
+    b"\xff\xd8\xff",  # JPEG
+    b"GIF8",  # GIF
+    b"PK\x03\x04",  # ZIP/XLSX
+    b"%PDF",  # PDF
+]
 
 log = structlog.get_logger()
 router = APIRouter()
@@ -84,18 +94,22 @@ def get_genblaze(settings: Settings = Depends(get_settings)) -> GenblazeClient:
         b2_endpoint=settings.b2_endpoint_url,
         b2_key_id=settings.b2_key_id,
         b2_app_key=settings.b2_application_key,
+        openai_api_key=settings.openai_api_key,
     )
 
 
 # ── Endpoint ──────────────────────────────────────────────────────────────────
 
 @router.post("/generate", response_model=RecapResponse)
+@limiter.limit("5/hour")
 async def generate_recap(
+    request: Request,
     file: Annotated[UploadFile, File(description="CSV transaction export")],
     settings: Settings = Depends(get_settings),
     b2: B2Client = Depends(get_b2),
     genblaze: GenblazeClient = Depends(get_genblaze),
     store: SessionStore = Depends(get_session_store),
+    x_session_id: str | None = Header(None),
 ) -> RecapResponse:
     """
     Run the full Banker's Wrapped pipeline:
@@ -112,8 +126,10 @@ async def generate_recap(
         raise HTTPException(status_code=422, detail="Uploaded file is empty")
     if len(csv_bytes) > MAX_CSV_SIZE_BYTES:
         raise HTTPException(status_code=413, detail="File exceeds 5 MB limit")
+    if any(csv_bytes.startswith(magic) for magic in _BINARY_MAGIC):
+        raise HTTPException(status_code=422, detail="File does not appear to be a CSV")
 
-    session_id = str(uuid.uuid4())
+    session_id = x_session_id or str(uuid.uuid4())
     user_id = str(uuid.uuid4())  # Anonymous user — no auth required for MVP
 
     store.create(session_id, user_id)
@@ -123,6 +139,7 @@ async def generate_recap(
 
     try:
         # ── Agent 1: Document Intelligence ───────────────────────────────────
+        store.append_event(session_id, "parsing", f"Parsing {safe_filename}")
         doc_agent = DocumentAgent()
         doc_output = await doc_agent(DocumentAgentInput(
             csv_bytes=csv_bytes,
@@ -130,14 +147,17 @@ async def generate_recap(
         ))
 
         # ── Agent 2: Financial Analytics + Personality ───────────────────────
+        store.append_event(session_id, "analyzing", "Calculating insights")
         analytics_agent = AnalyticsAgent()
         analytics_output = await analytics_agent(doc_output)
 
         # ── Agent 3: Narrative Generation ────────────────────────────────────
+        store.append_event(session_id, "scripting", "Writing narrative script")
         narrative_agent = NarrativeAgent(settings)
         narrative_output = await narrative_agent(analytics_output)
 
         # ── Agent 4: Media (Voice + Images + FFmpeg + B2) ────────────────────
+        store.append_event(session_id, "generating_images", "Generating 4 scene images + narration")
         media_agent = MediaAgent(settings, genblaze, b2)
         media_output = await media_agent(MediaAgentInput(
             script_output=narrative_output,
@@ -149,6 +169,7 @@ async def generate_recap(
         ))
 
         # ── Persist session ──────────────────────────────────────────────────
+        store.append_event(session_id, "uploading", "Uploading to Backblaze B2")
         store.set_complete(
             session_id,
             output_url=media_output.video_url,

@@ -29,6 +29,7 @@ htmlcov/
 node_modules/
 .next/
 out/
+*.tsbuildinfo
 
 # Runtime logs & demo output
 logs/

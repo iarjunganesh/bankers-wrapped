@@ -1,0 +1,117 @@
+"""Unit tests for GenblazeClient — mocks Genblaze SDK and OpenAI."""
+
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from backend.media.genblaze_client import AudioResult, GenblazeClient, ImageResult
+
+
+@pytest.fixture
+def client() -> GenblazeClient:
+    return GenblazeClient(
+        gmi_api_key="mock-gmi-key",
+        b2_bucket="test-bucket",
+        b2_endpoint="https://s3.eu-central-003.backblazeb2.com",
+        b2_key_id="test-key-id",
+        b2_app_key="test-app-key",
+        openai_api_key="sk-test-openai-key",
+    )
+
+
+class TestGenblazeClientInit:
+    def test_stores_openai_api_key(self, client):
+        assert client.openai_api_key == "sk-test-openai-key"
+
+    def test_stores_gmi_api_key(self, client):
+        assert client.gmi_api_key == "mock-gmi-key"
+
+
+class TestGenerateNarrationAudio:
+    async def test_returns_audio_result(self, client):
+        fake_mp3 = b"\xff\xe3" + b"\x00" * 256
+
+        mock_response = MagicMock()
+        mock_response.read.return_value = fake_mp3
+        mock_openai_instance = MagicMock()
+        mock_openai_instance.audio.speech.create.return_value = mock_response
+
+        with patch("backend.media.genblaze_client.openai") as mock_openai_module:
+            mock_openai_module.OpenAI.return_value = mock_openai_instance
+            result = await client.generate_narration_audio("Hello world narration.")
+
+        assert isinstance(result, AudioResult)
+        assert result.audio_bytes == fake_mp3
+        assert result.model == "tts-1"
+        assert result.voice == "alloy"
+
+    async def test_calls_openai_tts_with_correct_params(self, client):
+        mock_response = MagicMock()
+        mock_response.read.return_value = b"\xff\xe3\x00"
+        mock_openai_instance = MagicMock()
+        mock_openai_instance.audio.speech.create.return_value = mock_response
+
+        with patch("backend.media.genblaze_client.openai") as mock_openai_module:
+            mock_openai_module.OpenAI.return_value = mock_openai_instance
+            await client.generate_narration_audio(
+                narration_text="Test narration.",
+                model="tts-1-hd",
+                voice="nova",
+            )
+
+        mock_openai_instance.audio.speech.create.assert_called_once_with(
+            model="tts-1-hd",
+            voice="nova",
+            input="Test narration.",
+            response_format="mp3",
+        )
+
+    async def test_custom_model_and_voice_reflected_in_result(self, client):
+        mock_response = MagicMock()
+        mock_response.read.return_value = b"\xff\xe3\x00"
+        mock_openai_instance = MagicMock()
+        mock_openai_instance.audio.speech.create.return_value = mock_response
+
+        with patch("backend.media.genblaze_client.openai") as mock_openai_module:
+            mock_openai_module.OpenAI.return_value = mock_openai_instance
+            result = await client.generate_narration_audio(
+                "Text", model="tts-1-hd", voice="nova"
+            )
+
+        assert result.model == "tts-1-hd"
+        assert result.voice == "nova"
+
+
+class TestGenerateSceneImage:
+    async def test_returns_image_result(self, client):
+        fake_png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
+
+        mock_asset = MagicMock()
+        mock_asset.url = "https://cdn.gmi.ai/scene_00.png"
+
+        mock_run_obj = MagicMock()
+        mock_run_obj.steps = [MagicMock(assets=[mock_asset])]
+        mock_manifest = MagicMock()
+        mock_manifest.canonical_hash = "sha256:abc123"
+
+        mock_pipeline_result = MagicMock()
+        mock_pipeline_result.run = mock_run_obj
+        mock_pipeline_result.manifest = mock_manifest
+
+        mock_pipeline_instance = MagicMock()
+        mock_pipeline_instance.step.return_value = mock_pipeline_instance
+        mock_pipeline_instance.run.return_value = mock_pipeline_result
+
+        # Patch at source modules — these are lazily imported inside the method
+        with (
+            patch("backend.media.genblaze_client.httpx") as mock_httpx,
+            patch("genblaze_core.Pipeline", return_value=mock_pipeline_instance),
+            patch("genblaze_gmicloud.GMICloudImageProvider"),
+            patch("genblaze_core.Modality"),
+        ):
+            mock_httpx.Client.return_value.__enter__.return_value.get.return_value.content = fake_png
+            result = await client.generate_scene_image("A financial scene")
+
+        assert isinstance(result, ImageResult)
+        assert result.image_bytes == fake_png
+        assert result.manifest_hash == "sha256:abc123"

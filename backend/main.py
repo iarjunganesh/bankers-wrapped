@@ -14,9 +14,12 @@ import sys
 import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
+from backend.api.limiter import limiter
 from backend.api.middleware.logging import RequestLoggingMiddleware
-from backend.api.v1 import health, recap
+from backend.api.v1 import health, progress, recap
 from backend.config import get_settings
 
 # ── Logging configuration ─────────────────────────────────────────────────────
@@ -50,6 +53,10 @@ app = FastAPI(
     ),
 )
 
+# ── Rate limiting ─────────────────────────────────────────────────────────────
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
+
 # ── Middleware ────────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
@@ -63,6 +70,7 @@ app.add_middleware(RequestLoggingMiddleware)
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
 app.include_router(recap.router, prefix="/api/v1/recap", tags=["recap"])
+app.include_router(progress.router, prefix="/api/v1/recap", tags=["progress"])
 
 
 @app.get("/")

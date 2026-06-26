@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: bankers-wrapped-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: B2_KEY_ID
+        sync: false
+      - key: B2_APPLICATION_KEY
+        sync: false
+      - key: B2_ENDPOINT_URL
+        sync: false
+      - key: B2_BUCKET_NAME
+        sync: false
+      - key: GMI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false

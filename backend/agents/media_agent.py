@@ -2,11 +2,12 @@
 Media Agent.
 
 Consolidated agent responsible for:
-  1. genblaze.image.generate()  → GMI Cloud FLUX scene images (PNG × N)
-  2. FFmpeg composition         → images → recap.mp4 (silent slideshow)
-  3. Backblaze B2 upload        → all assets stored, presigned URL returned
+  1. genblaze.image.generate()        → GMI Cloud Seedream scene images (PNG × N, parallel)
+  2. genblaze.generate_narration_audio() → OpenAI TTS narration MP3 (via GenblazeClient)
+  3. FFmpeg composition               → images + audio → recap.mp4
+  4. Backblaze B2 upload              → all assets stored, presigned URL returned
 
-All generative media calls route through the Genblaze SDK.
+All generative media calls route through the Genblaze SDK (GenblazeClient wrapper).
 """
 
 from __future__ import annotations
@@ -116,17 +117,33 @@ class MediaAgent(BaseAgent):
                 self.b2.upload_bytes(scene_key, image_result.image_bytes, "image/png")
                 b2_keys[f"scene_{idx}"] = scene_key
 
-            # ── 4. Compose final MP4 with FFmpeg (images only, no audio) ────
+            # ── 4. Synthesise narration audio via Genblaze (OpenAI TTS) ────────
+            full_narration = " ".join(scene.narration for scene in script.scenes)
+            self.log.info("media_agent.narration.start")
+            audio_result = await self.genblaze.generate_narration_audio(
+                narration_text=full_narration,
+                model=self.settings.openai_tts_model,
+                voice=self.settings.openai_tts_voice,
+            )
+            narration_path = tmp / "narration.mp3"
+            narration_path.write_bytes(audio_result.audio_bytes)
+
+            narration_key = B2Client.narration_key(user_id, session_id)
+            self.b2.upload_bytes(narration_key, audio_result.audio_bytes, "audio/mpeg")
+            b2_keys["narration"] = narration_key
+
+            # ── 5. Compose final MP4 with FFmpeg (images + narration audio) ──
             self.log.info("media_agent.compose.start")
             output_path = tmp / f"recap_{session_id}.mp4"
             await self.composer.compose(
                 scene_image_paths=scene_image_paths,
                 output_path=output_path,
+                audio_path=narration_path,
                 title=script.title,
                 personality=script.personality,
             )
 
-            # ── 5. Upload final MP4 to B2 output/ ──────────────────────────
+            # ── 6. Upload final MP4 to B2 output/ ──────────────────────────
             video_key = B2Client.output_key(user_id, session_id)
             video_bytes = output_path.read_bytes()
             self.b2.upload_bytes(video_key, video_bytes, "video/mp4")
@@ -134,7 +151,7 @@ class MediaAgent(BaseAgent):
 
             video_url = self.b2.presigned_url(video_key)
 
-            # ── 6. Build and upload provenance metadata ──────────────────────
+            # ── 7. Build and upload provenance metadata ──────────────────────
             elapsed_ms = int(time.time() * 1000) - start_ms
             metadata = PipelineMetadata(
                 session_id=session_id,
@@ -148,6 +165,7 @@ class MediaAgent(BaseAgent):
                         else self.settings.openai_model
                     ),
                     "image": f"gmi-cloud/{self.settings.gmi_image_model}",
+                    "audio": f"openai/{audio_result.model}",
                     "compositor": "ffmpeg",
                 },
                 input_filename=input_data.input_filename,

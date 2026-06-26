@@ -1,23 +1,25 @@
-FROM python:3.12-slim
+FROM python:3.14-slim
 
-# Install system dependencies (ffmpeg required for video composition)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+# FFmpeg required for video composition
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+
+# uv for fast, reproducible installs
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
-# Install Poetry
-RUN pip install poetry==1.8.3
-COPY pyproject.toml poetry.lock* ./
-RUN poetry config virtualenvs.create false \
-    && poetry install --only main --no-root
+# Dependencies first — cached unless pyproject.toml changes
+COPY pyproject.toml uv.lock* ./
+RUN uv sync --no-dev --frozen
 
-# Copy source
+# Application code
 COPY backend/ ./backend/
-COPY prompts/ ./prompts/
-COPY data/ ./data/
+
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8000
 
 EXPOSE 8000
 
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["uv", "run", "uvicorn", "backend.main:app", "--host", "0.0.0.0"]
+CMD ["--port", "8000"]

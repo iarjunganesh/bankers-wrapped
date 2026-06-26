@@ -84,6 +84,10 @@ class B2Client:
         return f"{user_id}/{session_id}/output/recap_{session_id}.mp4"
 
     @staticmethod
+    def narration_key(user_id: str, session_id: str) -> str:
+        return f"{user_id}/{session_id}/pipeline/narration.mp3"
+
+    @staticmethod
     def metadata_key(user_id: str, session_id: str) -> str:
         return f"{user_id}/{session_id}/metadata/session_metadata.json"
 

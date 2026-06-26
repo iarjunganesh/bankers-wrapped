@@ -5,8 +5,9 @@ Routes all generative media calls through the Genblaze Pipeline API.
 No AI provider is called directly — every request goes through genblaze-core.
 
 Providers used:
-  - genblaze-gmicloud  → GMI Cloud FLUX image generation (Flux2-Dev)
+  - genblaze-gmicloud  → GMI Cloud Seedream image generation
   - genblaze-s3        → Backblaze B2 storage sink
+  - openai (TTS)       → Narration audio synthesis (wrapped here; no direct calls elsewhere)
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ import os
 from dataclasses import dataclass
 
 import httpx
+import openai
 import structlog
 
 log = structlog.get_logger()
@@ -24,6 +26,13 @@ log = structlog.get_logger()
 class ImageResult:
     image_bytes: bytes
     manifest_hash: str
+
+
+@dataclass
+class AudioResult:
+    audio_bytes: bytes
+    model: str
+    voice: str
 
 
 class GenblazeClient:
@@ -41,12 +50,14 @@ class GenblazeClient:
         b2_endpoint: str,
         b2_key_id: str,
         b2_app_key: str,
+        openai_api_key: str = "",
     ) -> None:
         self.gmi_api_key = gmi_api_key
         self.b2_bucket = b2_bucket
         self.b2_endpoint = b2_endpoint
         self.b2_key_id = b2_key_id
         self.b2_app_key = b2_app_key
+        self.openai_api_key = openai_api_key
 
         if gmi_api_key:
             os.environ.setdefault("GMI_API_KEY", gmi_api_key)
@@ -66,7 +77,7 @@ class GenblazeClient:
     async def generate_scene_image(
         self,
         prompt: str,
-        model: str = "Flux2-Dev",
+        model: str = "seedream-4-0-250828",
         width: int = 1344,
         height: int = 768,
         timeout: int = 120,
@@ -99,3 +110,32 @@ class GenblazeClient:
 
         log.info("genblaze.image.generate", provider="gmi-cloud", model=model, bytes=len(image_bytes))
         return ImageResult(image_bytes=image_bytes, manifest_hash=pr.manifest.canonical_hash)
+
+    async def generate_narration_audio(
+        self,
+        narration_text: str,
+        model: str = "tts-1",
+        voice: str = "alloy",
+    ) -> AudioResult:
+        """
+        Synthesise narration audio via OpenAI TTS.
+
+        Wrapped here so all AI media generation routes through GenblazeClient —
+        no direct openai.audio calls outside this module.
+        """
+        import asyncio
+
+        client = openai.OpenAI(api_key=self.openai_api_key or None)
+
+        def _synthesise() -> bytes:
+            resp = client.audio.speech.create(
+                model=model,
+                voice=voice,  # type: ignore[arg-type]
+                input=narration_text,
+                response_format="mp3",
+            )
+            return resp.read()
+
+        audio_bytes = await asyncio.to_thread(_synthesise)
+        log.info("genblaze.audio.generate", model=model, voice=voice, bytes=len(audio_bytes))
+        return AudioResult(audio_bytes=audio_bytes, model=model, voice=voice)

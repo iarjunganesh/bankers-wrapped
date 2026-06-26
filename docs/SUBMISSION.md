@@ -10,9 +10,9 @@
 | Criterion | How Banker's Wrapped Addresses It |
 | --- | --- |
 | **Real-World Utility** | Solves chronically low engagement in banking apps — turns opaque data into a story people want to share. Clear target market: retail banks and fintechs. |
-| **Production Readiness** | CI/CD with 70%+ coverage gate, structured JSON logging, health endpoint, error handling, 6 ADRs, synthetic demo data committed to repo. Not a prototype — a deployable system. |
-| **B2 Storage + Orchestration** | B2 stores every pipeline artifact under a structured `{user_id}/{session_id}/` hierarchy with full provenance metadata per session. Presigned URLs serve the final video. |
-| **Genblaze Usage** | Genblaze is the **sole** media generation layer — every image generation call routes through the Genblaze Pipeline SDK. No provider is called directly. |
+| **Production Readiness** | CI/CD with 80%+ coverage gate (currently 94%), structured JSON logging, health endpoint, rate limiting (5 req/hr/IP), binary CSV validation, 6 ADRs, synthetic demo data committed. Not a prototype — a deployable system. |
+| **B2 Storage + Orchestration** | B2 stores every pipeline artifact under a structured `{user_id}/{session_id}/` hierarchy with full provenance metadata. All 7 artifact keys returned in API response. Presigned URLs serve the final video. |
+| **Genblaze Usage** | Genblaze is the **sole** media generation layer — image generation (GMI Cloud Seedream) and narration audio (OpenAI TTS) both route exclusively through `GenblazeClient`. No provider is called directly outside `genblaze_client.py`. |
 
 ---
 
@@ -26,15 +26,28 @@
 
 ---
 
+## Pipeline Artifacts Stored in B2
+
+```text
+{user_id}/{session_id}/input/transactions.csv
+{user_id}/{session_id}/pipeline/script.json
+{user_id}/{session_id}/pipeline/narration.mp3       ← OpenAI TTS via GenblazeClient
+{user_id}/{session_id}/pipeline/scenes/scene_00.png … scene_03.png
+{user_id}/{session_id}/output/recap_{session_id}.mp4
+{user_id}/{session_id}/metadata/session_metadata.json
+```
+
+---
+
 ## Demo Script (for video recording)
 
 1. Open `https://bankers-wrapped.vercel.app`
 2. Upload `data/synthetic/transactions_jan_2026.csv` (Financial Builder personality)
-3. Show the progress indicator while the 4-agent pipeline runs
-4. Play the generated MP4 recap video
-5. Open the B2 bucket in the Backblaze console — show the structured artifact layout
+3. Show the **live SSE step-by-step progress** while the 4-agent pipeline runs
+4. Play the generated **narrated MP4 recap video** (H.264 + AAC audio)
+5. Open the **B2 bucket** in the Backblaze console — show the structured artifact layout
 6. Open `session_metadata.json` — show provenance trail (models used, SHA-256 hash, processing time)
-7. Repeat with `transactions_q4_2025.csv` to show a different personality (Financial Explorer)
+7. Repeat with `data/synthetic/transactions_q4_2025.csv` — show a different personality (Financial Explorer)
 
 ---
 
@@ -42,7 +55,7 @@
 
 | | |
 | --- | --- |
-| **App** | `https://bankers-wrapped.vercel.app` *(deploy in progress)* |
+| **App** | `https://bankers-wrapped.vercel.app` *(deploy pending)* |
 | **Demo Video** | `https://youtu.be/TBD` |
 | **Devpost** | `https://devpost.com/TBD` |
 | **GitHub** | `https://github.com/iarjunganesh/bankers-wrapped` |

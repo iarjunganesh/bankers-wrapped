@@ -60,3 +60,32 @@ def test_metadata_roundtrips_as_dict(store):
     store.set_complete("sess-6", "https://example.com", {"a": 1, "b": [2, 3]})
     row = store.get("sess-6")
     assert row["metadata"] == {"a": 1, "b": [2, 3]}
+
+
+def test_append_event_stores_event(store):
+    store.create("sess-7", "user-7")
+    store.append_event("sess-7", "parsing", "Parsing transactions.csv")
+    events = store.get_events("sess-7")
+    assert len(events) == 1
+    assert events[0]["event"] == "parsing"
+    assert events[0]["detail"] == "Parsing transactions.csv"
+    assert "ts" in events[0]
+
+
+def test_append_multiple_events_in_order(store):
+    store.create("sess-8", "user-8")
+    store.append_event("sess-8", "parsing", "step 1")
+    store.append_event("sess-8", "analyzing", "step 2")
+    store.append_event("sess-8", "scripting", "step 3")
+    events = store.get_events("sess-8")
+    assert [e["event"] for e in events] == ["parsing", "analyzing", "scripting"]
+
+
+def test_get_events_empty_for_new_session(store):
+    store.create("sess-9", "user-9")
+    assert store.get_events("sess-9") == []
+
+
+def test_append_event_noop_for_missing_session(store):
+    store.append_event("nonexistent", "parsing", "detail")
+    assert store.get_events("nonexistent") == []
