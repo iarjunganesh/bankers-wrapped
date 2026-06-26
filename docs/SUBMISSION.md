@@ -18,7 +18,7 @@
 
 ## Deliverables Checklist
 
-- [ ] Working hosted URL (`https://bankers-wrapped.vercel.app`)
+- [x] Working hosted URL (`https://bankers-wrapped.vercel.app`)
 - [ ] Demo video ≤ 3 min uploaded to YouTube
 - [ ] Devpost submission form completed
 - [ ] README links to demo video and hosted URL
@@ -55,7 +55,8 @@
 
 | | |
 | --- | --- |
-| **App** | `https://bankers-wrapped.vercel.app` *(deploy pending)* |
+| **App** | `https://bankers-wrapped.vercel.app` ✅ live |
+| **API** | `https://bankers-wrapped-api-production.up.railway.app` ✅ live |
 | **Demo Video** | `https://youtu.be/TBD` |
 | **Devpost** | `https://devpost.com/TBD` |
 | **GitHub** | `https://github.com/iarjunganesh/bankers-wrapped` |

@@ -13,6 +13,9 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16.2.9-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 
+[![Railway](https://img.shields.io/badge/Backend-Railway-0B0D0E?logo=railway&logoColor=white)](https://bankers-wrapped-api-production.up.railway.app)
+[![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000?logo=vercel&logoColor=white)](https://bankers-wrapped.vercel.app)
+
 [![Genblaze](https://img.shields.io/badge/Media-Genblaze%20SDK-7C3AED)](https://github.com/backblaze-labs/genblaze)
 [![NVIDIA NIM](https://img.shields.io/badge/LLM-NVIDIA%20NIM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/)
 [![GMI Cloud](https://img.shields.io/badge/Images-GMI%20Cloud%20Seedream-0066CC)](https://cloud.gmi.ai/)
@@ -211,6 +214,7 @@ Every generated video is fully traceable via `session_metadata.json`:
 | **Video Compose** | [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/) | Scene images + narration audio → H.264/AAC MP4 |
 | **Frontend** | [![Next.js](https://img.shields.io/badge/Next.js-16.2.9-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/) [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/) [![Node.js](https://img.shields.io/badge/Node.js-26.4.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) | Upload portal + video player |
 | **Session State** | [![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/) | Pipeline state tracking (SQLite → PostgreSQL) |
+| **Hosting** | [![Railway](https://img.shields.io/badge/Backend-Railway-0B0D0E?logo=railway&logoColor=white)](https://railway.app) [![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000?logo=vercel&logoColor=white)](https://vercel.com) | Backend on Railway · Frontend on Vercel |
 | **Observability** | [![structlog](https://img.shields.io/badge/structlog-JSON-4A90E2)](https://www.structlog.org/) | Structured request + agent logging |
 
 ---
@@ -334,7 +338,7 @@ curl -X POST http://localhost:8000/api/v1/recap/generate \
 ## CI / CD
 
 ```text
-push → ruff lint → mypy type-check → pytest (≥70% coverage gate) → Codecov
+push → ruff lint → mypy type-check → pytest (≥80% coverage gate) → Codecov
 ```
 
 See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
@@ -345,7 +349,8 @@ See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 | | |
 | --- | --- |
-| **App** | `https://bankers-wrapped.vercel.app` *(deploy in progress)* |
+| **App** | [https://bankers-wrapped.vercel.app](https://bankers-wrapped.vercel.app) ✅ live |
+| **API** | [https://bankers-wrapped-api-production.up.railway.app](https://bankers-wrapped-api-production.up.railway.app) |
 | **Demo Video** | `https://youtu.be/TBD` *(≤ 3 min, recorded before submission)* |
 | **Try It Now** | `make demo` — runs the full pipeline with synthetic data, no real bank account needed |
 
@@ -356,7 +361,6 @@ Hackathon judging criteria and submission checklist: [`docs/SUBMISSION.md`](docs
 ## Future Roadmap
 
 - PDF statement parsing (Azure Document Intelligence)
-- Voice narration layer (ElevenLabs or OpenAI TTS via Genblaze)
 - Goal Tracking Agent — savings milestones, debt payoff detection
 - Animated video clips — Genblaze → Runway ML (post-hackathon)
 - AI Banker Avatar — HeyGen personalized presenter

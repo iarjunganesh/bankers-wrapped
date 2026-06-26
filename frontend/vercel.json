@@ -3,12 +3,12 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://bankers-wrapped-api.up.railway.app"
+    "NEXT_PUBLIC_API_URL": "https://bankers-wrapped-api-production.up.railway.app"
   },
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://bankers-wrapped-api.up.railway.app/api/:path*"
+      "destination": "https://bankers-wrapped-api-production.up.railway.app/api/:path*"
     }
   ]
 }
