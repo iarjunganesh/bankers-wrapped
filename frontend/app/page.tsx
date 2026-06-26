@@ -66,6 +66,7 @@ export default function Home() {
   const [dragging, setDragging] = useState(false);
   const [progressEvents, setProgressEvents] = useState<ProgressEvent[]>([]);
   const [artifactsOpen, setArtifactsOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const sseRef = useRef<EventSource | null>(null);
 
@@ -144,10 +145,22 @@ export default function Home() {
     setArtifactsOpen(false);
   };
 
-  const copyShareLink = () => {
-    if (result) {
-      navigator.clipboard.writeText(`${window.location.origin}/recap/${result.session_id}`);
+  const copyShareLink = async () => {
+    if (!result) return;
+    const url = `${window.location.origin}/recap/${result.session_id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Fallback for browsers that block clipboard API
+      const el = document.createElement("textarea");
+      el.value = url;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
     }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   const theme = result ? getTheme(result.insights.personality) : null;
@@ -270,7 +283,7 @@ export default function Home() {
             </div>
 
             <button type="button" className="bw-share-btn" onClick={copyShareLink}>
-              Share your recap →
+              {copied ? "✓ Link copied!" : "Share your recap →"}
             </button>
 
             <details
