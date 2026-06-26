@@ -128,7 +128,7 @@ def _setup_media_mock(MockMedia):
 
     MockMedia.return_value = AsyncMock(return_value=MagicMock(
         video_url="https://f000.backblazeb2.com/recap.mp4?token=test",
-        b2_keys={"video": "user/sess/output/recap.mp4", "audio": "user/sess/pipeline/narration.mp3"},
+        b2_keys={"video": "user/sess/output/recap.mp4"},
         metadata=PipelineMetadata(
             session_id="test-session",
             user_id="test-user",
@@ -136,8 +136,7 @@ def _setup_media_mock(MockMedia):
             pipeline_version="1.0.0",
             models_used={
                 "llm": "nvidia-nim/meta/llama-3.1-70b-instruct",
-                "tts": "elevenlabs/eleven_multilingual_v2",
-                "image": "gmi-cloud/Flux2-Dev",
+                "image": "gmi-cloud/seedream-4-0-250828",
                 "compositor": "ffmpeg",
             },
             input_filename="jan.csv",

@@ -8,6 +8,9 @@ Registers:
   - API routers: /api/v1/health, /api/v1/recap
 """
 
+import logging
+import sys
+
 import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +20,12 @@ from backend.api.v1 import health, recap
 from backend.config import get_settings
 
 # ── Logging configuration ─────────────────────────────────────────────────────
+# Route stdlib logging (uvicorn, genblaze SDK, etc.) to stdout.
+# force=True removes any handlers uvicorn may have installed before app import.
+# start_demo.ps1 merges stderr→stdout at the process level (2>&1) so all logs
+# land in a single backend.log regardless of which stream they originate from.
+logging.basicConfig(stream=sys.stdout, level=logging.INFO, force=True)
+
 structlog.configure(
     processors=[
         structlog.contextvars.merge_contextvars,

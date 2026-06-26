@@ -13,7 +13,6 @@ jobs:
     # Fake credentials satisfy Settings() defaults; tests mock all outbound calls
     env:
       GMI_API_KEY: "mock-gmi-key-for-testing-only"
-      ELEVENLABS_API_KEY: "mock-elevenlabs-key-for-testing-only"
       NVIDIA_NIM_API_KEY: ""
       OPENAI_API_KEY: "sk-mock-openai-key-for-testing-only"
       B2_ENDPOINT_URL: "https://s3.eu-central-003.backblazeb2.com"
@@ -25,49 +24,38 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.12
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python 3.14
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.14"
 
-      # Install FFmpeg system binary package required by native media composition tests
-      - name: Install System Video Dependencies (FFmpeg)
+      - name: Install FFmpeg
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
 
-      # Optimize workflow speed by implementing global step caching dependencies
-      - name: Load Cached Poetry Packages
-        id: cached-poetry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pypoetry
-          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-poetry-
+      - name: Install dependencies
+        run: uv sync --group dev
 
-      - name: Install Package Manager (Poetry)
+      - name: Lint (Ruff)
+        run: uv run ruff check .
+
+      - name: Type check (Mypy)
+        run: uv run mypy backend/
+
+      - name: Tests + coverage gate
         run: |
-          pip install poetry
-          poetry config virtualenvs.in-project true
-
-      - name: Sync Virtual Environment Dependencies
-        run: poetry install --no-interaction
-
-      - name: Execute Linting Quality Scan (Ruff)
-        run: poetry run ruff check .
-
-      - name: Verify Strict Data Type Compliance (Mypy)
-        run: poetry run mypy backend/
-
-      - name: Run Test Suite & Enforce Code Coverage Gate
-        run: |
-          poetry run pytest tests/unit tests/integration \
+          uv run pytest tests/unit tests/integration \
             --cov=backend \
             --cov-report=xml \
             --cov-fail-under=70
 
-      - name: Publish Verification Report to Codecov
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

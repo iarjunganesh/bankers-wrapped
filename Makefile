@@ -1,29 +1,37 @@
-.PHONY: install test lint type-check ci demo dev clean
+.PHONY: install test lint type-check ci demo demo-start demo-stop dev clean
 
 install:
-	poetry install
+	uv sync --group dev
 
 test:
-	poetry run pytest tests/ -v
+	uv run pytest tests/ -v
 
 lint:
-	poetry run ruff check .
+	uv run ruff check .
 
 type-check:
-	poetry run mypy backend/
+	uv run mypy backend/
 
 ci: lint type-check test
 
+# Run the demo pipeline against both synthetic CSVs (API must be running)
 demo:
-	@echo "Starting Banker's Wrapped demo pipeline..."
-	curl -s -X POST http://localhost:8000/api/v1/recap/generate \
-	  -F "file=@data/synthetic/transactions_jan_2026.csv" | python3 -m json.tool
+	uv run python scripts/demo_run.py
+
+# Start backend + frontend demo stack
+demo-start:
+	bash scripts/start_demo.sh
+
+# Stop backend + frontend demo stack
+demo-stop:
+	bash scripts/stop_demo.sh
 
 dev:
-	poetry run uvicorn backend.main:app --reload --port 8000
+	uv run uvicorn backend.main:app --reload --port 8000
 
 clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -name "*.pyc" -delete
 	rm -f bankers_wrapped.db
 	rm -f coverage.xml .coverage
+	rm -rf logs/

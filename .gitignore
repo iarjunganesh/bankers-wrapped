@@ -30,6 +30,9 @@ node_modules/
 .next/
 out/
 
+# Runtime logs & demo output
+logs/
+
 # OS
 .DS_Store
 Thumbs.db

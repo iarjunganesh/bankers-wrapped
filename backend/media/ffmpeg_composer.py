@@ -2,11 +2,10 @@
 FFmpeg Compositor.
 
 Combines:
-  - Intro title slide (text-rendered PNG)
   - Scene images (one per scene, displayed for N seconds each)
-  - Narration audio (full MP3 spanning all scenes)
+  - Narration audio (optional MP3 spanning all scenes)
 
-Output: recap.mp4 (H.264 + AAC, 1792x1024, 25fps)
+Output: recap.mp4 (H.264, 1792x1024, 25fps; AAC audio track when provided)
 """
 
 from __future__ import annotations
@@ -32,8 +31,8 @@ class FFmpegComposer:
     async def compose(
         self,
         scene_image_paths: list[Path],
-        audio_path: Path,
         output_path: Path,
+        audio_path: Path | None = None,
         title: str = "Your Financial Recap",
         personality: str = "Financial Builder",
     ) -> Path:
@@ -42,10 +41,11 @@ class FFmpegComposer:
 
         Args:
             scene_image_paths: List of PNG/JPG image files, one per scene.
-            audio_path: MP3 narration audio file.
             output_path: Destination for the output MP4.
-            title: Video title shown on intro slide.
-            personality: Financial Personality shown on intro slide.
+            audio_path: Optional MP3 narration audio. When omitted, the video
+                runs for (scenes × scene_duration) seconds with no audio track.
+            title: Video title (kept for future overlay use).
+            personality: Financial Personality (kept for future overlay use).
 
         Returns:
             Path to the composed MP4 file.
@@ -58,40 +58,41 @@ class FFmpegComposer:
             lines = []
 
             for img_path in scene_image_paths:
-                lines.append(f"file '{img_path.resolve()}'")
+                lines.append(f"file '{img_path.resolve().as_posix()}'")
                 lines.append(f"duration {self.scene_duration}")
 
             # Last image needs to be repeated (ffmpeg concat demuxer quirk)
             if scene_image_paths:
-                lines.append(f"file '{scene_image_paths[-1].resolve()}'")
+                lines.append(f"file '{scene_image_paths[-1].resolve().as_posix()}'")
 
             concat_file.write_text("\n".join(lines))
 
-            # 2. Run ffmpeg
+            # 2. Build ffmpeg command
             cmd = [
                 FFMPEG_BIN,
                 "-y",
-                # Input 1: image slideshow via concat demuxer
                 "-f", "concat",
                 "-safe", "0",
                 "-i", str(concat_file),
-                # Input 2: audio
-                "-i", str(audio_path),
-                # Video encoding
+            ]
+
+            if audio_path is not None:
+                cmd += ["-i", str(audio_path)]
+
+            cmd += [
                 "-vf", "scale=1792:1024:force_original_aspect_ratio=decrease,"
                        "pad=1792:1024:(ow-iw)/2:(oh-ih)/2,format=yuv420p",
                 "-c:v", "libx264",
                 "-preset", "fast",
                 "-crf", "23",
-                # Audio encoding
-                "-c:a", "aac",
-                "-b:a", "192k",
-                # Sync: end when audio ends
-                "-shortest",
-                str(output_path),
             ]
 
-            log.info("ffmpeg.compose.start", scenes=len(scene_image_paths))
+            if audio_path is not None:
+                cmd += ["-c:a", "aac", "-b:a", "192k", "-shortest"]
+
+            cmd.append(str(output_path))
+
+            log.info("ffmpeg.compose.start", scenes=len(scene_image_paths), audio=audio_path is not None)
 
             result = await asyncio.to_thread(
                 subprocess.run,

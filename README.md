@@ -1,38 +1,39 @@
 # Banker's Wrapped
 
-**AI-Powered Financial Storytelling Platform**
-Backblaze Generative Media Hackathon 2026 — Built with Genblaze on B2
-
----
+> **Backblaze Generative Media Hackathon 2026 — Built with Genblaze on B2**
 
 [![CI](https://github.com/iarjunganesh/bankers-wrapped/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/iarjunganesh/bankers-wrapped/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Backblaze B2](https://img.shields.io/badge/Storage-Backblaze%20B2-FF0000?logo=backblaze&logoColor=white)](https://www.backblaze.com/cloud-storage)
-[![Genblaze](https://img.shields.io/badge/Media-Genblaze%20SDK-7C3AED)](https://github.com/backblaze-labs/genblaze)
-[![NVIDIA NIM](https://img.shields.io/badge/LLM-NVIDIA%20NIM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/)
-[![GMI Cloud](https://img.shields.io/badge/Hosted%20on-GMI%20Cloud-0066CC)](https://cloud.gmi.ai/)
 [![Coverage](https://codecov.io/gh/iarjunganesh/bankers-wrapped/graph/badge.svg?token=GSBUXVREL7)](https://codecov.io/gh/iarjunganesh/bankers-wrapped)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+[![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Semantic Kernel](https://img.shields.io/badge/Semantic_Kernel-1.x-0078D4?logo=microsoft&logoColor=white)](https://learn.microsoft.com/en-us/semantic-kernel/)
+[![Node.js](https://img.shields.io/badge/Node.js-26.4.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.2.9-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+
+[![Genblaze](https://img.shields.io/badge/Media-Genblaze%20SDK-7C3AED)](https://github.com/backblaze-labs/genblaze)
+[![NVIDIA NIM](https://img.shields.io/badge/LLM-NVIDIA%20NIM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/)
+[![GMI Cloud](https://img.shields.io/badge/Images-GMI%20Cloud%20Seedream-0066CC)](https://cloud.gmi.ai/)
+[![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/)
+[![Backblaze B2](https://img.shields.io/badge/Storage-Backblaze%20B2-FF0000?logo=backblaze&logoColor=white)](https://www.backblaze.com/cloud-storage)
 
 ---
 
 ## What Is This?
 
-Banker's Wrapped is an agentic AI platform that transforms raw transaction data into a **personalized narrated financial recap video** — fully generated, stored, and served via Backblaze B2, with all AI media calls routed through the Genblaze SDK.
+Banker's Wrapped is an agentic AI platform that transforms raw transaction data into a **personalized narrated financial recap video** — fully generated, stored, and served via Backblaze B2, with every AI media call routed through the Genblaze SDK.
 
-Upload a CSV. Receive a 60-second video that tells the story of your financial year.
-
-Inspired by Spotify Wrapped. Built for banking. Designed for production.
+Upload a CSV. Receive a 60-second video that tells the story of your financial year. Inspired by Spotify Wrapped. Built for banking. Designed for production.
 
 ---
 
-## Live Demo
+## The Problem
 
-| | |
-|---|---|
-| **App** | `https://bankers-wrapped.vercel.app` *(deploy in progress)* |
-| **Demo Video** | `https://youtu.be/TBD` *(≤ 3 min, recorded before submission)* |
-| **Try It Now** | `make demo` — runs the full pipeline with synthetic data, no real bank account needed |
+Banks generate mountains of transaction data but deliver it as an unreadable table. Customers disengage; apps go unused. Financial institutions lose the relationship. There is no moment that makes money *feel* meaningful.
+
+Banker's Wrapped solves this with an agentic pipeline that reads your transactions, assigns a financial personality, writes a 4-scene narrative, synthesizes voice narration, generates scene images, and composes a sharable 60-second MP4 — end to end, no human in the loop.
 
 ---
 
@@ -43,137 +44,86 @@ Inspired by Spotify Wrapped. Built for banking. Designed for production.
 3. **Analytics Agent** calculates income, expenses, savings rate, and top spending categories
 4. **Financial Personality** is assigned: Builder · Optimizer · Explorer · Achiever
 5. **Narrative Agent** (NVIDIA NIM / Llama 3.1 70B) generates a structured 4-scene video script
-6. **Voice narration** synthesized via **Genblaze → ElevenLabs** (`eleven_multilingual_v2`)
-7. **Scene images** generated via **Genblaze → GMI Cloud** (FLUX2-Dev, 1344×768)
-8. **FFmpeg** composes the final MP4: scene images + narration audio
-9. **All artifacts** uploaded to **Backblaze B2**; presigned URL returned to user
+6. **Scene images** generated via **Genblaze → GMI Cloud** (Seedream 4.0, 1344×768) — all 4 in parallel
+7. **FFmpeg** composes the final MP4: scene images slideshow
+8. **All artifacts** uploaded to **Backblaze B2**; presigned URL returned to user
 
 ---
 
 ## Architecture
 
-### System Overview
-
-```mermaid
-flowchart LR
-    User(["👤 User"])
-
-    subgraph fe["Frontend · Next.js"]
-        Upload["CSV Upload"]
-        Player["Video Player"]
-    end
-
-    subgraph api["FastAPI Backend · Python 3.12"]
-        EP["POST /api/v1/recap/generate"]
-    end
-
-    subgraph pipeline["Agent Pipeline · Semantic Kernel"]
-        A1["Agent 1\nDocument Intelligence"]
-        A2["Agent 2\nFinancial Analytics\n+ Personality"]
-        A3["Agent 3\nNarrative Agent\nGPT-4o"]
-        A4["Agent 4\nMedia Agent"]
-    end
-
-    subgraph genblaze["⚡ Genblaze SDK"]
-        EL["ElevenLabs\nVoice Narration"]
-        GI["GMI Cloud FLUX\nScene Images"]
-    end
-
-    FF["🎬 FFmpeg\nCompose MP4"]
-
-    subgraph b2["☁️ Backblaze B2"]
-        B2["bankers-wrapped-assets\n{user_id}/{session_id}/…"]
-    end
-
-    User -->|"upload CSV"| Upload --> EP
-    EP --> A1 --> A2 --> A3 --> A4
-    A4 --> EL & GI --> FF --> B2
-    A4 -->|"artifacts + metadata"| B2
-    B2 -->|"presigned URL"| Player --> User
-```
-
-### Agent Pipeline Detail
-
-```mermaid
-flowchart LR
-    CSV[/"📄 CSV"/]
-    A1["① Document\nAgent"]
-    A2["② Analytics\nAgent"]
-    A3["③ Narrative\nNVIDIA NIM"]
-    A4["④ Media\nAgent"]
-    EL["Genblaze\nElevenLabs TTS"]
-    GI["Genblaze\nGMI Cloud FLUX"]
-    FF["FFmpeg\ncompose MP4"]
-    B2[("Backblaze B2")]
-    URL[/"Presigned\nURL"/]
-
-    CSV --> A1 --> A2 --> A3 --> A4
-    A4 --> EL & GI --> FF --> B2 --> URL
-```
-
-### Backblaze B2 Storage Layout
-
 ```mermaid
 graph LR
-    ROOT["☁️ bankers-wrapped-assets"]
+    classDef userStyle    fill:#4A90E2,stroke:#2563EB,stroke-width:2px,color:#fff;
+    classDef fastapiStyle fill:#009688,stroke:#00796B,stroke-width:2px,color:#fff;
+    classDef skStyle      fill:#0078D4,stroke:#005A9E,stroke-width:2px,color:#fff;
+    classDef nvidiaStyle  fill:#76B900,stroke:#5A8A00,stroke-width:2px,color:#fff;
+    classDef gmiStyle     fill:#0059B3,stroke:#004080,stroke-width:2px,color:#fff;
+    classDef ffmpegStyle  fill:#007808,stroke:#005A06,stroke-width:2px,color:#fff;
+    classDef b2Style      fill:#E8392A,stroke:#C02A1D,stroke-width:2px,color:#fff;
 
-    ROOT --> UID["{user_id}"]
-    UID --> SID["{session_id}"]
+    u(["👤 User"]):::userStyle
+    api["⚡ FastAPI<br/>POST /api/v1/recap/generate"]:::fastapiStyle
+    ff["🎬 FFmpeg<br/>compose recap.mp4"]:::ffmpegStyle
+    b2[("☁️ Backblaze B2<br/>user_id/session_id/")]:::b2Style
 
-    SID --> IN["📁 input/"]
-    SID --> PL["📁 pipeline/"]
-    SID --> OUT["📁 output/"]
-    SID --> META["📁 metadata/"]
+    subgraph pipeline["🤖 Agent Pipeline · Semantic Kernel"]
+        direction TB
+        a1["① Document Agent<br/>→ List[Transaction]"]:::skStyle
+        a2["② Analytics Agent<br/>→ FinancialInsights"]:::skStyle
+        a3["③ Narrative Agent<br/>NVIDIA NIM · Llama 3.1 70B<br/>→ NarrativeScript"]:::nvidiaStyle
+        a4["④ Media Agent<br/>Orchestration"]:::skStyle
 
-    IN --> F1["transactions.csv\n← uploaded statement"]
+        a1 --> a2
+        a2 --> a3
+        a3 --> a4
+    end
 
-    PL --> F2["script.json\n← LLM narrative script"]
-    PL --> F3["narration.mp3\n← ElevenLabs via Genblaze"]
-    PL --> SC["📁 scenes/"]
-    SC --> F4["scene_00.png\n← GMI Cloud FLUX via Genblaze"]
-    SC --> F5["scene_01…03.png"]
+    subgraph gb["⚡ Genblaze SDK"]
+        gi["🖼️ GMI Cloud Seedream<br/>scene_00…03 (parallel)"]:::gmiStyle
+    end
 
-    OUT --> F6["recap_{session_id}.mp4\n← final video"]
+    style pipeline fill:transparent,stroke:#0078D4,stroke-width:1.5px
+    style gb fill:transparent,stroke:#0059B3,stroke-width:1.5px
 
-    META --> F7["session_metadata.json\n← provenance trail"]
+    u ==>|"CSV Upload"| api
+    api ==> a1
 
-    style ROOT fill:#f97316,color:#fff
-    style IN fill:#3b82f6,color:#fff
-    style PL fill:#3b82f6,color:#fff
-    style OUT fill:#22c55e,color:#fff
-    style META fill:#8b5cf6,color:#fff
-    style SC fill:#60a5fa,color:#fff
+    a4 -->|"Visual Prompts × 4"| gi
+
+    gi --> ff
+    ff ==>|"recap.mp4"| b2
+
+    a4 -.->|"CSV · Script · Images · Metadata"| b2
+    b2 ==>|"Presigned URL"| u
 ```
 
----
+### Pipeline Timing
 
-## Genblaze Integration
+Measured on a live run against `transactions_jan_2026.csv` (22 transactions, 4 scenes):
 
-Genblaze is **not optional** — it is the media generation layer. Every AI media call routes through the Genblaze Pipeline SDK. Zero direct provider API calls.
+| Step | Agent / Service | Time |
+| --- | --- | --- |
+| CSV parse + normalise | DocumentAgent | < 5 ms |
+| Spending analytics + personality | AnalyticsAgent | < 1 ms |
+| Narrative script (4 scenes) | NarrativeAgent · NVIDIA NIM Llama 3.1 70B | ~31 s |
+| Scene images × 4 **in parallel** | MediaAgent · Genblaze → GMI Cloud Seedream | ~155 s |
+| MP4 composition | FFmpeg (H.264, 1792×1024, 25 fps) | ~1 s |
+| B2 uploads (CSV + script + 4 PNG + MP4 + metadata) | Backblaze B2 eu-central-003 | ~2 s |
+| **Total wall-clock** | | **~195 s** |
 
-```python
-# Voice narration — Genblaze → ElevenLabs
-Pipeline("bankers-wrapped-tts")
-    .step(ElevenLabsProvider(output_dir=tmpdir),
-          model="eleven_multilingual_v2",
-          prompt=script.full_narration,
-          modality=Modality.AUDIO,
-          voice_id=voice_id,
-          response_format="mp3")
-    .run(timeout=90)
+Image generation dominates. Generating all 4 scenes concurrently with `asyncio.gather` keeps total time bounded by the slowest single scene rather than their sum — a 4× speedup over sequential.
 
-# Scene images — Genblaze → GMI Cloud FLUX  (one call per scene)
-Pipeline("bankers-wrapped-image")
-    .step(GMICloudImageProvider(output_dir=tmpdir),
-          model="Flux2-Dev",
-          prompt=scene.visual_prompt,
-          modality=Modality.IMAGE,
-          width=1344,
-          height=768)
-    .run(timeout=120)
+### B2 Storage Layout
+
+```text
+bankers-wrapped-assets/
+└── {user_id}/{session_id}/
+    ├── input/     transactions.csv
+    ├── pipeline/  script.json · narration.mp3 · scenes/scene_00…03.png
+    ├── output/    recap_{session_id}.mp4
+    └── metadata/  session_metadata.json
 ```
-
-Every run produces a **SHA-256 provenance manifest** stored in B2 metadata — full model traceability per video.
 
 ---
 
@@ -182,13 +132,36 @@ Every run produces a **SHA-256 provenance manifest** stored in B2 metadata — f
 The emotional centrepiece of every recap. One of four labels is assigned based on spending and saving patterns:
 
 | Personality | Trigger | Scene 1 Hook |
-|---|---|---|
+| --- | --- | --- |
 | **Financial Builder** | Savings rate ≥ 15% or active debt reduction | *"You're laying the foundation — brick by brick."* |
 | **Financial Explorer** | Top spend in travel or entertainment | *"You invest in experiences that last a lifetime."* |
 | **Financial Achiever** | Active investing or steady 8–14% savings | *"Your discipline is paying off — literally."* |
 | **Financial Optimizer** | Lean discretionary spend, efficient budget | *"Every dollar has a purpose in your world."* |
 
 The personality label opens Scene 1 and drives the entire visual and narrative tone.
+
+---
+
+## Genblaze Integration
+
+Genblaze is **not optional** — it is the media generation layer. Every AI media call routes through the Genblaze Pipeline SDK. Zero direct provider API calls.
+
+```python
+# Scene images — Genblaze → GMI Cloud Seedream  (all 4 in parallel via asyncio.gather)
+pr = (
+    Pipeline("bankers-wrapped-image")
+    .step(GMICloudImageProvider(),
+          model="seedream-4-0-250828",
+          prompt=scene.visual_prompt,
+          modality=Modality.IMAGE,
+          width=1344,
+          height=768)
+    .run(timeout=300, raise_on_failure=True)
+)
+image_bytes = httpx.get(pr.run.steps[0].assets[0].url).content
+```
+
+Every run produces a **SHA-256 provenance manifest** stored in B2 metadata — full model traceability per video.
 
 ---
 
@@ -204,8 +177,7 @@ Every generated video is fully traceable via `session_metadata.json`:
   "pipeline_version": "1.0.0",
   "models_used": {
     "llm":        "nvidia-nim/meta/llama-3.1-70b-instruct",
-    "tts":        "elevenlabs/eleven_multilingual_v2",
-    "image":      "gmi-cloud/Flux2-Dev",
+    "image":      "gmi-cloud/seedream-4-0-250828",
     "compositor": "ffmpeg"
   },
   "input_hash":         "sha256:a3f…",
@@ -220,29 +192,17 @@ Every generated video is fully traceable via `session_metadata.json`:
 ## Tech Stack
 
 | Layer | Technology | Role |
-|---|---|---|
-| **Media Generation** | **Genblaze SDK** | Sole orchestrator for all AI media calls |
-| **Storage** | **Backblaze B2** | Structured artifact store + presigned delivery |
-| **Backend** | FastAPI + Python 3.12 | Async agentic pipeline |
-| **Agent Framework** | Semantic Kernel | Typed plugin contracts, native async |
-| **LLM** | NVIDIA NIM / Llama 3.1 70B | Narrative script generation |
-| **Voice** | ElevenLabs (via Genblaze) | `eleven_multilingual_v2` narration |
-| **Images** | GMI Cloud FLUX (via Genblaze) | Scene visuals (1344×768, Flux2-Dev) |
-| **Video Compose** | FFmpeg | Scene images + audio → MP4 |
-| **Frontend** | Next.js 14 + React 18 | Upload portal + video player |
-| **Session State** | SQLite → PostgreSQL | Pipeline state tracking |
-| **Observability** | structlog (JSON) | Structured request + agent logging |
-
----
-
-## Hackathon Judging Alignment
-
-| Criterion | How Banker's Wrapped Addresses It |
-|---|---|
-| **Real-World Utility** | Solves chronically low engagement in banking apps — turns opaque data into a story people want to share. Clear target market: retail banks and fintechs. |
-| **Production Readiness** | CI/CD with 70%+ coverage gate, structured JSON logging, health endpoint, error handling, 6 ADRs, synthetic demo data committed to repo. Not a prototype — a deployable system. |
-| **B2 Storage + Orchestration** | B2 stores every pipeline artifact under a structured `{user_id}/{session_id}/` hierarchy with full provenance metadata per session. Presigned URLs serve the final video. |
-| **Genblaze Usage** | Genblaze is the **sole** media generation layer — every voice synthesis and image generation call routes through the Genblaze Pipeline SDK. No provider is called directly. |
+| --- | --- | --- |
+| **Media Generation** | [![Genblaze](https://img.shields.io/badge/Genblaze-SDK-7C3AED)](https://github.com/backblaze-labs/genblaze) | Sole orchestrator for all AI media calls |
+| **Storage** | [![Backblaze B2](https://img.shields.io/badge/Backblaze-B2-FF0000?logo=backblaze&logoColor=white)](https://www.backblaze.com/cloud-storage) | Structured artifact store + presigned delivery |
+| **Backend** | [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/) [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/) | Async agentic pipeline |
+| **Agent Framework** | [![Semantic Kernel](https://img.shields.io/badge/Semantic_Kernel-0078D4?logo=microsoft&logoColor=white)](https://learn.microsoft.com/en-us/semantic-kernel/) | Typed plugin contracts, native async |
+| **LLM** | [![NVIDIA NIM](https://img.shields.io/badge/NVIDIA_NIM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/) | Narrative script generation |
+| **Images** | [![GMI Cloud](https://img.shields.io/badge/GMI_Cloud-Seedream-0066CC)](https://cloud.gmi.ai/) | Scene visuals 1344×768, seedream-4-0-250828 (via Genblaze) — 4 parallel |
+| **Video Compose** | [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.1-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/) | Scene images → H.264 MP4 (no audio) |
+| **Frontend** | [![Next.js](https://img.shields.io/badge/Next.js-16.2.9-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/) [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/) [![Node.js](https://img.shields.io/badge/Node.js-26.4.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) | Upload portal + video player |
+| **Session State** | [![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/) | Pipeline state tracking (SQLite → PostgreSQL) |
+| **Observability** | [![structlog](https://img.shields.io/badge/structlog-JSON-4A90E2)](https://www.structlog.org/) | Structured request + agent logging |
 
 ---
 
@@ -255,26 +215,36 @@ cd bankers-wrapped
 
 # 2. Configure
 cp .env.example .env
-# Fill in: GMI_API_KEY, ELEVENLABS_API_KEY, NVIDIA_NIM_API_KEY, B2_KEY_ID, B2_APPLICATION_KEY, B2_ENDPOINT_URL
+# Fill in: GMI_API_KEY, NVIDIA_NIM_API_KEY, B2_KEY_ID, B2_APPLICATION_KEY, B2_ENDPOINT_URL
 
-# 3. Install (requires Python 3.12 and ffmpeg)
+# 3. Install (requires Python 3.14 and ffmpeg)
 make install
 
-# 4. Run
-make dev        # uvicorn on :8000
+# 4. Start backend + frontend
+make demo-start           # bash scripts/start_demo.sh
+# — or backend only:
+make dev                  # uvicorn on :8000 with hot-reload
 
-# 5. Generate a recap with synthetic data
-make demo
-# — or directly:
-curl -X POST http://localhost:8000/api/v1/recap/generate \
-     -F "file=@data/synthetic/transactions_jan_2026.csv"
+# 5. Run the demo pipeline against both synthetic datasets
+make demo                 # python scripts/demo_run.py
+
+# 6. Stop all services when done
+make demo-stop            # bash scripts/stop_demo.sh
+```
+
+On Windows, use the PowerShell equivalents directly:
+
+```powershell
+.\scripts\start_demo.ps1
+python scripts\demo_run.py
+.\scripts\stop_demo.ps1
 ```
 
 ---
 
 ## Project Structure
 
-```
+```text
 bankers-wrapped/
 ├── backend/
 │   ├── agents/          # 4 Semantic Kernel agents
@@ -303,7 +273,7 @@ bankers-wrapped/
 Six decisions documented — see [`docs/adr/`](docs/adr/) for full rationale.
 
 | ADR | Decision |
-|---|---|
+| --- | --- |
 | [001](docs/adr/001-genblaze-central.md) | Genblaze as sole media generation layer — no direct provider calls |
 | [002](docs/adr/002-semantic-kernel-orchestration.md) | Semantic Kernel for agent orchestration — typed plugins, native async |
 | [003](docs/adr/003-ffmpeg-over-remotion.md) | FFmpeg for composition; Runway ML / Luma AI excluded — no quota risk |
@@ -317,10 +287,22 @@ Six decisions documented — see [`docs/adr/`](docs/adr/) for full rationale.
 
 No real bank data required. Two datasets committed to [`data/synthetic/`](data/synthetic/):
 
-| File | Personality Triggered |
-|---|---|
-| `transactions_jan_2026.csv` — 25 txns, USD, Jan 2026 | **Financial Builder** |
-| `transactions_q4_2025.csv` — 80 txns, Q4 2025 | **Financial Explorer** |
+| File | Period | Transactions | Personality Triggered |
+| --- | --- | --- | --- |
+| `transactions_jan_2026.csv` | Jan 2026 | 22 | **Financial Builder** |
+| `transactions_q4_2025.csv` | Oct–Dec 2025 | 39 | **Financial Explorer** |
+
+### CSV Schema
+
+| Column | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `date` | YYYY-MM-DD | ✅ | Transaction date |
+| `description` | string | ✅ | Merchant or transfer description |
+| `amount` | float | ✅ | Positive = income/credit, negative = expense/debit |
+| `currency` | string | ❌ | ISO 4217 code (default: USD) |
+| `category` | string | ❌ | Auto-inferred from description if omitted |
+
+**Valid categories:** `income` · `savings` · `housing` · `food` · `travel` · `entertainment` · `utilities` · `investment` · `debt` · `other`
 
 ```csv
 date,description,amount,currency,category
@@ -330,11 +312,19 @@ date,description,amount,currency,category
 2026-01-20,Lufthansa Flight,-312.00,USD,travel
 ```
 
+```bash
+# Run the full pipeline with the January demo file
+make demo
+# or directly via curl
+curl -X POST http://localhost:8000/api/v1/recap/generate \
+  -F "file=@data/synthetic/transactions_jan_2026.csv"
+```
+
 ---
 
 ## CI / CD
 
-```
+```text
 push → ruff lint → mypy type-check → pytest (≥70% coverage gate) → Codecov
 ```
 
@@ -342,10 +332,22 @@ See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ---
 
+## Live Demo
+
+| | |
+| --- | --- |
+| **App** | `https://bankers-wrapped.vercel.app` *(deploy in progress)* |
+| **Demo Video** | `https://youtu.be/TBD` *(≤ 3 min, recorded before submission)* |
+| **Try It Now** | `make demo` — runs the full pipeline with synthetic data, no real bank account needed |
+
+Hackathon judging criteria and submission checklist: [`docs/SUBMISSION.md`](docs/SUBMISSION.md)
+
+---
+
 ## Future Roadmap
 
 - PDF statement parsing (Azure Document Intelligence)
-- Multi-language narration (Swedish, Hindi, German via ElevenLabs)
+- Voice narration layer (ElevenLabs or OpenAI TTS via Genblaze)
 - Goal Tracking Agent — savings milestones, debt payoff detection
 - Animated video clips — Genblaze → Runway ML (post-hackathon)
 - AI Banker Avatar — HeyGen personalized presenter

@@ -80,7 +80,6 @@ def get_b2(settings: Settings = Depends(get_settings)) -> B2Client:
 def get_genblaze(settings: Settings = Depends(get_settings)) -> GenblazeClient:
     return GenblazeClient(
         gmi_api_key=settings.gmi_api_key,
-        elevenlabs_api_key=settings.elevenlabs_api_key,
         b2_bucket=settings.b2_bucket_name,
         b2_endpoint=settings.b2_endpoint_url,
         b2_key_id=settings.b2_key_id,

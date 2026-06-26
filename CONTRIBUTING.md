@@ -6,7 +6,7 @@
 git clone https://github.com/iarjunganesh/bankers-wrapped
 cd bankers-wrapped
 cp .env.example .env   # fill in your credentials
-make install           # poetry install
+make install           # uv sync --group dev
 make dev               # uvicorn on :8000
 ```
 

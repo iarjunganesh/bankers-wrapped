@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  quality:
+    name: Quality gate
+    runs-on: ubuntu-latest
+
+    env:
+      GMI_API_KEY: "mock-gmi-key-for-testing-only"
+      NVIDIA_NIM_API_KEY: ""
+      OPENAI_API_KEY: "sk-mock-openai-key-for-testing-only"
+      B2_ENDPOINT_URL: "https://s3.eu-central-003.backblazeb2.com"
+      B2_KEY_ID: "mock_b2_key_id"
+      B2_APPLICATION_KEY: "mock_b2_application_key"
+      B2_BUCKET_NAME: "bankers-wrapped-test-bucket"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Lint (Ruff)
+        run: uv run ruff check .
+
+      - name: Type check (Mypy)
+        run: uv run mypy backend/
+
+      - name: Tests + coverage gate
+        run: |
+          uv run pytest tests/unit tests/integration \
+            --cov=backend \
+            --cov-report=xml \
+            --cov-fail-under=70
+
+  release:
+    name: Create GitHub Release
+    needs: quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          python - <<'EOF'
+          import os, re
+          text = open("CHANGELOG.md").read()
+          version = "${{ github.ref_name }}".lstrip("v")
+          pattern = rf"## \[{re.escape(version)}\][^\n]*\n(.*?)(?=\n## \[|\Z)"
+          match = re.search(pattern, text, re.DOTALL)
+          body = match.group(1).strip() if match else "Release ${{ github.ref_name }}"
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"body<<ENDOFBODY\n{body}\nENDOFBODY\n")
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "Banker's Wrapped ${{ github.ref_name }}"
+          body: ${{ steps.changelog.outputs.body }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') }}

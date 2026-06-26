@@ -2,17 +2,16 @@
 Media Agent.
 
 Consolidated agent responsible for:
-  1. genblaze.audio.synthesize()  → ElevenLabs narration (MP3)
-  2. genblaze.image.generate()    → GMI Cloud FLUX scene images (PNG × N)
-  3. FFmpeg composition           → intro + images + audio → recap.mp4
-  4. Backblaze B2 upload          → all assets stored, presigned URL returned
+  1. genblaze.image.generate()  → GMI Cloud FLUX scene images (PNG × N)
+  2. FFmpeg composition         → images → recap.mp4 (silent slideshow)
+  3. Backblaze B2 upload        → all assets stored, presigned URL returned
 
-All generative media calls route through the Genblaze SDK. No provider is
-called directly.
+All generative media calls route through the Genblaze SDK.
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import tempfile
 import time
@@ -91,32 +90,23 @@ class MediaAgent(BaseAgent):
             self.b2.upload_json(script_key, script.model_dump())
             b2_keys["script"] = script_key
 
-            # ── 3. Generate narration audio via Genblaze → ElevenLabs ───────
-            self.log.info("media_agent.audio.start")
-            audio_result = await self.genblaze.synthesize_narration(
-                script=script.full_narration,
-                voice_id=self.settings.elevenlabs_voice_id,
-                model=self.settings.elevenlabs_model,
-                timeout=self.settings.pipeline_timeout_audio,
-            )
-            audio_path = tmp / "narration.mp3"
-            audio_path.write_bytes(audio_result.audio_bytes)
-
-            audio_key = B2Client.pipeline_key(user_id, session_id, "narration.mp3")
-            self.b2.upload_bytes(audio_key, audio_result.audio_bytes, "audio/mpeg")
-            b2_keys["audio"] = audio_key
-
-            # ── 4. Generate scene images via Genblaze → GMI Cloud FLUX ────────
-            scene_image_paths: list[Path] = []
-            image_manifest_hashes: list[str] = []
-
-            for idx, scene in enumerate(script.scenes):
+            # ── 3. Generate scene images in parallel via Genblaze → GMI Cloud ──
+            async def _gen_image(idx: int, prompt: str):
                 self.log.info("media_agent.image.start", scene_idx=idx)
-                image_result = await self.genblaze.generate_scene_image(
-                    prompt=scene.visual_prompt,
+                return await self.genblaze.generate_scene_image(
+                    prompt=prompt,
                     model=self.settings.gmi_image_model,
                     timeout=self.settings.pipeline_timeout_image,
                 )
+
+            image_results = await asyncio.gather(*[
+                _gen_image(i, scene.visual_prompt)
+                for i, scene in enumerate(script.scenes)
+            ])
+
+            scene_image_paths: list[Path] = []
+            image_manifest_hashes: list[str] = []
+            for idx, image_result in enumerate(image_results):
                 img_path = tmp / f"scene_{idx:02d}.png"
                 img_path.write_bytes(image_result.image_bytes)
                 scene_image_paths.append(img_path)
@@ -126,18 +116,17 @@ class MediaAgent(BaseAgent):
                 self.b2.upload_bytes(scene_key, image_result.image_bytes, "image/png")
                 b2_keys[f"scene_{idx}"] = scene_key
 
-            # ── 5. Compose final MP4 with FFmpeg ────────────────────────────
+            # ── 4. Compose final MP4 with FFmpeg (images only, no audio) ────
             self.log.info("media_agent.compose.start")
             output_path = tmp / f"recap_{session_id}.mp4"
             await self.composer.compose(
                 scene_image_paths=scene_image_paths,
-                audio_path=audio_path,
                 output_path=output_path,
                 title=script.title,
                 personality=script.personality,
             )
 
-            # ── 6. Upload final MP4 to B2 output/ ──────────────────────────
+            # ── 5. Upload final MP4 to B2 output/ ──────────────────────────
             video_key = B2Client.output_key(user_id, session_id)
             video_bytes = output_path.read_bytes()
             self.b2.upload_bytes(video_key, video_bytes, "video/mp4")
@@ -145,7 +134,7 @@ class MediaAgent(BaseAgent):
 
             video_url = self.b2.presigned_url(video_key)
 
-            # ── 7. Build and upload provenance metadata ──────────────────────
+            # ── 6. Build and upload provenance metadata ──────────────────────
             elapsed_ms = int(time.time() * 1000) - start_ms
             metadata = PipelineMetadata(
                 session_id=session_id,
@@ -158,7 +147,6 @@ class MediaAgent(BaseAgent):
                         if self.settings.nvidia_nim_api_key
                         else self.settings.openai_model
                     ),
-                    "tts": f"elevenlabs/{self.settings.elevenlabs_model}",
                     "image": f"gmi-cloud/{self.settings.gmi_image_model}",
                     "compositor": "ffmpeg",
                 },

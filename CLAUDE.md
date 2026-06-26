@@ -9,7 +9,7 @@ Upload a CSV → 4-agent pipeline → personalized 60-second MP4 recap video sto
 ## Key Commands
 
 ```bash
-make install   # poetry install
+make install   # uv sync --group dev
 make dev       # uvicorn :8000 (hot-reload)
 make test      # pytest tests/unit --cov=backend --cov-fail-under=70
 make lint      # ruff check . && mypy backend/
@@ -23,16 +23,16 @@ make demo      # full pipeline with data/synthetic/transactions_jan_2026.csv
 1. `DocumentAgent` — CSV parse + normalise → `List[Transaction]`
 2. `AnalyticsAgent` — insights + Financial Personality → `FinancialInsights`
 3. `NarrativeAgent` — NVIDIA NIM (Llama 3.1 70B) structured script → `NarrativeScript` (4 scenes)
-4. `MediaAgent` — Genblaze → ElevenLabs (TTS) + GMI Cloud FLUX (images) + FFmpeg → `recap.mp4` → B2
+4. `MediaAgent` — Genblaze → GMI Cloud Seedream (images, parallel) + FFmpeg → `recap.mp4` → B2
 
-All AI media calls route through the **Genblaze SDK** (`genblaze-core`, `genblaze-gmicloud`, `genblaze-elevenlabs`). No direct provider calls for media generation.
+All AI media calls route through the **Genblaze SDK** (`genblaze-core`, `genblaze-gmicloud`). No direct provider calls for media generation.
 
 ## Critical Constraints
 
 - **Genblaze is mandatory** — sole media generation layer; judges score on this
-- **B2 stores everything** — input CSV, script, audio, images, video, metadata
+- **B2 stores everything** — input CSV, script, images, video, metadata
 - `get_settings()` uses `@lru_cache` — call `get_settings.cache_clear()` in tests that need different env vars
-- FFmpeg must be installed on the host (`sudo apt-get install ffmpeg`)
+- FFmpeg must be installed on the host: Linux `sudo apt-get install ffmpeg` · Windows `winget install ffmpeg`
 - SQLite for MVP; PostgreSQL is the documented upgrade path (ADR-004)
 - `FFmpegComposer.compose()` is `async def` — always `await` it
 
@@ -48,7 +48,6 @@ All AI media calls route through the **Genblaze SDK** (`genblaze-core`, `genblaz
 ```
 {user_id}/{session_id}/input/transactions.csv
 {user_id}/{session_id}/pipeline/script.json
-{user_id}/{session_id}/pipeline/narration.mp3
 {user_id}/{session_id}/pipeline/scenes/scene_00.png … scene_03.png
 {user_id}/{session_id}/output/recap_{session_id}.mp4
 {user_id}/{session_id}/metadata/session_metadata.json

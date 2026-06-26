@@ -52,7 +52,6 @@ def test_settings() -> Settings:
     return Settings(
         openai_api_key="sk-test-key",  # fallback LLM only; mocked in tests
         gmi_api_key="mock-gmi-key",
-        elevenlabs_api_key="el-test-key",
         b2_key_id="b2-test-key-id",
         b2_application_key="b2-test-app-key",
         b2_endpoint_url="https://s3.us-west-004.backblazeb2.com",
@@ -62,7 +61,6 @@ def test_settings() -> Settings:
 
 # ── Genblaze mocks ────────────────────────────────────────────────────────────
 
-FAKE_MP3_BYTES = b"\xff\xe0" + b"\x00" * 1024  # Minimal MP3 magic bytes
 FAKE_PNG_BYTES = (
     b"\x89PNG\r\n\x1a\n"  # PNG magic bytes
     + b"\x00" * 64         # Minimal PNG data
@@ -71,17 +69,11 @@ FAKE_PNG_BYTES = (
 
 @pytest.fixture
 def mock_genblaze_client():
-    """Mock GenblazeClient — no real Genblaze/OpenAI calls made."""
+    """Mock GenblazeClient — no real Genblaze/GMI calls made."""
     with patch("backend.agents.media_agent.GenblazeClient") as MockClass:
         instance = MockClass.return_value
-        from backend.media.genblaze_client import AudioResult, ImageResult
+        from backend.media.genblaze_client import ImageResult
 
-        instance.synthesize_narration = AsyncMock(
-            return_value=AudioResult(
-                audio_bytes=FAKE_MP3_BYTES,
-                manifest_hash="sha256:fake-audio-hash",
-            )
-        )
         instance.generate_scene_image = AsyncMock(
             return_value=ImageResult(
                 image_bytes=FAKE_PNG_BYTES,

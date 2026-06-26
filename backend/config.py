@@ -20,12 +20,7 @@ class Settings(BaseSettings):
 
     # GMI Cloud (via Genblaze) — image generation
     gmi_api_key: str = ""
-    gmi_image_model: str = "Flux2-Dev"
-
-    # ElevenLabs (via Genblaze) — voice narration
-    elevenlabs_api_key: str = ""
-    elevenlabs_voice_id: str = "21m00Tcm4TlvDq8ikWAM"  # Rachel
-    elevenlabs_model: str = "eleven_multilingual_v2"
+    gmi_image_model: str = "seedream-4-0-250828"
 
     # Backblaze B2
     b2_key_id: str = ""
@@ -36,8 +31,7 @@ class Settings(BaseSettings):
 
     # Pipeline
     pipeline_version: str = "1.0.0"
-    pipeline_timeout_image: int = 120
-    pipeline_timeout_audio: int = 90
+    pipeline_timeout_image: int = 300
     ffmpeg_scene_duration: int = 8  # seconds per scene image in final MP4
 
     # NVIDIA NIM — OpenAI-compatible LLM endpoint

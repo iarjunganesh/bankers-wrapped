@@ -7,5 +7,5 @@ All generative media calls route through the Genblaze SDK. No provider is called
 ## Rationale
 - Required by hackathon rules
 - Single retry boundary for all media generation  
-- Provider-agnostic: swap ElevenLabs to OpenAI TTS with one config flag
+- Provider-agnostic: swap GMI Cloud for any other image provider with one config flag
 - SHA-256 provenance manifest on every run via genblaze-core
