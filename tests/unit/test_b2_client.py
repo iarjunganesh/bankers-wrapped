@@ -77,8 +77,38 @@ class TestB2Client:
         key = B2Client.metadata_key("user1", "sess1")
         assert key == "user1/sess1/metadata/session_metadata.json"
 
+    def test_analytics_key_format(self):
+        key = B2Client.analytics_key("user1", "sess1")
+        assert key == "user1/sess1/pipeline/analytics.json"
+
+    def test_prompts_key_format(self):
+        key = B2Client.prompts_key("user1", "sess1")
+        assert key == "user1/sess1/pipeline/prompts.json"
+
+    def test_generation_key_format(self):
+        key = B2Client.generation_key("user1", "sess1")
+        assert key == "user1/sess1/pipeline/generation.json"
+
+    def test_thumbnail_key_format(self):
+        key = B2Client.thumbnail_key("user1", "sess1")
+        assert key == "user1/sess1/pipeline/thumbnail.png"
+
+    def test_download_bytes_calls_get_object(self, b2, mock_boto3):
+        b2._client.get_object.return_value = {"Body": _FakeBytesIO(b"image data")}
+        result = b2.download_bytes("some/key.png")
+        b2._client.get_object.assert_called_once_with(Bucket="test-bucket", Key="some/key.png")
+        assert result == b"image data"
+
     def test_upload_file_reads_and_uploads(self, b2, mock_boto3, tmp_path):
         test_file = tmp_path / "test.mp3"
         test_file.write_bytes(b"audio data")
         result = b2.upload_file("audio/narration.mp3", test_file, "audio/mpeg")
         assert result.startswith("b2://")
+
+
+class _FakeBytesIO:
+    def __init__(self, data: bytes) -> None:
+        self._data = data
+
+    def read(self) -> bytes:
+        return self._data

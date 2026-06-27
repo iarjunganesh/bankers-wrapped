@@ -1,7 +1,9 @@
 """Integration tests for POST /api/v1/recap/generate endpoint."""
 
+import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from backend.api.v1.recap import get_session_store
 from tests.conftest import SYNTHETIC_CSV
 
 
@@ -73,6 +75,22 @@ class TestRecapEndpoint:
         assert response.status_code == 200
         assert response.json()["video_url"].startswith("https://")
 
+    def test_generate_returns_thumbnail_url(self, api_client):
+        with (
+            patch("backend.api.v1.recap.NarrativeAgent") as MockNarrative,
+            patch("backend.api.v1.recap.MediaAgent") as MockMedia,
+        ):
+            _setup_narrative_mock(MockNarrative)
+            _setup_media_mock(MockMedia)
+
+            response = api_client.post(
+                "/api/v1/recap/generate",
+                files={"file": ("jan.csv", SYNTHETIC_CSV, "text/csv")},
+            )
+
+        assert response.status_code == 200
+        assert response.json()["thumbnail_url"].startswith("https://")
+
     def test_generate_returns_insights(self, api_client):
         with (
             patch("backend.api.v1.recap.NarrativeAgent") as MockNarrative,
@@ -112,6 +130,46 @@ class TestRecapEndpoint:
         b2_keys = response.json()["b2_keys"]
         assert isinstance(b2_keys, dict)
 
+    def test_download_zip_returns_404_for_unknown_session(self, api_client):
+        response = api_client.get("/api/v1/recap/no-such-session/download")
+        assert response.status_code == 404
+
+    def test_download_zip_returns_zip_for_complete_session(self, api_client):
+        """Create a session, mark it complete, then verify the download endpoint responds."""
+        store = get_session_store()
+        sid = str(uuid.uuid4())
+        store.create(sid, "test-user")
+        store.set_complete(
+            sid,
+            output_url="https://presigned.url/recap.mp4",
+            metadata={
+                "b2_keys": {"video": "u/s/output/recap.mp4"},
+                "insights": {
+                    "period_label": "Jan 2026",
+                    "total_income": 5000.0,
+                    "total_expenses": 3000.0,
+                    "savings_amount": 2000.0,
+                    "savings_rate": 40.0,
+                    "top_categories": [],
+                    "achievements": [],
+                    "personality": "Financial Builder",
+                    "personality_reason": "Strong saver.",
+                    "currency": "USD",
+                },
+                "processing_time_ms": 12345,
+                "thumbnail_url": "https://presigned.url/thumbnail.png",
+            },
+        )
+
+        fake_b2 = MagicMock()
+        fake_b2.download_bytes.return_value = b"fake video bytes"
+
+        with patch("backend.api.v1.recap.get_b2", return_value=fake_b2):
+            response = api_client.get(f"/api/v1/recap/{sid}/download")
+
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/zip"
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -124,7 +182,7 @@ def _setup_narrative_mock(MockNarrative):
             personality="Financial Builder",
             scenes=[
                 Scene(id=i, narration=f"Scene {i} narration.", visual_prompt=f"Scene {i} visual")
-                for i in range(1, 5)
+                for i in range(1, 6)
             ],
         )
     ))
@@ -137,7 +195,14 @@ def _setup_media_mock(MockMedia):
 
     MockMedia.return_value = AsyncMock(return_value=MagicMock(
         video_url="https://f000.backblazeb2.com/recap.mp4?token=test",
-        b2_keys={"video": "user/sess/output/recap.mp4"},
+        thumbnail_url="https://f000.backblazeb2.com/thumbnail.png?token=test",
+        b2_keys={
+            "video": "user/sess/output/recap.mp4",
+            "thumbnail": "user/sess/pipeline/thumbnail.png",
+            "analytics": "user/sess/pipeline/analytics.json",
+            "prompts": "user/sess/pipeline/prompts.json",
+            "generation": "user/sess/pipeline/generation.json",
+        },
         metadata=PipelineMetadata(
             session_id="test-session",
             user_id="test-user",
@@ -146,6 +211,7 @@ def _setup_media_mock(MockMedia):
             models_used={
                 "llm": "nvidia-nim/meta/llama-3.1-70b-instruct",
                 "image": "gmi-cloud/seedream-4-0-250828",
+                "audio": "openai/tts-1",
                 "compositor": "ffmpeg",
             },
             input_filename="jan.csv",

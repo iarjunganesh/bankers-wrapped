@@ -77,7 +77,7 @@ class TestFFmpegComposer:
                     output_path=output,
                 )
 
-    async def test_concat_file_written(self, composer, fake_scene_images, fake_audio, tmp_path):
+    async def test_filter_complex_included(self, composer, fake_scene_images, fake_audio, tmp_path):
         output = tmp_path / "recap.mp4"
         captured: list = []
 
@@ -93,8 +93,43 @@ class TestFFmpegComposer:
             )
         assert captured
         cmd = captured[0]
-        assert "-f" in cmd
-        assert "concat" in cmd
+        assert "-filter_complex" in cmd
+
+    async def test_xfade_in_filter(self, composer, fake_scene_images, fake_audio, tmp_path):
+        output = tmp_path / "recap.mp4"
+        captured: list = []
+
+        async def capture_thread(fn, cmd, **kwargs):  # type: ignore[no-untyped-def]
+            captured.append(cmd)
+            return MagicMock(returncode=0, stderr="")
+
+        with patch("backend.media.ffmpeg_composer.asyncio.to_thread", capture_thread):
+            await composer.compose(
+                scene_image_paths=fake_scene_images,
+                audio_path=fake_audio,
+                output_path=output,
+            )
+        assert captured
+        cmd_str = " ".join(captured[0])
+        assert "xfade" in cmd_str
+
+    async def test_fade_in_out_applied(self, composer, fake_scene_images, fake_audio, tmp_path):
+        output = tmp_path / "recap.mp4"
+        captured: list = []
+
+        async def capture_thread(fn, cmd, **kwargs):  # type: ignore[no-untyped-def]
+            captured.append(cmd)
+            return MagicMock(returncode=0, stderr="")
+
+        with patch("backend.media.ffmpeg_composer.asyncio.to_thread", capture_thread):
+            await composer.compose(
+                scene_image_paths=fake_scene_images,
+                audio_path=fake_audio,
+                output_path=output,
+            )
+        cmd_str = " ".join(captured[0])
+        assert "fade=t=in" in cmd_str
+        assert "fade=t=out" in cmd_str
 
     async def test_scene_duration_applied(self, fake_scene_images, fake_audio, tmp_path):
         composer = FFmpegComposer(scene_duration_seconds=10)
@@ -106,3 +141,25 @@ class TestFFmpegComposer:
                 output_path=output,
             )
         assert composer.scene_duration == 10
+
+    async def test_single_scene_no_xfade(self, composer, tmp_path):
+        """A single-scene video must not emit an xfade transition filter."""
+        single_img = tmp_path / "scene_00.png"
+        single_img.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)
+        output = tmp_path / "recap.mp4"
+        captured: list = []
+
+        async def capture_thread(fn, cmd, **kwargs):  # type: ignore[no-untyped-def]
+            captured.append(cmd)
+            return MagicMock(returncode=0, stderr="")
+
+        with patch("backend.media.ffmpeg_composer.asyncio.to_thread", capture_thread):
+            await composer.compose(
+                scene_image_paths=[single_img],
+                output_path=output,
+            )
+        # Extract only the filter_complex value, not paths (paths may contain test name)
+        cmd = captured[0]
+        fc_idx = cmd.index("-filter_complex") + 1
+        filter_str = cmd[fc_idx]
+        assert "xfade" not in filter_str

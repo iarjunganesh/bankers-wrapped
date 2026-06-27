@@ -8,24 +8,38 @@ Providers used:
   - genblaze-gmicloud  → GMI Cloud Seedream image generation
   - genblaze-s3        → Backblaze B2 storage sink
   - openai (TTS)       → Narration audio synthesis (wrapped here; no direct calls elsewhere)
+
+Retry policy: up to 3 attempts with exponential backoff (2s, 4s) for both
+image generation and audio synthesis. Retry count and wall-clock latency
+are returned in each result for provenance tracking.
 """
 
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
 
 import httpx
 import openai
 import structlog
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 log = structlog.get_logger()
+
 
 
 @dataclass
 class ImageResult:
     image_bytes: bytes
     manifest_hash: str
+    latency_ms: int = field(default=0)
+    retry_count: int = field(default=0)
 
 
 @dataclass
@@ -33,6 +47,8 @@ class AudioResult:
     audio_bytes: bytes
     model: str
     voice: str
+    latency_ms: int = field(default=0)
+    retry_count: int = field(default=0)
 
 
 class GenblazeClient:
@@ -83,33 +99,64 @@ class GenblazeClient:
         timeout: int = 120,
     ) -> ImageResult:
         """
-        Generate a scene image via Genblaze → GMI Cloud (FLUX).
+        Generate a scene image via Genblaze → GMI Cloud (Seedream).
 
-        Returns ImageResult containing raw PNG bytes and provenance manifest hash.
-        GMI Cloud uses an async queue API; genblaze-gmicloud handles polling internally.
+        Retries up to 3 times with exponential backoff. Returns ImageResult
+        with raw PNG bytes, provenance manifest hash, wall-clock latency, and
+        retry count for generation.json provenance.
         """
-        from genblaze_core import Modality, Pipeline
-        from genblaze_gmicloud import GMICloudImageProvider
+        attempt_count = 0
 
-        pr = (
-            Pipeline("bankers-wrapped-image")
-            .step(
-                GMICloudImageProvider(),
-                model=model,
-                prompt=prompt,
-                modality=Modality.IMAGE,
-                width=width,
-                height=height,
-            )
-            .run(timeout=timeout, raise_on_failure=True)
+        @retry(
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=1, min=2, max=30),
+            retry=retry_if_exception_type(Exception),
+            reraise=True,
         )
+        async def _attempt() -> ImageResult:
+            nonlocal attempt_count
+            t0 = int(time.time() * 1000)
+            try:
+                from genblaze_core import Modality, Pipeline
+                from genblaze_gmicloud import GMICloudImageProvider
 
-        asset = pr.run.steps[0].assets[0]
-        with httpx.Client(timeout=30) as http:
-            image_bytes = http.get(asset.url).content
+                pr = (
+                    Pipeline("bankers-wrapped-image")
+                    .step(
+                        GMICloudImageProvider(),
+                        model=model,
+                        prompt=prompt,
+                        modality=Modality.IMAGE,
+                        width=width,
+                        height=height,
+                    )
+                    .run(timeout=timeout, raise_on_failure=True)
+                )
 
-        log.info("genblaze.image.generate", provider="gmi-cloud", model=model, bytes=len(image_bytes))
-        return ImageResult(image_bytes=image_bytes, manifest_hash=pr.manifest.canonical_hash)
+                asset = pr.run.steps[0].assets[0]
+                with httpx.Client(timeout=30) as http:
+                    image_bytes = http.get(asset.url).content
+
+                latency = int(time.time() * 1000) - t0
+                log.info(
+                    "genblaze.image.generate",
+                    provider="gmi-cloud",
+                    model=model,
+                    bytes=len(image_bytes),
+                    latency_ms=latency,
+                    attempt=attempt_count,
+                )
+                return ImageResult(
+                    image_bytes=image_bytes,
+                    manifest_hash=pr.manifest.canonical_hash,
+                    latency_ms=latency,
+                    retry_count=attempt_count,
+                )
+            except Exception:
+                attempt_count += 1
+                raise
+
+        return await _attempt()
 
     async def generate_narration_audio(
         self,
@@ -122,20 +169,52 @@ class GenblazeClient:
 
         Wrapped here so all AI media generation routes through GenblazeClient —
         no direct openai.audio calls outside this module.
+        Retries up to 3 times with exponential backoff.
         """
         import asyncio
 
-        client = openai.OpenAI(api_key=self.openai_api_key or None)
+        attempt_count = 0
 
-        def _synthesise() -> bytes:
-            resp = client.audio.speech.create(
-                model=model,
-                voice=voice,  # type: ignore[arg-type]
-                input=narration_text,
-                response_format="mp3",
-            )
-            return resp.read()
+        @retry(
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=1, min=2, max=30),
+            retry=retry_if_exception_type(Exception),
+            reraise=True,
+        )
+        async def _attempt() -> AudioResult:
+            nonlocal attempt_count
+            t0 = int(time.time() * 1000)
+            try:
+                client = openai.OpenAI(api_key=self.openai_api_key or None)
 
-        audio_bytes = await asyncio.to_thread(_synthesise)
-        log.info("genblaze.audio.generate", model=model, voice=voice, bytes=len(audio_bytes))
-        return AudioResult(audio_bytes=audio_bytes, model=model, voice=voice)
+                def _synthesise() -> bytes:
+                    resp = client.audio.speech.create(
+                        model=model,
+                        voice=voice,  # type: ignore[arg-type]
+                        input=narration_text,
+                        response_format="mp3",
+                    )
+                    return resp.read()
+
+                audio_bytes = await asyncio.to_thread(_synthesise)
+                latency = int(time.time() * 1000) - t0
+                log.info(
+                    "genblaze.audio.generate",
+                    model=model,
+                    voice=voice,
+                    bytes=len(audio_bytes),
+                    latency_ms=latency,
+                    attempt=attempt_count,
+                )
+                return AudioResult(
+                    audio_bytes=audio_bytes,
+                    model=model,
+                    voice=voice,
+                    latency_ms=latency,
+                    retry_count=attempt_count,
+                )
+            except Exception:
+                attempt_count += 1
+                raise
+
+        return await _attempt()

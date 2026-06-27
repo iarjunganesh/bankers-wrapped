@@ -22,10 +22,23 @@ interface Insights {
 interface RecapData {
   session_id: string;
   video_url: string;
+  thumbnail_url: string;
   insights: Insights;
   processing_time_ms: number;
   b2_keys: Record<string, string>;
 }
+
+const ARTIFACT_LABELS: Record<string, string> = {
+  csv:        "Input CSV",
+  script:     "Narrative script",
+  analytics:  "Financial analytics",
+  prompts:    "Image prompts",
+  generation: "Generation provenance",
+  narration:  "Narration audio",
+  thumbnail:  "Thumbnail",
+  video:      "Recap video",
+  metadata:   "Session metadata",
+};
 
 const PERSONALITY_THEMES: Record<string, { color: string; bg: string; icon: string; tagline: string }> = {
   "Financial Builder":   { color: "#F59E0B", bg: "rgba(245,158,11,0.15)",  icon: "🏗️", tagline: "Laying the foundation — brick by brick." },
@@ -118,6 +131,8 @@ export default function SharePage() {
 
   const theme = getTheme(data.insights.personality);
   const themeClass = PERSONALITY_CLASS[data.insights.personality] ?? "";
+  const sceneCount = Object.keys(data.b2_keys).filter((k) => k.startsWith("scene_")).length;
+  const artifactCount = Object.keys(data.b2_keys).length;
 
   return (
     <main className="bw-main">
@@ -130,6 +145,15 @@ export default function SharePage() {
         </div>
 
         <div className={`bw-result ${themeClass}`}>
+          {/* Thumbnail preview */}
+          {data.thumbnail_url && (
+            <img
+              src={data.thumbnail_url}
+              alt="Recap thumbnail"
+              className="bw-thumbnail"
+            />
+          )}
+
           <div className="bw-personality-badge">
             <span className="bw-personality-icon">{theme.icon}</span>
             <div>
@@ -165,9 +189,18 @@ export default function SharePage() {
 
           <div className="bw-video-section">
             <video className="bw-video" src={data.video_url} controls autoPlay muted />
-            <a className="bw-download-link" href={data.video_url} download="recap.mp4">
-              ↓ Download MP4
-            </a>
+            <div className="bw-video-actions">
+              <a className="bw-download-link" href={data.video_url} download="recap.mp4">
+                ↓ Download MP4
+              </a>
+              <a
+                className="bw-download-link"
+                href={`${API_URL}/api/v1/recap/${session_id}/download`}
+                download={`recap-${session_id.slice(0, 8)}.zip`}
+              >
+                ↓ Download full package (ZIP)
+              </a>
+            </div>
           </div>
 
           <button type="button" className="bw-share-btn" onClick={copyLink}>
@@ -175,11 +208,14 @@ export default function SharePage() {
           </button>
 
           <details className="bw-artifacts">
-            <summary className="bw-artifacts-summary">▸ Pipeline Artifacts (Backblaze B2)</summary>
+            <summary className="bw-artifacts-summary">
+              ▸ Pipeline Artifacts — Backblaze B2 ({artifactCount} files)
+            </summary>
             <div className="bw-artifacts-list">
-              {Object.entries(data.b2_keys).map(([k]) => (
+              {Object.entries(data.b2_keys).map(([k, path]) => (
                 <div key={k} className="bw-artifact-item">
-                  <span className="bw-artifact-key">{k}</span>
+                  <span className="bw-artifact-key">{ARTIFACT_LABELS[k] ?? k}</span>
+                  <span className="bw-artifact-path">{path}</span>
                 </div>
               ))}
             </div>
@@ -187,6 +223,7 @@ export default function SharePage() {
 
           <p className="bw-meta">
             Generated in {(data.processing_time_ms / 1000).toFixed(1)}s ·
+            {sceneCount} scenes · {artifactCount} B2 artifacts ·
             Session {data.session_id.slice(0, 8)} ·
             Powered by Backblaze B2 + Genblaze
           </p>

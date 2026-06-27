@@ -28,6 +28,8 @@ dependencies = [
     "structlog>=24.2.0",
     # Rate limiting
     "slowapi>=0.1.9",
+    # Retry / resilience
+    "tenacity>=8.2.0",
     # Video / Audio
     "ffmpeg-python>=0.2.0",
 ]

@@ -40,7 +40,7 @@ Upload a CSV. Receive a 60-second video that tells the story of your financial y
 
 Banks generate mountains of transaction data but deliver it as an unreadable table. Customers disengage; apps go unused. Financial institutions lose the relationship. There is no moment that makes money *feel* meaningful.
 
-Banker's Wrapped solves this with an agentic pipeline that reads your transactions, assigns a financial personality, writes a 4-scene narrative, synthesizes voice narration, generates scene images, and composes a sharable 60-second MP4 — end to end, no human in the loop.
+Banker's Wrapped solves this with an agentic pipeline that reads your transactions, assigns a financial personality, writes a 5-scene cinematic narrative, synthesizes voice narration, generates scene images with xfade transitions, and composes a sharable MP4 — end to end, no human in the loop.
 
 ---
 
@@ -50,11 +50,11 @@ Banker's Wrapped solves this with an agentic pipeline that reads your transactio
 2. **Document Agent** parses and normalizes transactions into typed records
 3. **Analytics Agent** calculates income, expenses, savings rate, and top spending categories
 4. **Financial Personality** is assigned: Builder · Optimizer · Explorer · Achiever
-5. **Narrative Agent** (NVIDIA NIM / Llama 3.1 70B) generates a structured 4-scene video script
-6. **Scene images** generated via **Genblaze → GMI Cloud** (Seedream 4.0, 1344×768) — all 4 in parallel
+5. **Narrative Agent** (NVIDIA NIM / Llama 3.1 70B) generates a structured **5-scene cinematic video script** (Opening → Achievement → Insight → Advice → Close)
+6. **Scene images** generated via **Genblaze → GMI Cloud** (Seedream 4.0, 1344×768) — all 5 in parallel (with automatic 3× retry + exponential backoff)
 7. **Voice narration** synthesised via **Genblaze → OpenAI TTS** (tts-1, alloy voice) — concatenated scene text
-8. **FFmpeg** composes the final MP4: scene images + narration audio (H.264/AAC)
-9. **All artifacts** uploaded to **Backblaze B2**; presigned URL returned to user
+8. **FFmpeg** composes the final MP4: scene images + narration audio — **xfade crossfade** between scenes + global fade-in/out (H.264/AAC)
+9. **10 artifacts** uploaded to **Backblaze B2** (video, thumbnail, script, analytics, prompts, generation provenance, scenes, narration, CSV, metadata); presigned URL + download ZIP returned
 
 ---
 
@@ -62,76 +62,81 @@ Banker's Wrapped solves this with an agentic pipeline that reads your transactio
 
 ```mermaid
 graph LR
-    classDef userStyle    fill:#4A90E2,stroke:#2563EB,stroke-width:2px,color:#fff;
-    classDef fastapiStyle fill:#009688,stroke:#00796B,stroke-width:2px,color:#fff;
-    classDef skStyle      fill:#0078D4,stroke:#005A9E,stroke-width:2px,color:#fff;
-    classDef nvidiaStyle  fill:#76B900,stroke:#5A8A00,stroke-width:2px,color:#fff;
-    classDef gmiStyle     fill:#0059B3,stroke:#004080,stroke-width:2px,color:#fff;
-    classDef ffmpegStyle  fill:#007808,stroke:#005A06,stroke-width:2px,color:#fff;
-    classDef b2Style      fill:#E8392A,stroke:#C02A1D,stroke-width:2px,color:#fff;
+    classDef user fill:#4A90E2,stroke:#2563EB,color:#fff
+    classDef api  fill:#009688,stroke:#00796B,color:#fff
+    classDef sk   fill:#0078D4,stroke:#005A9E,color:#fff
+    classDef nim  fill:#76B900,stroke:#5A8A00,color:#fff
+    classDef gmi  fill:#0059B3,stroke:#004080,color:#fff
+    classDef ff   fill:#007808,stroke:#005A06,color:#fff
+    classDef b2   fill:#E8392A,stroke:#C02A1D,color:#fff
+    classDef tts  fill:#7C3AED,stroke:#5B21B6,color:#fff
 
-    u(["👤 User"]):::userStyle
-    api["⚡ FastAPI<br/>POST /api/v1/recap/generate"]:::fastapiStyle
-    ff["🎬 FFmpeg<br/>compose recap.mp4"]:::ffmpegStyle
-    b2[("☁️ Backblaze B2<br/>user_id/session_id/")]:::b2Style
+    U(["👤 User"]):::user
+    API["⚡ FastAPI<br/>rate-limit 5/hr"]:::api
+    PL["🤖 Agent Pipeline<br/>Semantic Kernel"]:::sk
+    B2[("☁️ Backblaze B2<br/>10 artifacts")]:::b2
 
-    subgraph pipeline["🤖 Agent Pipeline · Semantic Kernel"]
-        direction TB
-        a1["① Document Agent<br/>→ List[Transaction]"]:::skStyle
-        a2["② Analytics Agent<br/>→ FinancialInsights"]:::skStyle
-        a3["③ Narrative Agent<br/>NVIDIA NIM · Llama 3.1 70B<br/>→ NarrativeScript"]:::nvidiaStyle
-        a4["④ Media Agent<br/>Orchestration"]:::skStyle
+    U ==> API ==> PL ==> B2
 
-        a1 --> a2
-        a2 --> a3
-        a3 --> a4
+    subgraph pipe["🔍 Agent Pipeline · Semantic Kernel"]
+        A1["① Document<br/>Transactions"]:::sk
+        A2["② Analytics<br/>Insights + Personality"]:::sk
+        A3["③ Narrative<br/>NVIDIA NIM / Llama 3.1 70B"]:::nim
+        A4["④ Media Agent<br/>retry ×3 · asset manifest"]:::sk
+        GI["🖼️ GMI Cloud Seedream<br/>× 5 parallel"]:::gmi
+        AU["🔊 OpenAI TTS<br/>narration.mp3"]:::tts
+        FF["🎬 FFmpeg<br/>xfade → H.264/AAC"]:::ff
+        A1 --> A2 --> A3 --> A4
+        A4 -.-> GI
+        A4 -.-> AU
+        GI --> FF
+        AU --> FF
     end
 
-    subgraph gb["⚡ Genblaze SDK"]
-        gi["🖼️ GMI Cloud Seedream<br/>scene_00…03 (parallel)"]:::gmiStyle
-    end
+    style pipe fill:transparent,stroke:#0078D4,stroke-width:2px,stroke-dasharray:6 3
 
-    style pipeline fill:transparent,stroke:#0078D4,stroke-width:1.5px
-    style gb fill:transparent,stroke:#0059B3,stroke-width:1.5px
-
-    u ==>|"CSV Upload"| api
-    api ==> a1
-
-    a4 -->|"Visual Prompts × 4"| gi
-
-    gi --> ff
-    ff ==>|"recap.mp4"| b2
-
-    a4 -.->|"CSV · Script · Images · Metadata"| b2
-    b2 ==>|"Presigned URL"| u
+    PL -.-> A1
 ```
 
 ### Pipeline Timing
 
-Measured on a live run against `transactions_jan_2026.csv` (22 transactions, 4 scenes):
+Measured on a live run against `transactions_jan_2026.csv` (22 transactions, 5 scenes):
 
 | Step | Agent / Service | Time |
 | --- | --- | --- |
 | CSV parse + normalise | DocumentAgent | < 1 s |
 | Spending analytics + personality | AnalyticsAgent | < 1 s |
-| Narrative script (4 scenes) | NarrativeAgent · NVIDIA NIM Llama 3.1 70B | ~30 s |
-| Scene images × 4 | MediaAgent · Genblaze → GMI Cloud Seedream | ~168 s |
-| Voice narration | GenblazeClient → OpenAI TTS (tts-1, alloy) | ~7 s |
-| MP4 composition | FFmpeg (H.264/AAC) | ~2 s |
-| B2 uploads (7 artifacts) | Backblaze B2 | ~2 s |
-| **Total wall-clock** | | **~210 s** |
+| Narrative script (5 scenes) | NarrativeAgent · NVIDIA NIM Llama 3.1 70B | ~30 s |
+| Scene images × 5 | MediaAgent · Genblaze → GMI Cloud Seedream (parallel, retry ×3) | ~180 s |
+| Voice narration | GenblazeClient → OpenAI TTS (tts-1, alloy, retry ×3) | ~7 s |
+| MP4 composition | FFmpeg (H.264/AAC, xfade transitions) | ~2 s |
+| B2 uploads (10 artifacts) | Backblaze B2 | ~3 s |
+| **Total wall-clock** | | **~224 s** |
 
-Image generation dominates. `asyncio.gather` dispatches all 4 scenes concurrently — GMI Cloud queues them server-side per API key, so wall time reflects their queue depth rather than true parallel execution.
+Image generation dominates. `asyncio.gather` dispatches all 5 scenes concurrently — GMI Cloud queues them server-side per API key, so wall time reflects their queue depth rather than true parallel execution. Per-step latency and retry counts are recorded in `generation.json`.
 
 ### B2 Storage Layout
+
+Every recap produces **10 artifacts** — B2 is the complete source of truth for the entire media pipeline:
 
 ```text
 bankers-wrapped-assets/
 └── {user_id}/{session_id}/
-    ├── input/     transactions.csv
-    ├── pipeline/  script.json · narration.mp3 · scenes/scene_00…03.png
-    ├── output/    recap_{session_id}.mp4           ← H.264 video + AAC narration audio
-    └── metadata/  session_metadata.json
+    ├── input/
+    │   └── transactions.csv
+    ├── pipeline/
+    │   ├── script.json           ← narrative script (5 scenes)
+    │   ├── analytics.json        ← financial insights snapshot
+    │   ├── prompts.json          ← image prompts + SHA-256 hashes per scene
+    │   ├── generation.json       ← model, provider, latency, retry count per step
+    │   ├── thumbnail.png         ← scene 0 used as recap preview image
+    │   ├── narration.mp3         ← OpenAI TTS (alloy voice)
+    │   └── scenes/
+    │       ├── scene_00.png … scene_04.png   ← GMI Cloud Seedream 1344×768
+    ├── output/
+    │   └── recap_{session_id}.mp4   ← H.264/AAC, xfade transitions
+    └── metadata/
+        └── session_metadata.json    ← top-level provenance record
 ```
 
 ---
@@ -171,7 +176,7 @@ image_bytes = httpx.get(pr.run.steps[0].assets[0].url).content
 
 # Narration audio — OpenAI TTS wrapped inside GenblazeClient (no direct provider calls outside)
 audio_result = await genblaze_client.generate_narration_audio(
-    narration_text=script.full_narration,   # all 4 scene narrations joined
+    narration_text=script.full_narration,   # all 5 scene narrations joined
     model="tts-1",
     voice="alloy",
 )
@@ -183,7 +188,9 @@ Every run produces a **SHA-256 provenance manifest** stored in B2 metadata — f
 
 ## Provenance Metadata
 
-Every generated video is fully traceable via `session_metadata.json`:
+Every run produces **four machine-readable provenance files** in B2:
+
+**`session_metadata.json`** — top-level record:
 
 ```json
 {
@@ -204,6 +211,23 @@ Every generated video is fully traceable via `session_metadata.json`:
 }
 ```
 
+**`generation.json`** — per-step model telemetry (latency, retries, manifest hashes):
+
+```json
+{
+  "images": [
+    { "scene_idx": 0, "model": "seedream-4-0-250828", "provider": "gmi-cloud",
+      "latency_ms": 32400, "retry_count": 0, "manifest_hash": "sha256:…", "success": true }
+  ],
+  "audio":      { "model": "tts-1", "provider": "openai", "latency_ms": 6900, "retry_count": 0 },
+  "compositor": { "tool": "ffmpeg", "scenes": 5, "latency_ms": 2100, "success": true }
+}
+```
+
+**`prompts.json`** — all image prompts with SHA-256 hashes for full reproducibility.
+
+**`analytics.json`** — financial insights snapshot (income, expenses, savings rate, personality).
+
 ---
 
 ## Tech Stack
@@ -215,8 +239,8 @@ Every generated video is fully traceable via `session_metadata.json`:
 | **Backend** | [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/) [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/) | Async agentic pipeline |
 | **Agent Framework** | [![Semantic Kernel](https://img.shields.io/badge/Semantic_Kernel-0078D4?logo=microsoft&logoColor=white)](https://learn.microsoft.com/en-us/semantic-kernel/) | Typed plugin contracts, native async |
 | **LLM** | [![NVIDIA NIM](https://img.shields.io/badge/NVIDIA_NIM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/) | Narrative script generation |
-| **Images** | [![GMI Cloud](https://img.shields.io/badge/GMI_Cloud-Seedream-0066CC)](https://cloud.gmi.ai/) | Scene visuals 1344×768, seedream-4-0-250828 (via Genblaze) — 4 parallel |
-| **Video Compose** | [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/) | Scene images + narration audio → H.264/AAC MP4 |
+| **Images** | [![GMI Cloud](https://img.shields.io/badge/GMI_Cloud-Seedream-0066CC)](https://cloud.gmi.ai/) | Scene visuals 1344×768, seedream-4-0-250828 (via Genblaze) — 5 parallel, retry ×3 |
+| **Video Compose** | [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/) | Scene images + narration → H.264/AAC MP4 with xfade transitions |
 | **Frontend** | [![Next.js](https://img.shields.io/badge/Next.js-16.2.9-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/) [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/) [![Node.js](https://img.shields.io/badge/Node.js-26.4.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) | Upload portal + video player |
 | **Session State** | [![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/) | Pipeline state tracking (SQLite → PostgreSQL) |
 | **Hosting** | [![Railway](https://img.shields.io/badge/Backend-Railway-0B0D0E?logo=railway&logoColor=white)](https://railway.app) [![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000?logo=vercel&logoColor=white)](https://vercel.com) | Backend on Railway · Frontend on Vercel |
@@ -270,7 +294,7 @@ bankers-wrapped/
 │   │   ├── limiter.py   # slowapi rate limiter (5 req/hr/IP)
 │   │   ├── middleware/  # Request logging
 │   │   └── v1/
-│   │       ├── recap.py    # POST /generate · GET /{session_id}
+│   │       ├── recap.py    # POST /generate · GET /{session_id} · GET /{session_id}/download
 │   │       ├── progress.py # GET /{session_id}/progress (SSE)
 │   │       └── health.py
 │   ├── media/           # GenblazeClient (images + TTS) · FFmpegComposer

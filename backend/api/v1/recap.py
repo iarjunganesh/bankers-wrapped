@@ -1,5 +1,7 @@
 """
 POST /api/v1/recap/generate
+GET  /api/v1/recap/{session_id}
+GET  /api/v1/recap/{session_id}/download
 
 Accepts a CSV upload, runs the full 4-agent pipeline, and returns
 the presigned B2 URL for the generated recap video.
@@ -7,12 +9,16 @@ the presigned B2 URL for the generated recap video.
 
 from __future__ import annotations
 
+import io
 import os
 import uuid
+import zipfile
+from pathlib import Path
 from typing import Annotated
 
 import structlog
 from fastapi import APIRouter, Depends, File, Header, HTTPException, Request, UploadFile
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from backend.agents.analytics_agent import AnalyticsAgent
@@ -70,6 +76,7 @@ class InsightsSummary(BaseModel):
 class RecapResponse(BaseModel):
     session_id: str
     video_url: str
+    thumbnail_url: str = ""
     insights: InsightsSummary
     processing_time_ms: int
     b2_keys: dict[str, str]
@@ -157,10 +164,17 @@ async def generate_recap(
         narrative_output = await narrative_agent(analytics_output)
 
         # ── Agent 4: Media (Voice + Images + FFmpeg + B2) ────────────────────
-        store.append_event(session_id, "generating_images", "Generating 4 scene images + narration")
-        media_agent = MediaAgent(settings, genblaze, b2)
+        store.append_event(session_id, "generating_images", "Generating scene images + narration")
+
+        def _on_media_progress(event: str, detail: str) -> None:
+            store.append_event(session_id, event, detail)
+
+        media_agent = MediaAgent(
+            settings, genblaze, b2, progress_callback=_on_media_progress
+        )
         media_output = await media_agent(MediaAgentInput(
             script_output=narrative_output,
+            analytics_output=analytics_output,
             session_id=session_id,
             user_id=user_id,
             csv_bytes=csv_bytes,
@@ -193,12 +207,14 @@ async def generate_recap(
                 "b2_keys": media_output.b2_keys,
                 "insights": insights_summary.model_dump(),
                 "processing_time_ms": media_output.metadata.processing_time_ms,
+                "thumbnail_url": media_output.thumbnail_url,
             },
         )
 
         response = RecapResponse(
             session_id=session_id,
             video_url=media_output.video_url,
+            thumbnail_url=media_output.thumbnail_url,
             b2_keys=media_output.b2_keys,
             insights=insights_summary,
             processing_time_ms=media_output.metadata.processing_time_ms,
@@ -209,6 +225,7 @@ async def generate_recap(
             session_id=session_id,
             personality=insights.personality.value,
             ms=media_output.metadata.processing_time_ms,
+            artifacts=len(media_output.b2_keys),
         )
 
         return response
@@ -238,7 +255,53 @@ async def get_recap(
     return RecapResponse(
         session_id=session_id,
         video_url=session["output_url"],
+        thumbnail_url=meta.get("thumbnail_url", ""),
         b2_keys=meta.get("b2_keys", {}),
         insights=insights,
         processing_time_ms=meta.get("processing_time_ms", 0),
+    )
+
+
+@router.get("/{session_id}/download")
+async def download_recap_zip(
+    session_id: str,
+    store: SessionStore = Depends(get_session_store),
+    b2: B2Client = Depends(get_b2),
+) -> StreamingResponse:
+    """
+    Download all recap artifacts as a ZIP package.
+
+    The ZIP contains the video, thumbnail, scene images, narration audio,
+    narrative script, analytics, generation provenance, and prompt manifest.
+    Ideal for judges and users who want the complete media package.
+    """
+    session = store.get(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Recap not found")
+    if session["status"] != "complete":
+        raise HTTPException(status_code=404, detail="Recap not ready yet")
+
+    b2_keys: dict[str, str] = session["metadata"].get("b2_keys", {})
+    if not b2_keys:
+        raise HTTPException(status_code=404, detail="No artifacts found")
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        for artifact_name, b2_key in b2_keys.items():
+            try:
+                data = b2.download_bytes(b2_key)
+                ext = Path(b2_key).suffix or ".bin"
+                zf.writestr(f"{artifact_name}{ext}", data)
+            except Exception:
+                log.warning("download_zip.skip", artifact=artifact_name, key=b2_key)
+
+    zip_buffer.seek(0)
+    short_id = session_id[:8]
+
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="recap-{short_id}.zip"',
+        },
     )

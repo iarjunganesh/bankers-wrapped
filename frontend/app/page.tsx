@@ -20,6 +20,7 @@ interface Insights {
 interface RecapResult {
   session_id: string;
   video_url: string;
+  thumbnail_url: string;
   insights: Insights;
   processing_time_ms: number;
   b2_keys: Record<string, string>;
@@ -35,11 +36,25 @@ type Stage = "idle" | "uploading" | "processing" | "done" | "error";
 
 const PIPELINE_STEPS = [
   { key: "parsing",           label: "Parsing transactions" },
-  { key: "analyzing",         label: "Calculating insights" },
+  { key: "analyzing",         label: "Calculating financial insights" },
   { key: "scripting",         label: "Writing narrative script" },
   { key: "generating_images", label: "Generating scene images + narration" },
-  { key: "uploading",         label: "Uploading to Backblaze B2" },
+  { key: "composing_video",   label: "Composing video with FFmpeg" },
+  { key: "uploading_to_b2",   label: "Uploading all artifacts to Backblaze B2" },
+  { key: "uploading",         label: "Finalising recap" },
 ];
+
+const ARTIFACT_LABELS: Record<string, string> = {
+  csv:        "Input CSV",
+  script:     "Narrative script",
+  analytics:  "Financial analytics",
+  prompts:    "Image prompts",
+  generation: "Generation provenance",
+  narration:  "Narration audio",
+  thumbnail:  "Thumbnail",
+  video:      "Recap video",
+  metadata:   "Session metadata",
+};
 
 const PERSONALITY_THEMES: Record<string, { color: string; bg: string; icon: string; tagline: string }> = {
   "Financial Builder":   { color: "#F59E0B", bg: "rgba(245,158,11,0.15)",  icon: "🏗️", tagline: "Laying the foundation — brick by brick." },
@@ -151,7 +166,6 @@ export default function Home() {
     try {
       await navigator.clipboard.writeText(url);
     } catch {
-      // Fallback for browsers that block clipboard API
       const el = document.createElement("textarea");
       el.value = url;
       document.body.appendChild(el);
@@ -173,6 +187,9 @@ export default function Home() {
   })();
 
   const themeClass = result ? (PERSONALITY_CLASS[result.insights.personality] ?? "") : "";
+  const sceneCount = result
+    ? Object.keys(result.b2_keys).filter((k) => k.startsWith("scene_")).length
+    : 0;
 
   return (
     <main className="bw-main">
@@ -253,6 +270,15 @@ export default function Home() {
         {/* Result */}
         {stage === "done" && result && theme && (
           <div className={`bw-result ${themeClass}`}>
+            {/* Thumbnail */}
+            {result.thumbnail_url && (
+              <img
+                src={result.thumbnail_url}
+                alt="Recap thumbnail"
+                className="bw-thumbnail"
+              />
+            )}
+
             <div className="bw-personality-badge">
               <span className="bw-personality-icon">{theme.icon}</span>
               <div>
@@ -279,9 +305,18 @@ export default function Home() {
 
             <div className="bw-video-section">
               <video className="bw-video" src={result.video_url} controls autoPlay muted />
-              <a className="bw-download-link" href={result.video_url} download="recap.mp4">
-                ↓ Download MP4
-              </a>
+              <div className="bw-video-actions">
+                <a className="bw-download-link" href={result.video_url} download="recap.mp4">
+                  ↓ Download MP4
+                </a>
+                <a
+                  className="bw-download-link"
+                  href={`${API_URL}/api/v1/recap/${result.session_id}/download`}
+                  download={`recap-${result.session_id.slice(0, 8)}.zip`}
+                >
+                  ↓ Download full package (ZIP)
+                </a>
+              </div>
             </div>
 
             <button type="button" className="bw-share-btn" onClick={copyShareLink}>
@@ -293,12 +328,13 @@ export default function Home() {
               onToggle={(e) => setArtifactsOpen((e.target as HTMLDetailsElement).open)}
             >
               <summary className="bw-artifacts-summary">
-                {artifactsOpen ? "▾" : "▸"} Pipeline Artifacts (Backblaze B2)
+                {artifactsOpen ? "▾" : "▸"} Pipeline Artifacts — Backblaze B2 ({Object.keys(result.b2_keys).length} files)
               </summary>
               <div className="bw-artifacts-list">
-                {Object.entries(result.b2_keys).map(([k]) => (
+                {Object.entries(result.b2_keys).map(([k, path]) => (
                   <div key={k} className="bw-artifact-item">
-                    <span className="bw-artifact-key">{k}</span>
+                    <span className="bw-artifact-key">{ARTIFACT_LABELS[k] ?? k}</span>
+                    <span className="bw-artifact-path">{path}</span>
                   </div>
                 ))}
               </div>
@@ -306,6 +342,7 @@ export default function Home() {
 
             <p className="bw-meta">
               Generated in {(result.processing_time_ms / 1000).toFixed(1)}s ·
+              {sceneCount} scenes ·
               Session {result.session_id.slice(0, 8)} ·
               Powered by Backblaze B2 + Genblaze
             </p>

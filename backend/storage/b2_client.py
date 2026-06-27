@@ -65,6 +65,15 @@ class B2Client:
         payload = json.dumps(data, indent=2, default=str).encode("utf-8")
         return self.upload_bytes(key, payload, "application/json")
 
+    # ── Download helpers ──────────────────────────────────────────────────────
+
+    def download_bytes(self, key: str) -> bytes:
+        """Download an object from B2 and return raw bytes."""
+        response = self._client.get_object(Bucket=self.bucket, Key=key)
+        data: bytes = response["Body"].read()
+        log.info("b2.download", key=key, bytes=len(data))
+        return data
+
     # ── Key builders ──────────────────────────────────────────────────────────
 
     @staticmethod
@@ -90,6 +99,22 @@ class B2Client:
     @staticmethod
     def metadata_key(user_id: str, session_id: str) -> str:
         return f"{user_id}/{session_id}/metadata/session_metadata.json"
+
+    @staticmethod
+    def analytics_key(user_id: str, session_id: str) -> str:
+        return f"{user_id}/{session_id}/pipeline/analytics.json"
+
+    @staticmethod
+    def prompts_key(user_id: str, session_id: str) -> str:
+        return f"{user_id}/{session_id}/pipeline/prompts.json"
+
+    @staticmethod
+    def generation_key(user_id: str, session_id: str) -> str:
+        return f"{user_id}/{session_id}/pipeline/generation.json"
+
+    @staticmethod
+    def thumbnail_key(user_id: str, session_id: str) -> str:
+        return f"{user_id}/{session_id}/pipeline/thumbnail.png"
 
     # ── Presigned URL ─────────────────────────────────────────────────────────
 

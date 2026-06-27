@@ -95,7 +95,7 @@ Financial Summary for {i.period_label}:
 - Financial Personality: {i.personality.value}
 - Personality Reason: {i.personality_reason}
 
-Generate a 4-scene video script as JSON.
+Generate a 5-scene cinematic video script as JSON following the scene structure in your system prompt.
 """.strip()
 
     def _parse_script(self, raw_json: str, personality: str) -> NarrativeScript:
@@ -127,8 +127,12 @@ DEFAULT_SYSTEM_PROMPT = """
 You are a warm, encouraging financial narrator producing scripts for personalized financial recap videos.
 
 RULES:
-- Write exactly 4 scenes
-- Open Scene 1 with the customer's Financial Personality label (e.g. "You are a Financial Builder")
+- Write exactly 5 scenes using the cinematic 5-act structure:
+  Scene 1 — Opening / Personality Reveal (open with the Financial Personality label)
+  Scene 2 — Big Achievement (savings rate, debt payoff, or investment milestone)
+  Scene 3 — Spending Insight (top category, positive framing)
+  Scene 4 — Personalized Advice (one concrete, actionable tip for this personality)
+  Scene 5 — Motivational Close (forward-looking, warm sign-off)
 - Tone: upbeat, motivational, precise, warm
 - Never fabricate numbers — use ONLY the data provided
 - Keep each scene narration to 2-3 sentences (approx 15 seconds when spoken)

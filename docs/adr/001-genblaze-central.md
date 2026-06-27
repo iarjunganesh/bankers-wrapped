@@ -17,3 +17,4 @@ Two provider types in use:
 - Single abstraction boundary for all media generation; provider swaps require only config changes
 - SHA-256 provenance manifest on every image run via `genblaze-core`
 - OpenAI TTS wrapped inside GenblazeClient satisfies the "two provider types" scoring criterion
+- Retry logic (3× exponential backoff via `tenacity`) lives inside `GenblazeClient` — callers are always retry-transparent; `ImageResult.retry_count` and `AudioResult.retry_count` expose telemetry for `generation.json`

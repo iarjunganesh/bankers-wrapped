@@ -1,9 +1,85 @@
 # Changelog
 
+<!-- markdownlint-disable MD024 -->
+
 All notable changes to Banker's Wrapped are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: [SemVer](https://semver.org/)
 
 ## [Unreleased]
+
+---
+
+## [1.4.0] — 2026-06-28
+
+### Added
+
+- **Full asset manifest** — B2 now stores 10 artifact types per session: `analytics.json` (financial insights snapshot), `prompts.json` (image prompts + SHA-256 hashes per scene), `generation.json` (model, provider, latency\_ms, retry\_count per pipeline step), `thumbnail.png` (scene 0 reused as preview image)
+- **Tenacity retry** — all Genblaze media calls (`generate_scene_image`, `generate_narration_audio`) wrapped with 3-attempt exponential backoff (2–30 s). `retry_count` and `latency_ms` tracked in `ImageResult` / `AudioResult`
+- **5-scene cinematic narrative** — `NarrativeAgent` now requests a 5-act script: Opening / Personality Reveal → Big Achievement → Spending Insight → Personalized Advice → Motivational Close
+- **FFmpeg xfade transitions** — `FFmpegComposer` rewritten to `filter_complex` pipeline: 0.5 s crossfade between every scene pair + global 0.5 s fade-in / fade-out
+- **SSE stages** `composing_video` and `uploading_to_b2` added; emitted from `MediaAgent` via `progress_callback` (7 stages total)
+- **Download ZIP endpoint** — `GET /api/v1/recap/{session_id}/download` streams an in-memory ZIP containing all B2 artifacts for the session
+- `thumbnail_url` field added to `RecapResponse` and stored in session metadata
+- `B2Client.download_bytes()` — reads an object body from B2 (used by ZIP endpoint)
+- Frontend: thumbnail image on main and share pages, "Download full package" ZIP button, full B2 key paths per artifact, 7-step SSE progress bar, scene + artifact count in footer
+- 93 tests, 93% coverage (gate: 80%)
+
+### Changed
+
+- `NarrativeAgent` user prompt updated to request 5-scene JSON
+- `MediaAgent.__init__` now accepts optional `progress_callback: Callable[[str, str], None]`
+- `MediaAgentInput` gains optional `analytics_output: AnalyticsAgentOutput | None = None`
+- `MediaAgentOutput` gains `thumbnail_url: str`
+- `FFmpegComposer.compose()` uses single `-filter_complex` command (replaces concat demuxer)
+
+---
+
+## [1.3.0] — 2026-06-26
+
+### Added
+
+- `GET /api/v1/recap/{session_id}` — public share endpoint; returns full `RecapResponse` from session store
+- Public share page at `/recap/[session_id]` — personality badge, stats, video player, B2 artifact list, copy link, CTA
+
+### Changed
+
+- README: project structure, pipeline timing table corrected to ~210 s from prod logs, narration row added
+- SUBMISSION.md: share page step added to demo script
+- CLAUDE.md: Phase 2 marked complete; all API endpoints documented
+
+### Fixed
+
+- ADR-001 updated to document both provider types (images + audio)
+
+---
+
+## [1.2.1] — 2026-06-26
+
+### Fixed
+
+- Dockerfile: removed `startCommand` from `railway.json`; fixed `$PORT` shell expansion in `CMD`
+- Docker layer cache: `COPY README.md` moved before `uv sync` to avoid hatchling build error
+
+---
+
+## [1.2.0] — 2026-06-26
+
+### Added
+
+- **Voice narration** — `GenblazeClient.generate_narration_audio()` wraps OpenAI TTS (tts-1, alloy); MediaAgent joins all scene text, generates `narration.mp3`, uploads to B2, passes `audio_path` to FFmpeg
+- **SSE pipeline progress** — `SessionStore.append_event` / `get_events` (JSON `events` column, auto-migrated); `GET /api/v1/recap/{session_id}/progress` streams `text/event-stream` at 500 ms poll; 5 stages: `parsing → analyzing → scripting → generating_images → uploading`
+- `X-Session-ID` header on POST response so frontend can subscribe to SSE before pipeline returns
+- Frontend: live step-by-step SSE progress list (✅ done / ⏳ active / ○ pending); personality badges with per-theme CSS variables; drag-and-drop upload, demo dataset button, video player, B2 artifact panel
+- **Rate limiting** — `slowapi`: 5 uploads/hour per IP (disabled in tests via `limiter.enabled = False`)
+- **Binary CSV validation** — magic-byte check rejects PNG/JPEG/GIF/ZIP/PDF even with `.csv` extension
+- Coverage gate raised 70% → 80%
+- Dockerfile, `railway.json`, `render.yaml`, `vercel.json` — production deployment configs
+- `scripts/start_demo.sh` / `stop_demo.sh` (Bash) for Railway + Vercel local preview
+
+### Changed
+
+- `FFmpegComposer.compose()` signature: `audio_path` parameter now used (was ignored)
+- Session metadata: `insights` + `processing_time_ms` stored on complete
 
 ---
 
