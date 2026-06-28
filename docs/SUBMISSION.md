@@ -36,7 +36,7 @@
 {user_id}/{session_id}/pipeline/generation.json        ← model, latency, retry per step
 {user_id}/{session_id}/pipeline/thumbnail.png          ← scene 0 preview image
 {user_id}/{session_id}/pipeline/narration.mp3          ← OpenAI TTS via GenblazeClient
-{user_id}/{session_id}/pipeline/scenes/scene_00.png … scene_04.png
+{user_id}/{session_id}/pipeline/scenes/scene_00.jpg … scene_04.jpg
 {user_id}/{session_id}/output/recap_{session_id}.mp4
 {user_id}/{session_id}/metadata/session_metadata.json
 ```
@@ -47,7 +47,7 @@
 
 1. Open `https://bankers-wrapped.vercel.app`
 2. Upload `data/synthetic/transactions_jan_2026.csv` (Financial Builder personality)
-3. Show the **live 7-step SSE progress** while the 4-agent pipeline runs *(jump-cut the ~4 min generation wait)*
+3. Show the **live 12-step SSE progress** while the 4-agent pipeline runs — per-step latency visible next to each completed stage *(jump-cut the ~4 min generation wait)*
 4. Play the generated **narrated MP4 recap video** (H.264 + AAC, xfade transitions, OpenAI TTS voice)
 5. Click **"Share your recap →"** — open the public share page at `/recap/{session_id}` showing thumbnail + artifact list
 6. Click **"Download full package"** — show the ZIP download of all 10 B2 artifacts

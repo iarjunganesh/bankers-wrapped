@@ -132,47 +132,65 @@ export default function Home() {
     setStage("uploading");
     setError("");
     setProgressEvents([]);
+    setPipelineStartTime(null);
+    setElapsedS(0);
 
     const sessionId = crypto.randomUUID();
 
     sseRef.current?.close();
     const sse = new EventSource(`${API_URL}/api/v1/recap/${sessionId}/progress`);
     sseRef.current = sse;
-    sse.onmessage = (e) => {
+
+    sse.onmessage = async (e) => {
       try {
         const ev: ProgressEvent = JSON.parse(e.data as string);
-        setProgressEvents((prev) => [...prev, ev]);
+        // Deduplicate by event key (handles SSE reconnects)
+        setProgressEvents((prev) =>
+          prev.some((p) => p.event === ev.event) ? prev : [...prev, ev]
+        );
+
+        if (ev.event === "complete") {
+          sse.close();
+          sseRef.current = null;
+          try {
+            const r = await fetch(`${API_URL}/api/v1/recap/${sessionId}`);
+            if (!r.ok) throw new Error("Failed to load recap result");
+            const data = await r.json() as RecapResult;
+            setResult(data);
+            setStage("done");
+          } catch (fetchErr) {
+            setError(fetchErr instanceof Error ? fetchErr.message : "Failed to load result");
+            setStage("error");
+          }
+        } else if (ev.event === "failed") {
+          sse.close();
+          sseRef.current = null;
+          setError(ev.detail || "Pipeline failed. Please try again.");
+          setStage("error");
+        }
       } catch { /* ignore malformed events */ }
     };
+
     sse.onerror = () => sse.close();
 
     const form = new FormData();
     form.append("file", file);
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 300_000);
 
     try {
       setStage("processing");
       const res = await fetch(`${API_URL}/api/v1/recap/generate`, {
         method: "POST",
         body: form,
-        signal: controller.signal,
         headers: { "X-Session-ID": sessionId },
       });
-      clearTimeout(timeout);
-      sse.close();
 
       if (!res.ok) {
         const data = await res.json() as { detail?: string };
-        throw new Error(data.detail ?? "Pipeline failed");
+        sse.close();
+        throw new Error(data.detail ?? "Upload failed");
       }
-
-      const data = await res.json() as RecapResult;
-      setResult(data);
-      setStage("done");
+      // 202 Accepted — pipeline runs in background; SSE delivers progress + final result
     } catch (err: unknown) {
-      clearTimeout(timeout);
       sse.close();
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
       setStage("error");
@@ -235,6 +253,11 @@ export default function Home() {
     if (first && first.event !== step.key) return fmtDuration(ev.ts - first.ts);
     return null;
   };
+
+  // Timestamp of the most-recently-completed step — used as start of the active step's timer
+  const lastCompletedTs = progressEvents.length > 0
+    ? progressEvents[progressEvents.length - 1].ts
+    : null;
 
   const themeClass = result ? (PERSONALITY_CLASS[result.insights.personality] ?? "") : "";
   const sceneCount = result
@@ -299,6 +322,10 @@ export default function Home() {
                 const done     = completedKeys.has(step.key);
                 const active   = i === currentIdx + 1 && !done;
                 const duration = done ? getStepDuration(step, i) : null;
+                // Live elapsed timer for the active step — recalculates every second via elapsedS
+                const running  = (active && lastCompletedTs !== null)
+                  ? fmtDuration(Math.max(0, Date.now() / 1000 - lastCompletedTs))
+                  : null;
                 return (
                   <div key={step.key} className="bw-step-row">
                     <span className={`bw-step-icon ${done ? "bw-step-done" : active ? "bw-step-active" : "bw-step-idle"}`}>
@@ -308,6 +335,7 @@ export default function Home() {
                       {step.label}
                     </span>
                     {duration && <span className="bw-step-duration">{duration}</span>}
+                    {running && !duration && <span className="bw-step-duration bw-step-running">{running}</span>}
                   </div>
                 );
               })}

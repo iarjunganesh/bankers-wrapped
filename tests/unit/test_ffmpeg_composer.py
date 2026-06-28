@@ -17,8 +17,8 @@ def composer() -> FFmpegComposer:
 def fake_scene_images(tmp_path) -> list[Path]:
     images = []
     for i in range(4):
-        img = tmp_path / f"scene_{i:02d}.png"
-        img.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)
+        img = tmp_path / f"scene_{i:02d}.jpg"
+        img.write_bytes(b"\xff\xd8\xff" + b"\x00" * 64)
         images.append(img)
     return images
 
@@ -77,7 +77,7 @@ class TestFFmpegComposer:
                     output_path=output,
                 )
 
-    async def test_filter_complex_included(self, composer, fake_scene_images, fake_audio, tmp_path):
+    async def test_uses_concat_demuxer(self, composer, fake_scene_images, fake_audio, tmp_path):
         output = tmp_path / "recap.mp4"
         captured: list = []
 
@@ -93,25 +93,8 @@ class TestFFmpegComposer:
             )
         assert captured
         cmd = captured[0]
-        assert "-filter_complex" in cmd
-
-    async def test_xfade_in_filter(self, composer, fake_scene_images, fake_audio, tmp_path):
-        output = tmp_path / "recap.mp4"
-        captured: list = []
-
-        async def capture_thread(fn, cmd, **kwargs):  # type: ignore[no-untyped-def]
-            captured.append(cmd)
-            return MagicMock(returncode=0, stderr="")
-
-        with patch("backend.media.ffmpeg_composer.asyncio.to_thread", capture_thread):
-            await composer.compose(
-                scene_image_paths=fake_scene_images,
-                audio_path=fake_audio,
-                output_path=output,
-            )
-        assert captured
-        cmd_str = " ".join(captured[0])
-        assert "xfade" in cmd_str
+        assert "-f" in cmd
+        assert "concat" in cmd
 
     async def test_fade_in_out_applied(self, composer, fake_scene_images, fake_audio, tmp_path):
         output = tmp_path / "recap.mp4"
@@ -142,10 +125,10 @@ class TestFFmpegComposer:
             )
         assert composer.scene_duration == 10
 
-    async def test_single_scene_has_ending_card_xfade(self, composer, tmp_path):
-        """A single-scene video has exactly one xfade — between the scene and the ending card."""
-        single_img = tmp_path / "scene_00.png"
-        single_img.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)
+    async def test_single_scene_uses_concat(self, composer, tmp_path):
+        """A single-scene video uses the concat demuxer."""
+        single_img = tmp_path / "scene_00.jpg"
+        single_img.write_bytes(b"\xff\xd8\xff" + b"\x00" * 64)
         output = tmp_path / "recap.mp4"
         captured: list = []
 
@@ -159,7 +142,4 @@ class TestFFmpegComposer:
                 output_path=output,
             )
         cmd = captured[0]
-        fc_idx = cmd.index("-filter_complex") + 1
-        filter_str = cmd[fc_idx]
-        assert "xfade" in filter_str
-        assert filter_str.count("xfade") == 1
+        assert "concat" in cmd

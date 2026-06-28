@@ -362,9 +362,9 @@ class TestMediaAgentAssetManifest:
         _, json_keys, _ = await self._run()
         assert "u/s/pipeline/generation.json" in json_keys
 
-    async def test_thumbnail_png_uploaded(self):
+    async def test_thumbnail_jpeg_uploaded(self):
         _, _, byte_types = await self._run()
-        assert "image/png" in byte_types
+        assert "image/jpeg" in byte_types
 
     async def test_thumbnail_url_returned(self):
         output, _, _ = await self._run()

@@ -14,7 +14,7 @@ make dev               # uvicorn on :8000
 
 ```bash
 make lint   # ruff + mypy must pass
-make test   # pytest ≥70% coverage gate must pass
+make test   # pytest ≥80% coverage gate must pass
 ```
 
 ## Key Constraints

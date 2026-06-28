@@ -16,5 +16,36 @@
       "Bash(curl -X GET http://localhost*)",
       "Bash(curl -X POST http://localhost*)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git push*)",
+            "shell": "bash",
+            "command": "uv run ruff check .; R1=$?; uv run mypy backend/; R2=$?; uv run pytest tests/ -q 2>&1; R3=$?; if [ $R1 -ne 0 ] || [ $R2 -ne 0 ] || [ $R3 -ne 0 ]; then echo '{\"continue\":false,\"stopReason\":\"Quality gate failed — fix errors above, then retry.\"}'; exit 2; fi",
+            "timeout": 180,
+            "statusMessage": "Running quality gate: lint + types + tests..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "FILE=$(tr \",\" \"\\n\" | grep file_path | grep -oE \"[a-zA-Z0-9._/-]+.py\" | head -1); case \"$FILE\" in *.py) uv run ruff check --fix \"$FILE\" 2>/dev/null; true;; esac",
+            "statusMessage": "Auto-fixing Python imports...",
+            "async": true
+          }
+        ]
+      }
+    ]
   }
 }

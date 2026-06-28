@@ -63,7 +63,7 @@ class TestB2Client:
 
     def test_scene_key_format(self):
         key = B2Client.scene_key("user1", "sess1", 3)
-        assert key == "user1/sess1/pipeline/scenes/scene_03.png"
+        assert key == "user1/sess1/pipeline/scenes/scene_03.jpg"
 
     def test_output_key_format(self):
         key = B2Client.output_key("user1", "sess1")

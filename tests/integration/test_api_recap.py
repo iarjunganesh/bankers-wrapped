@@ -1,4 +1,4 @@
-"""Integration tests for POST /api/v1/recap/generate endpoint."""
+"""Integration tests for the recap API endpoints."""
 
 import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -41,7 +41,7 @@ class TestRecapEndpoint:
         )
         assert response.status_code == 422
 
-    def test_generate_returns_session_id(self, api_client):
+    def test_generate_returns_202_with_session_id(self, api_client):
         with (
             patch("backend.api.v1.recap.NarrativeAgent") as MockNarrative,
             patch("backend.api.v1.recap.MediaAgent") as MockMedia,
@@ -54,12 +54,13 @@ class TestRecapEndpoint:
                 files={"file": ("jan.csv", SYNTHETIC_CSV, "text/csv")},
             )
 
-        assert response.status_code == 200
+        assert response.status_code == 202
         data = response.json()
         assert "session_id" in data
         assert len(data["session_id"]) == 36  # UUID format
 
-    def test_generate_returns_video_url(self, api_client):
+    def test_generate_result_available_via_get(self, api_client):
+        """After 202, the GET endpoint returns the completed recap."""
         with (
             patch("backend.api.v1.recap.NarrativeAgent") as MockNarrative,
             patch("backend.api.v1.recap.MediaAgent") as MockMedia,
@@ -67,15 +68,22 @@ class TestRecapEndpoint:
             _setup_narrative_mock(MockNarrative)
             _setup_media_mock(MockMedia)
 
-            response = api_client.post(
+            post_resp = api_client.post(
                 "/api/v1/recap/generate",
                 files={"file": ("jan.csv", SYNTHETIC_CSV, "text/csv")},
             )
 
-        assert response.status_code == 200
-        assert response.json()["video_url"].startswith("https://")
+        assert post_resp.status_code == 202
+        session_id = post_resp.json()["session_id"]
 
-    def test_generate_returns_thumbnail_url(self, api_client):
+        get_resp = api_client.get(f"/api/v1/recap/{session_id}")
+        assert get_resp.status_code == 200
+        data = get_resp.json()
+        assert data["video_url"].startswith("https://")
+        assert data["thumbnail_url"].startswith("https://")
+        assert isinstance(data["b2_keys"], dict)
+
+    def test_generate_result_has_insights(self, api_client):
         with (
             patch("backend.api.v1.recap.NarrativeAgent") as MockNarrative,
             patch("backend.api.v1.recap.MediaAgent") as MockMedia,
@@ -83,28 +91,14 @@ class TestRecapEndpoint:
             _setup_narrative_mock(MockNarrative)
             _setup_media_mock(MockMedia)
 
-            response = api_client.post(
+            post_resp = api_client.post(
                 "/api/v1/recap/generate",
                 files={"file": ("jan.csv", SYNTHETIC_CSV, "text/csv")},
             )
 
-        assert response.status_code == 200
-        assert response.json()["thumbnail_url"].startswith("https://")
-
-    def test_generate_returns_insights(self, api_client):
-        with (
-            patch("backend.api.v1.recap.NarrativeAgent") as MockNarrative,
-            patch("backend.api.v1.recap.MediaAgent") as MockMedia,
-        ):
-            _setup_narrative_mock(MockNarrative)
-            _setup_media_mock(MockMedia)
-
-            response = api_client.post(
-                "/api/v1/recap/generate",
-                files={"file": ("jan.csv", SYNTHETIC_CSV, "text/csv")},
-            )
-
-        insights = response.json()["insights"]
+        session_id = post_resp.json()["session_id"]
+        get_resp = api_client.get(f"/api/v1/recap/{session_id}")
+        insights = get_resp.json()["insights"]
         assert "period_label" in insights
         assert "personality" in insights
         assert insights["personality"] in [
@@ -114,28 +108,11 @@ class TestRecapEndpoint:
             "Financial Achiever",
         ]
 
-    def test_generate_returns_b2_keys(self, api_client):
-        with (
-            patch("backend.api.v1.recap.NarrativeAgent") as MockNarrative,
-            patch("backend.api.v1.recap.MediaAgent") as MockMedia,
-        ):
-            _setup_narrative_mock(MockNarrative)
-            _setup_media_mock(MockMedia)
-
-            response = api_client.post(
-                "/api/v1/recap/generate",
-                files={"file": ("jan.csv", SYNTHETIC_CSV, "text/csv")},
-            )
-
-        b2_keys = response.json()["b2_keys"]
-        assert isinstance(b2_keys, dict)
-
     def test_download_zip_returns_404_for_unknown_session(self, api_client):
         response = api_client.get("/api/v1/recap/no-such-session/download")
         assert response.status_code == 404
 
     def test_download_zip_returns_zip_for_complete_session(self, api_client):
-        """Create a session, mark it complete, then verify the download endpoint responds."""
         store = get_session_store()
         sid = str(uuid.uuid4())
         store.create(sid, "test-user")

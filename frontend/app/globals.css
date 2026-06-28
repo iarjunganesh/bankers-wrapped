@@ -100,6 +100,7 @@ body { margin: 0; padding: 0; }
 .bw-step-icon        { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
 .bw-step-label       { font-size: 13px; }
 .bw-step-duration    { margin-left: auto; font-size: 11px; color: #555; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.bw-step-running     { color: #F59E0B; font-style: italic; }
 
 .bw-step-done   { color: #34d399; }
 .bw-step-active { color: #6366f1; }

@@ -86,7 +86,7 @@ class B2Client:
 
     @staticmethod
     def scene_key(user_id: str, session_id: str, scene_id: int) -> str:
-        return f"{user_id}/{session_id}/pipeline/scenes/scene_{scene_id:02d}.png"
+        return f"{user_id}/{session_id}/pipeline/scenes/scene_{scene_id:02d}.jpg"
 
     @staticmethod
     def output_key(user_id: str, session_id: str) -> str:

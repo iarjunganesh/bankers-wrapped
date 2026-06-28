@@ -1,10 +1,7 @@
 """
-POST /api/v1/recap/generate
-GET  /api/v1/recap/{session_id}
-GET  /api/v1/recap/{session_id}/download
-
-Accepts a CSV upload, runs the full 4-agent pipeline, and returns
-the presigned B2 URL for the generated recap video.
+POST /api/v1/recap/generate  — accepts upload, starts pipeline as background task, returns 202
+GET  /api/v1/recap/{session_id}  — fetch completed recap (used by share page + frontend after SSE complete)
+GET  /api/v1/recap/{session_id}/download  — stream ZIP of all B2 artifacts
 """
 
 from __future__ import annotations
@@ -17,7 +14,16 @@ from pathlib import Path
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends, File, Header, HTTPException, Request, UploadFile
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Header,
+    HTTPException,
+    Request,
+    UploadFile,
+)
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -31,13 +37,12 @@ from backend.media.genblaze_client import GenblazeClient
 from backend.storage.b2_client import B2Client
 from backend.storage.session_store import SessionStore
 
-# Bytes that indicate a file is binary (not a text CSV)
 _BINARY_MAGIC = [
-    b"\x89PNG",  # PNG
-    b"\xff\xd8\xff",  # JPEG
-    b"GIF8",  # GIF
-    b"PK\x03\x04",  # ZIP/XLSX
-    b"%PDF",  # PDF
+    b"\x89PNG",
+    b"\xff\xd8\xff",
+    b"GIF8",
+    b"PK\x03\x04",
+    b"%PDF",
 ]
 
 log = structlog.get_logger()
@@ -53,6 +58,11 @@ def get_session_store() -> SessionStore:
 
 
 # ── Response schemas ──────────────────────────────────────────────────────────
+
+
+class AcceptedResponse(BaseModel):
+    session_id: str
+
 
 class CategorySpendResponse(BaseModel):
     category: str
@@ -84,6 +94,7 @@ class RecapResponse(BaseModel):
 
 # ── Dependencies ──────────────────────────────────────────────────────────────
 
+
 def get_b2(settings: Settings = Depends(get_settings)) -> B2Client:
     return B2Client(
         endpoint_url=settings.b2_endpoint_url,
@@ -105,84 +116,56 @@ def get_genblaze(settings: Settings = Depends(get_settings)) -> GenblazeClient:
     )
 
 
-# ── Endpoint ──────────────────────────────────────────────────────────────────
+# ── Background pipeline ───────────────────────────────────────────────────────
 
-@router.post("/generate", response_model=RecapResponse)
-@limiter.limit("5/hour")
-async def generate_recap(
-    request: Request,
-    file: Annotated[UploadFile, File(description="CSV transaction export")],
-    settings: Settings = Depends(get_settings),
-    b2: B2Client = Depends(get_b2),
-    genblaze: GenblazeClient = Depends(get_genblaze),
-    store: SessionStore = Depends(get_session_store),
-    x_session_id: str | None = Header(None),
-) -> RecapResponse:
-    """
-    Run the full Banker's Wrapped pipeline:
-      Document Agent → Analytics Agent → Narrative Agent → Media Agent
 
-    Returns the presigned Backblaze B2 URL for the generated recap.mp4.
-    """
-    if not file.filename or not file.filename.endswith(".csv"):
-        raise HTTPException(status_code=422, detail="File must be a .csv")
-    safe_filename = os.path.basename(file.filename)
-
-    csv_bytes = await file.read()
-    if len(csv_bytes) == 0:
-        raise HTTPException(status_code=422, detail="Uploaded file is empty")
-    if len(csv_bytes) > MAX_CSV_SIZE_BYTES:
-        raise HTTPException(status_code=413, detail="File exceeds 5 MB limit")
-    if any(csv_bytes.startswith(magic) for magic in _BINARY_MAGIC):
-        raise HTTPException(status_code=422, detail="File does not appear to be a CSV")
-
-    session_id = x_session_id or str(uuid.uuid4())
-    user_id = str(uuid.uuid4())  # Anonymous user — no auth required for MVP
-
-    store.create(session_id, user_id)
-    store.set_processing(session_id)
-
-    log.info("recap.generate.start", session_id=session_id, filename=safe_filename)
-
+async def _run_pipeline(
+    session_id: str,
+    user_id: str,
+    csv_bytes: bytes,
+    safe_filename: str,
+    settings: Settings,
+    b2: B2Client,
+    genblaze: GenblazeClient,
+    store: SessionStore,
+) -> None:
+    """Full 4-agent pipeline — runs as a background task after 202 is returned."""
     try:
-        # ── Agent 1: Document Intelligence ───────────────────────────────────
         store.append_event(session_id, "parsing", f"Parsing {safe_filename}")
         doc_agent = DocumentAgent()
-        doc_output = await doc_agent(DocumentAgentInput(
-            csv_bytes=csv_bytes,
-            filename=safe_filename,
-        ))
+        doc_output = await doc_agent(
+            DocumentAgentInput(
+                csv_bytes=csv_bytes,
+                filename=safe_filename,
+            )
+        )
 
-        # ── Agent 2: Financial Analytics + Personality ───────────────────────
         store.append_event(session_id, "analyzing", "Calculating insights")
         analytics_agent = AnalyticsAgent()
         analytics_output = await analytics_agent(doc_output)
 
-        # ── Agent 3: Narrative Generation ────────────────────────────────────
         store.append_event(session_id, "scripting", "Writing narrative script")
         narrative_agent = NarrativeAgent(settings)
         narrative_output = await narrative_agent(analytics_output)
 
-        # ── Agent 4: Media (Voice + Images + FFmpeg + B2) ────────────────────
         store.append_event(session_id, "generating_images", "Generating scene images + narration")
 
         def _on_media_progress(event: str, detail: str) -> None:
             store.append_event(session_id, event, detail)
 
-        media_agent = MediaAgent(
-            settings, genblaze, b2, progress_callback=_on_media_progress
+        media_agent = MediaAgent(settings, genblaze, b2, progress_callback=_on_media_progress)
+        media_output = await media_agent(
+            MediaAgentInput(
+                script_output=narrative_output,
+                analytics_output=analytics_output,
+                session_id=session_id,
+                user_id=user_id,
+                csv_bytes=csv_bytes,
+                input_hash=doc_output.input_hash,
+                input_filename=safe_filename,
+            )
         )
-        media_output = await media_agent(MediaAgentInput(
-            script_output=narrative_output,
-            analytics_output=analytics_output,
-            session_id=session_id,
-            user_id=user_id,
-            csv_bytes=csv_bytes,
-            input_hash=doc_output.input_hash,
-            input_filename=safe_filename,
-        ))
 
-        # ── Persist session ──────────────────────────────────────────────────
         store.append_event(session_id, "uploading", "Uploading to Backblaze B2")
         insights = analytics_output.insights
         insights_summary = InsightsSummary(
@@ -192,8 +175,7 @@ async def generate_recap(
             savings_amount=insights.savings_amount,
             savings_rate=insights.savings_rate,
             top_categories=[
-                CategorySpendResponse(**c.model_dump())
-                for c in insights.top_categories
+                CategorySpendResponse(**c.model_dump()) for c in insights.top_categories
             ],
             achievements=insights.achievements,
             personality=insights.personality.value,
@@ -211,15 +193,6 @@ async def generate_recap(
             },
         )
 
-        response = RecapResponse(
-            session_id=session_id,
-            video_url=media_output.video_url,
-            thumbnail_url=media_output.thumbnail_url,
-            b2_keys=media_output.b2_keys,
-            insights=insights_summary,
-            processing_time_ms=media_output.metadata.processing_time_ms,
-        )
-
         log.info(
             "recap.generate.complete",
             session_id=session_id,
@@ -228,12 +201,65 @@ async def generate_recap(
             artifacts=len(media_output.b2_keys),
         )
 
-        return response
-
     except Exception as exc:
         store.set_failed(session_id, str(exc))
         log.error("recap.generate.failed", session_id=session_id, error=str(exc), exc_info=True)
-        raise HTTPException(status_code=500, detail="Pipeline processing failed. Please try again.") from exc
+
+
+# ── Endpoints ─────────────────────────────────────────────────────────────────
+
+
+@router.post("/generate", response_model=AcceptedResponse, status_code=202)
+@limiter.limit("5/hour")
+async def generate_recap(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    file: Annotated[UploadFile, File(description="CSV transaction export")],
+    settings: Settings = Depends(get_settings),
+    b2: B2Client = Depends(get_b2),
+    genblaze: GenblazeClient = Depends(get_genblaze),
+    store: SessionStore = Depends(get_session_store),
+    x_session_id: str | None = Header(None),
+) -> AcceptedResponse:
+    """
+    Validate the CSV and start the 4-agent pipeline as a background task.
+    Returns 202 Accepted immediately with the session_id.
+    Progress is streamed via GET /api/v1/recap/{session_id}/progress (SSE).
+    The completed recap is available at GET /api/v1/recap/{session_id}.
+    """
+    if not file.filename or not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=422, detail="File must be a .csv")
+    safe_filename = os.path.basename(file.filename)
+
+    csv_bytes = await file.read()
+    if len(csv_bytes) == 0:
+        raise HTTPException(status_code=422, detail="Uploaded file is empty")
+    if len(csv_bytes) > MAX_CSV_SIZE_BYTES:
+        raise HTTPException(status_code=413, detail="File exceeds 5 MB limit")
+    if any(csv_bytes.startswith(magic) for magic in _BINARY_MAGIC):
+        raise HTTPException(status_code=422, detail="File does not appear to be a CSV")
+
+    session_id = x_session_id or str(uuid.uuid4())
+    user_id = str(uuid.uuid4())
+
+    store.create(session_id, user_id)
+    store.set_processing(session_id)
+
+    log.info("recap.generate.start", session_id=session_id, filename=safe_filename)
+
+    background_tasks.add_task(
+        _run_pipeline,
+        session_id=session_id,
+        user_id=user_id,
+        csv_bytes=csv_bytes,
+        safe_filename=safe_filename,
+        settings=settings,
+        b2=b2,
+        genblaze=genblaze,
+        store=store,
+    )
+
+    return AcceptedResponse(session_id=session_id)
 
 
 @router.get("/{session_id}", response_model=RecapResponse)
@@ -241,7 +267,7 @@ async def get_recap(
     session_id: str,
     store: SessionStore = Depends(get_session_store),
 ) -> RecapResponse:
-    """Fetch a completed recap by session ID — used by the share page."""
+    """Fetch a completed recap by session ID — used by the share page and frontend."""
     session = store.get(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Recap not found")
@@ -268,13 +294,7 @@ async def download_recap_zip(
     store: SessionStore = Depends(get_session_store),
     b2: B2Client = Depends(get_b2),
 ) -> StreamingResponse:
-    """
-    Download all recap artifacts as a ZIP package.
-
-    The ZIP contains the video, thumbnail, scene images, narration audio,
-    narrative script, analytics, generation provenance, and prompt manifest.
-    Ideal for judges and users who want the complete media package.
-    """
+    """Download all recap artifacts as a ZIP package."""
     session = store.get(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Recap not found")

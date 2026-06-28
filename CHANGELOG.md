@@ -9,6 +9,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ---
 
+## [1.5.0] — 2026-06-28
+
+### Fixed
+
+- **FFmpeg 0-frame bug (root cause of 500 on Railway)** — `n_total = n + 1` without a matching lavfi input caused xfade to reference non-existent `[v5]`; added branded ending card (dark overlay + `drawtext` title) as the 6th input.
+- **Dockerfile** — added `fonts-liberation` so `drawtext` finds a system font on Debian slim.
+- **SSE race condition** (`progress.py`) — frontend opens SSE before the POST creates the session; previously returned 404 immediately ("spinner hangs forever"). Now polls up to 10 s for session creation.
+- **SSE final event `ts: 0`** — terminal event now uses `time.time()` so per-step duration is correct for the last stage.
+- **Demo button** — `fetch("/data/synthetic/…")` now has `ok` check + `.catch()` to surface errors visibly instead of silently sending a garbage blob.
+
+### Added
+
+- **Per-step latency** (`page.tsx` + `globals.css`) — each completed step shows elapsed time (e.g. `44.4s`, `1m 4s`) from consecutive SSE timestamps. Steps container widened to 360 px; `.bw-step-duration` class added.
+- **`FFMPEG_BIN` config** (`config.py` + `media_agent.py`) — override FFmpeg binary path via env var without rebuilding.
+- **README Interactive Demo Notebook section** — scenario table + quickstart added before "What Is This?" so it's the first thing judges see.
+
+---
+
 ## [1.4.0] — 2026-06-28
 
 ### Added

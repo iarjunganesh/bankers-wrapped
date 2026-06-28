@@ -6,7 +6,7 @@ AI-powered financial storytelling platform entered in the **Backblaze Generative
 
 Upload a CSV → 4-agent pipeline → personalized narrated MP4 recap video stored on Backblaze B2.
 
-**Current phase**: Phase 3 complete — full asset manifest, retry logic, xfade video transitions, 5-scene narrative, download ZIP, and complete SSE stages. Remaining work: demo video (≤3 min) + Devpost form submission.
+**Current phase**: v1.5.0 — FFmpeg ending card (fixed 0-frame bug), SSE race condition fixed, per-step latency in UI, `FFMPEG_BIN` config, README notebook section. Remaining work: demo video (≤3 min) + Devpost form submission + seed Scenario C session ID in notebook.
 
 ## Key Commands
 
@@ -64,7 +64,7 @@ OpenAI TTS is wrapped inside `GenblazeClient.generate_narration_audio()` — no 
 {user_id}/{session_id}/pipeline/generation.json      ← model, provider, latency, retry per step
 {user_id}/{session_id}/pipeline/narration.mp3
 {user_id}/{session_id}/pipeline/thumbnail.png        ← scene 0 used as recap preview
-{user_id}/{session_id}/pipeline/scenes/scene_00.png … scene_04.png
+{user_id}/{session_id}/pipeline/scenes/scene_00.jpg … scene_04.jpg
 {user_id}/{session_id}/output/recap_{session_id}.mp4
 {user_id}/{session_id}/metadata/session_metadata.json
 ```
@@ -83,10 +83,11 @@ OpenAI TTS is wrapped inside `GenblazeClient.generate_narration_audio()` — no 
 ## SSE Progress Endpoint
 
 `GET /api/v1/recap/{session_id}/progress` — Server-Sent Events stream.  
-Events emitted (in order):
-`parsing` → `analyzing` → `scripting` → `generating_images` → **`composing_video`** → **`uploading_to_b2`** → `uploading` → `complete` / `failed`
+Events emitted (in order, 12 steps + terminal):
+`parsing` → `analyzing` → `scripting` → `generating_images` → `scene_0_done` … `scene_4_done` → **`composing_video`** → **`uploading_to_b2`** → `uploading` → `complete` / `failed`
 
-`composing_video` and `uploading_to_b2` are emitted from inside `MediaAgent` via `progress_callback`.
+`composing_video` and `uploading_to_b2` are emitted from inside `MediaAgent` via `progress_callback`.  
+The endpoint waits up to 10 s for the session to be created (SSE race-condition fix). Each event carries a real `ts` (Unix timestamp) used by the frontend to calculate per-step latency.
 
 ## API Endpoints
 

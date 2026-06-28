@@ -135,18 +135,18 @@ class MediaAgent(BaseAgent):
 
             scene_image_paths: list[Path] = []
             for idx, image_result in enumerate(image_results):
-                img_path = tmp / f"scene_{idx:02d}.png"
+                img_path = tmp / f"scene_{idx:02d}.jpg"
                 img_path.write_bytes(image_result.image_bytes)
                 scene_image_paths.append(img_path)
 
                 scene_key = B2Client.scene_key(user_id, session_id, idx)
-                self.b2.upload_bytes(scene_key, image_result.image_bytes, "image/png")
+                self.b2.upload_bytes(scene_key, image_result.image_bytes, "image/jpeg")
                 b2_keys[f"scene_{idx}"] = scene_key
 
             # ── 5. Upload thumbnail (scene 0) to B2 pipeline/ ──────────────
             thumbnail_key = B2Client.thumbnail_key(user_id, session_id)
             self.b2.upload_bytes(
-                thumbnail_key, image_results[0].image_bytes, "image/png"
+                thumbnail_key, image_results[0].image_bytes, "image/jpeg"
             )
             b2_keys["thumbnail"] = thumbnail_key
             thumbnail_url = self.b2.presigned_url(thumbnail_key)
