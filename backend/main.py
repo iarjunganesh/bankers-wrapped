@@ -29,6 +29,15 @@ from backend.config import get_settings
 # land in a single backend.log regardless of which stream they originate from.
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, force=True)
 
+# Uvicorn installs its own handlers on these loggers that write to STDERR, which
+# makes Railway tag normal startup/access lines (e.g. "Started server process",
+# "Application startup complete") as severity=error. Clear those handlers and let
+# the records propagate to the root logger (stdout) so all logs are uniformly info.
+for _uvicorn_logger in ("uvicorn", "uvicorn.error", "uvicorn.access"):
+    _lg = logging.getLogger(_uvicorn_logger)
+    _lg.handlers.clear()
+    _lg.propagate = True
+
 structlog.configure(
     processors=[
         structlog.contextvars.merge_contextvars,
