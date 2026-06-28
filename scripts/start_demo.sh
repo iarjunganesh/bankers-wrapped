@@ -10,6 +10,17 @@ mkdir -p "$LOGS"
 
 # ── Resolve tool paths ───────────────────────────────────────────────────────
 UV=$(command -v uv 2>/dev/null || true)
+
+# On Windows/Git Bash, uv may live in LOCALAPPDATA or USERPROFILE but not bash PATH
+if [ -z "$UV" ] && [ -n "${LOCALAPPDATA:-}" ]; then
+    WIN_UV=$(find "$LOCALAPPDATA/uv" -name "uv.exe" 2>/dev/null | head -1 || true)
+    [ -n "$WIN_UV" ] && UV="$WIN_UV"
+fi
+if [ -z "$UV" ] && [ -n "${USERPROFILE:-}" ]; then
+    WIN_UV=$(find "$USERPROFILE/.cargo/bin" -name "uv.exe" 2>/dev/null | head -1 || true)
+    [ -n "$WIN_UV" ] && UV="$WIN_UV"
+fi
+
 POETRY=$(command -v poetry 2>/dev/null || true)
 
 if [ -z "$UV" ] && [ -z "$POETRY" ]; then

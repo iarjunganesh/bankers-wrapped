@@ -28,6 +28,29 @@
 
 ---
 
+## Interactive Demo Notebook
+
+[![Open in Jupyter](https://img.shields.io/badge/Demo-Jupyter%20Notebook-F37626?logo=jupyter&logoColor=white)](notebooks/DEMO_RUNBOOK.ipynb)
+
+**[`notebooks/DEMO_RUNBOOK.ipynb`](notebooks/DEMO_RUNBOOK.ipynb)** — a self-contained interactive walkthrough of the full pipeline. No frontend, no local backend required. Just set your API keys and run against the live Railway deployment.
+
+| Scenario | API cost | Time | What you'll see |
+| --- | --- | --- | --- |
+| **A — Financial Builder** (Jan 2026) | LLM + 5 images + TTS | ~4 min | Full end-to-end run · amber personality · 5-scene video |
+| **B — Financial Explorer** (Q4 2025) | LLM + 5 images + TTS | ~4 min | Second personality type · teal theme · 39-transaction dataset |
+| **C — Pre-generated session** | **None** | < 5 s | Fetch a completed session from B2 · inspect all 10 artifacts |
+| Comparison chart | — | instant | Income vs expenses side-by-side across both datasets |
+| Timing chart | — | instant | Where the ~4 min goes — image generation dominates (74%) |
+| B2 inspection | — | instant | Full 10-artifact B2 layout printed per session |
+
+```bash
+# Run against the live production API — no local setup needed
+pip install httpx matplotlib jupyter
+jupyter notebook notebooks/DEMO_RUNBOOK.ipynb
+```
+
+---
+
 ## What Is This?
 
 Banker's Wrapped is an agentic AI platform that transforms raw transaction data into a **personalized narrated financial recap video** — fully generated, stored, and served via Backblaze B2, with every AI media call routed through the Genblaze SDK.

@@ -79,7 +79,8 @@ class MediaAgent(BaseAgent):
         self.b2 = b2
         self.progress_callback = progress_callback
         self.composer = FFmpegComposer(
-            scene_duration_seconds=settings.ffmpeg_scene_duration
+            scene_duration_seconds=settings.ffmpeg_scene_duration,
+            ffmpeg_bin=settings.ffmpeg_bin,
         )
 
     def _emit(self, event: str, detail: str) -> None:
@@ -119,11 +120,13 @@ class MediaAgent(BaseAgent):
             # ── 4. Generate scene images in parallel via Genblaze → GMI Cloud ─
             async def _gen_image(idx: int, prompt: str):
                 self.log.info("media_agent.image.start", scene_idx=idx)
-                return await self.genblaze.generate_scene_image(
+                result = await self.genblaze.generate_scene_image(
                     prompt=prompt,
                     model=self.settings.gmi_image_model,
                     timeout=self.settings.pipeline_timeout_image,
                 )
+                self._emit(f"scene_{idx}_done", f"Scene {idx + 1} generated")
+                return result
 
             image_results = await asyncio.gather(*[
                 _gen_image(i, scene.visual_prompt)

@@ -24,17 +24,22 @@ import structlog
 
 log = structlog.get_logger()
 
-FFMPEG_BIN = "ffmpeg"
+import shutil
+
+# Resolved once at startup; override via FFMPEG_BIN env var / settings if not on PATH
+FFMPEG_BIN = shutil.which("ffmpeg") or "ffmpeg"
 _FADE_DUR = 0.5   # seconds for crossfade between scenes and global fade in/out
 _FPS = 25
 _SCALE = "scale=1792:1024:force_original_aspect_ratio=decrease,pad=1792:1024:(ow-iw)/2:(oh-ih)/2"
+_ENDING_DUR = 3   # seconds for branded ending card
 
 
 class FFmpegComposer:
     """Composes scene images + audio track into a final MP4 with visual transitions."""
 
-    def __init__(self, scene_duration_seconds: int = 8) -> None:
+    def __init__(self, scene_duration_seconds: int = 8, ffmpeg_bin: str = FFMPEG_BIN) -> None:
         self.scene_duration = scene_duration_seconds
+        self.ffmpeg_bin = ffmpeg_bin
 
     async def compose(
         self,
@@ -64,41 +69,58 @@ class FFmpegComposer:
         n = len(scene_image_paths)
         dur = self.scene_duration
         fade = _FADE_DUR
+        n_total = n + 1  # scenes + ending card
 
         # Build FFmpeg inputs: loop each image for scene_duration seconds
         inputs: list[str] = []
         for img in scene_image_paths:
             inputs += ["-loop", "1", "-t", str(dur), "-i", str(img)]
 
+        # Ending card: dark background generated via lavfi (input index n)
+        inputs += [
+            "-f", "lavfi",
+            "-i", f"color=c=0x0a0a0f:s=1792x1024:d={_ENDING_DUR}",
+        ]
+
         if audio_path is not None:
             inputs += ["-i", str(audio_path)]
 
-        audio_idx = n  # audio stream index (if present)
+        audio_idx = n_total  # audio stream index (if present)
 
         # ── filter_complex ────────────────────────────────────────────────────
         filter_parts: list[str] = []
 
-        # Step 1: scale + letterbox each input into a labelled video stream
+        # Step 1: scale + letterbox each scene image into a labelled stream
         for i in range(n):
             filter_parts.append(f"[{i}:v]{_SCALE},format=yuv420p[v{i}]")
 
-        # Step 2: chain xfade between consecutive streams
-        if n == 1:
-            # No transitions needed — just rename
-            filter_parts.append("[v0]copy[xout]")
-        else:
-            prev = "[v0]"
-            for i in range(1, n):
-                # offset = time into the output where the transition starts
-                offset = i * (dur - fade)
-                out_label = f"[xf{i}]" if i < n - 1 else "[xout]"
-                filter_parts.append(
-                    f"{prev}[v{i}]xfade=transition=fade:duration={fade}:offset={offset}{out_label}"
-                )
-                prev = f"[xf{i}]"
+        # Step 2: ending card — scale + drawtext branding (input index n)
+        ending_line1 = title.replace("'", "\\'")
+        ending_line2 = "Generated with AI  ·  Stored in Backblaze B2"
+        filter_parts.append(
+            f"[{n}:v]{_SCALE},format=yuv420p,"
+            f"drawtext=text='{ending_line1}':fontsize=64:fontcolor=white"
+            f":x=(w-text_w)/2:y=h*0.38,"
+            f"drawtext=text='{ending_line2}':fontsize=28:fontcolor=0xaaaaaa"
+            f":x=(w-text_w)/2:y=h*0.55[v{n}]"
+        )
 
-        # Step 3: global fade-in (first 0.5 s) and fade-out (last 0.5 s)
-        total_video_dur = n * dur - (n - 1) * fade
+        # Step 3: chain xfade between all streams (scenes + ending card)
+        prev = "[v0]"
+        for i in range(1, n_total):
+            # offset = cumulative time at which this transition starts
+            offset = sum(
+                (dur if j < n else _ENDING_DUR) - fade
+                for j in range(i)
+            )
+            out_label = f"[xf{i}]" if i < n_total - 1 else "[xout]"
+            filter_parts.append(
+                f"{prev}[v{i}]xfade=transition=fade:duration={fade}:offset={offset:.3f}{out_label}"
+            )
+            prev = f"[xf{i}]"
+
+        # Step 4: global fade-in (first 0.5 s) and fade-out (last 0.5 s)
+        total_video_dur = n * dur + _ENDING_DUR - n_total * fade + fade
         fade_out_start = total_video_dur - fade
         filter_parts.append(
             f"[xout]fade=t=in:st=0:d={fade},fade=t=out:st={fade_out_start:.3f}:d={fade}[vfinal]"
@@ -108,7 +130,7 @@ class FFmpegComposer:
 
         # ── Assemble command ──────────────────────────────────────────────────
         cmd = [
-            FFMPEG_BIN,
+            self.ffmpeg_bin,
             "-y",
         ] + inputs + [
             "-filter_complex", filter_complex,

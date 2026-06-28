@@ -34,15 +34,32 @@ interface ProgressEvent {
 
 type Stage = "idle" | "uploading" | "processing" | "done" | "error";
 
+function fmtDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds.toFixed(1)}s`;
+  return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`;
+}
+
 const PIPELINE_STEPS = [
   { key: "parsing",           label: "Parsing transactions" },
   { key: "analyzing",         label: "Calculating financial insights" },
   { key: "scripting",         label: "Writing narrative script" },
-  { key: "generating_images", label: "Generating scene images + narration" },
+  { key: "generating_images", label: "Generating scenes + narration" },
+  { key: "scene_0_done",      label: "Scene 1 generated" },
+  { key: "scene_1_done",      label: "Scene 2 generated" },
+  { key: "scene_2_done",      label: "Scene 3 generated" },
+  { key: "scene_3_done",      label: "Scene 4 generated" },
+  { key: "scene_4_done",      label: "Scene 5 generated" },
   { key: "composing_video",   label: "Composing video with FFmpeg" },
   { key: "uploading_to_b2",   label: "Uploading all artifacts to Backblaze B2" },
   { key: "uploading",         label: "Finalising recap" },
 ];
+
+const STAGE_WEIGHTS: Record<string, number> = {
+  parsing: 5, analyzing: 8, scripting: 15, generating_images: 5,
+  scene_0_done: 20, scene_1_done: 20, scene_2_done: 20, scene_3_done: 20, scene_4_done: 20,
+  composing_video: 28, uploading_to_b2: 15, uploading: 5,
+};
+const TOTAL_ESTIMATED_S = Object.values(STAGE_WEIGHTS).reduce((a, b) => a + b, 0);
 
 const ARTIFACT_LABELS: Record<string, string> = {
   csv:        "Input CSV",
@@ -82,12 +99,30 @@ export default function Home() {
   const [progressEvents, setProgressEvents] = useState<ProgressEvent[]>([]);
   const [artifactsOpen, setArtifactsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [pipelineStartTime, setPipelineStartTime] = useState<number | null>(null);
+  const [elapsedS, setElapsedS] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
   const sseRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
     return () => { sseRef.current?.close(); };
   }, []);
+
+  // Start pipeline timer on first SSE event
+  useEffect(() => {
+    if (progressEvents.length === 1 && pipelineStartTime === null) {
+      setPipelineStartTime(Date.now());
+    }
+  }, [progressEvents, pipelineStartTime]);
+
+  // Tick elapsed time while processing
+  useEffect(() => {
+    if (!pipelineStartTime || stage !== "processing") return;
+    const id = setInterval(() => {
+      setElapsedS(Math.floor((Date.now() - pipelineStartTime) / 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [pipelineStartTime, stage]);
 
   const handleFile = async (file: File) => {
     if (!file.name.endsWith(".csv")) {
@@ -158,6 +193,8 @@ export default function Home() {
     setError("");
     setProgressEvents([]);
     setArtifactsOpen(false);
+    setPipelineStartTime(null);
+    setElapsedS(0);
   };
 
   const copyShareLink = async () => {
@@ -185,6 +222,19 @@ export default function Home() {
     }
     return -1;
   })();
+
+  const eventMap = new Map(progressEvents.map((e) => [e.event, e]));
+  const getStepDuration = (step: typeof PIPELINE_STEPS[0], stepIdx: number): string | null => {
+    const ev = eventMap.get(step.key);
+    if (!ev) return null;
+    for (let i = stepIdx - 1; i >= 0; i--) {
+      const prev = eventMap.get(PIPELINE_STEPS[i].key);
+      if (prev) return fmtDuration(ev.ts - prev.ts);
+    }
+    const first = progressEvents[0];
+    if (first && first.event !== step.key) return fmtDuration(ev.ts - first.ts);
+    return null;
+  };
 
   const themeClass = result ? (PERSONALITY_CLASS[result.insights.personality] ?? "") : "";
   const sceneCount = result
@@ -226,8 +276,12 @@ export default function Home() {
               onClick={(e) => {
                 e.stopPropagation();
                 fetch("/data/synthetic/transactions_jan_2026.csv")
-                  .then((r) => r.blob())
-                  .then((b) => handleFile(new File([b], "transactions_jan_2026.csv", { type: "text/csv" })));
+                  .then((r) => {
+                    if (!r.ok) throw new Error(`Demo CSV unavailable (${r.status})`);
+                    return r.blob();
+                  })
+                  .then((b) => handleFile(new File([b], "transactions_jan_2026.csv", { type: "text/csv" })))
+                  .catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load demo file"));
               }}
             >
               Try demo dataset
@@ -242,8 +296,9 @@ export default function Home() {
             <p className="bw-processing-text">Generating your recap…</p>
             <div className="bw-steps">
               {PIPELINE_STEPS.map((step, i) => {
-                const done   = completedKeys.has(step.key);
-                const active = i === currentIdx + 1 && !done;
+                const done     = completedKeys.has(step.key);
+                const active   = i === currentIdx + 1 && !done;
+                const duration = done ? getStepDuration(step, i) : null;
                 return (
                   <div key={step.key} className="bw-step-row">
                     <span className={`bw-step-icon ${done ? "bw-step-done" : active ? "bw-step-active" : "bw-step-idle"}`}>
@@ -252,10 +307,23 @@ export default function Home() {
                     <span className={`bw-step-label ${done ? "bw-label-done" : active ? "bw-label-active" : "bw-label-idle"}`}>
                       {step.label}
                     </span>
+                    {duration && <span className="bw-step-duration">{duration}</span>}
                   </div>
                 );
               })}
             </div>
+            {pipelineStartTime !== null && (() => {
+              const rem = Math.max(0, TOTAL_ESTIMATED_S - elapsedS);
+              const m = Math.floor(rem / 60);
+              const s = rem % 60;
+              return (
+                <p className="bw-time-estimate">
+                  {rem > 0
+                    ? `Est. remaining: ${m}:${String(s).padStart(2, "0")}`
+                    : "Finishing up…"}
+                </p>
+              );
+            })()}
           </div>
         )}
 

@@ -142,8 +142,8 @@ class TestFFmpegComposer:
             )
         assert composer.scene_duration == 10
 
-    async def test_single_scene_no_xfade(self, composer, tmp_path):
-        """A single-scene video must not emit an xfade transition filter."""
+    async def test_single_scene_has_ending_card_xfade(self, composer, tmp_path):
+        """A single-scene video has exactly one xfade — between the scene and the ending card."""
         single_img = tmp_path / "scene_00.png"
         single_img.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 64)
         output = tmp_path / "recap.mp4"
@@ -158,8 +158,8 @@ class TestFFmpegComposer:
                 scene_image_paths=[single_img],
                 output_path=output,
             )
-        # Extract only the filter_complex value, not paths (paths may contain test name)
         cmd = captured[0]
         fc_idx = cmd.index("-filter_complex") + 1
         filter_str = cmd[fc_idx]
-        assert "xfade" not in filter_str
+        assert "xfade" in filter_str
+        assert filter_str.count("xfade") == 1

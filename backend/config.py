@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     pipeline_version: str = "1.0.0"
     pipeline_timeout_image: int = 300
     ffmpeg_scene_duration: int = 8  # seconds per scene image in final MP4
+    ffmpeg_bin: str = "ffmpeg"  # override via FFMPEG_BIN env var if not on PATH
 
     # NVIDIA NIM — OpenAI-compatible LLM endpoint
     # If set, NarrativeAgent uses NIM instead of OpenAI. Leave blank to use OpenAI.
