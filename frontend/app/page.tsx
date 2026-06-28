@@ -238,28 +238,24 @@ export default function Home() {
   // Count how many of the 5 scenes have completed (used for "X/5 scenes" sub-label)
   const scenesDoneCount = SCENE_KEYS.filter((k) => completedKeys.has(k)).length;
 
-  // "Generating scenes + narration" stays active until composing_video fires
-  // (the generating_images SSE fires at the START of the media step, not the end)
-  const composingOrLaterDone = PIPELINE_STEPS
-    .slice(PIPELINE_STEPS.findIndex((s) => s.key === "composing_video"))
-    .some((s) => completedKeys.has(s.key));
+  const pipelineComplete = completedKeys.has("complete");
 
-  const currentIdx = (() => {
+  // Each SSE event marks the START of its step. The ACTIVE step is the
+  // latest-started one (highest index whose event has fired); a step is DONE
+  // only once a later step has started. This makes e.g. "Writing narrative
+  // script" stay active (with a live timer) for the whole NIM call, instead of
+  // flipping to done the instant its own start event arrives.
+  const startedIdx = (() => {
     for (let i = PIPELINE_STEPS.length - 1; i >= 0; i--) {
-      const { key } = PIPELINE_STEPS[i];
-      // generating_images counts as done only once composing_video (or later) fires
-      const done = key === "generating_images" ? composingOrLaterDone : completedKeys.has(key);
-      if (done) return i;
+      if (completedKeys.has(PIPELINE_STEPS[i].key)) return i;
     }
     return -1;
   })();
 
-  // Each SSE event marks the START of its step, so a step's duration is
-  // (start of the NEXT step) − (start of this step).
+  // A step's duration is (start of the NEXT started step) − (start of this step).
   const getStepDuration = (step: typeof PIPELINE_STEPS[0], stepIdx: number): string | null => {
     const startEv = eventMap.get(step.key);
     if (!startEv) return null;
-    // Find the next pipeline step that has fired — its start is this step's end.
     for (let i = stepIdx + 1; i < PIPELINE_STEPS.length; i++) {
       const next = eventMap.get(PIPELINE_STEPS[i].key);
       if (next) return fmtDuration(next.ts - startEv.ts);
@@ -269,15 +265,6 @@ export default function Home() {
     if (done) return fmtDuration(done.ts - startEv.ts);
     return null;
   };
-
-  // Timestamp of the scripting event — used as baseline for generating_images timer
-  // so the counter doesn't reset on every scene_X_done event
-  const scriptingTs = eventMap.get("scripting")?.ts ?? null;
-
-  // Timestamp of the most-recently-completed step — used as start of the active step's timer
-  const lastCompletedTs = progressEvents.length > 0
-    ? progressEvents[progressEvents.length - 1].ts
-    : null;
 
   const themeClass = result ? (PERSONALITY_CLASS[result.insights.personality] ?? "") : "";
   const sceneCount = result
@@ -339,18 +326,16 @@ export default function Home() {
             <p className="bw-processing-text">Generating your recap…</p>
             <div className="bw-steps">
               {PIPELINE_STEPS.map((step, i) => {
-                const done   = step.key === "generating_images"
-                  ? composingOrLaterDone
-                  : completedKeys.has(step.key);
-                const active   = i === currentIdx + 1 && !done;
+                const started  = completedKeys.has(step.key);
+                // Done once a later step has started (or the pipeline finished).
+                const done     = pipelineComplete || (started && i < startedIdx);
+                // Active = the latest started step that isn't yet done.
+                const active   = !pipelineComplete && started && i === startedIdx;
                 const duration = done ? getStepDuration(step, i) : null;
-                // For generating_images, anchor the running timer to when scripting finished
-                // so it doesn't reset to 0 each time a scene_X_done event arrives
-                const timerBase = (active && step.key === "generating_images" && scriptingTs !== null)
-                  ? scriptingTs
-                  : lastCompletedTs;
-                const running  = (active && timerBase !== null)
-                  ? fmtDuration(Math.max(0, Date.now() / 1000 - timerBase))
+                // Live timer for the active step counts from ITS OWN start event.
+                const startTs  = eventMap.get(step.key)?.ts ?? null;
+                const running  = (active && startTs !== null)
+                  ? fmtDuration(Math.max(0, Date.now() / 1000 - startTs))
                   : null;
                 return (
                   <div key={step.key} className="bw-step-row">

@@ -117,7 +117,7 @@ def build_xfade_cmd(
     total_dur  = n * scene_dur - (n - 1) * _XDUR
     fade_out_t = total_dur - _FADE
 
-    cmd = [ffmpeg, "-hide_banner", "-y"]
+    cmd = [ffmpeg, "-hide_banner", "-y", "-filter_complex_threads", "2"]
 
     # One looped image input per scene (-framerate 25 → defined input rate for xfade)
     for p in scene_paths:
@@ -157,7 +157,7 @@ def build_xfade_cmd(
         "-filter_complex", "; ".join(parts),
         "-map", "[out]",
         "-map", f"{audio_idx}:a",
-        "-c:v", "libx264", "-pix_fmt", "yuv420p",
+        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-threads", "4",
         "-preset", "fast", "-crf", "23", "-movflags", "+faststart",
         "-c:a", "aac", "-b:a", "192k", "-shortest",
         str(output_path),

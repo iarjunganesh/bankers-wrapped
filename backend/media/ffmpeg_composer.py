@@ -103,7 +103,11 @@ class FFmpegComposer:
         fade_out_start = total_dur - _FADE_DUR
 
         # ── Build FFmpeg command ───────────────────────────────────────────────
-        cmd = [self.ffmpeg_bin, "-hide_banner", "-y"]
+        # -filter_complex_threads/-threads cap concurrency: ffmpeg auto-detects the
+        # HOST core count (e.g. 32 on Railway), not the container's CPU/RAM limit, so
+        # libx264 spawns 32 thread contexts whose buffers OOM-kill the container at
+        # encoder init. Capping keeps peak memory bounded; speed impact is negligible.
+        cmd = [self.ffmpeg_bin, "-hide_banner", "-y", "-filter_complex_threads", "2"]
 
         # One looped image input per scene; extra XFADE_DUR gives the filter
         # enough headroom to consume frames during the overlapping transition.
@@ -163,7 +167,7 @@ class FFmpegComposer:
         # plays in VLC but is undecodable in browsers ("file is corrupt"). The
         # in-filter format=yuv420p does not survive xfade negotiation, so force it here.
         cmd += [
-            "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-c:v", "libx264", "-pix_fmt", "yuv420p", "-threads", "4",
             "-preset", "fast", "-crf", "23", "-movflags", "+faststart",
         ]
         if audio_path is not None:
@@ -202,8 +206,15 @@ class FFmpegComposer:
         )
 
         if result.returncode != 0:
-            log.error("ffmpeg.compose.failed", stderr=result.stderr[-2000:])
-            raise RuntimeError(f"FFmpeg failed: {result.stderr[-500:]}")
+            # returncode 137 = 128+9 (SIGKILL, usually OOM); 139 = SIGSEGV (crash).
+            log.error(
+                "ffmpeg.compose.failed",
+                returncode=result.returncode,
+                stderr=result.stderr[-2000:],
+            )
+            raise RuntimeError(
+                f"FFmpeg failed (rc={result.returncode}): {result.stderr[-500:]}"
+            )
 
         log.info("ffmpeg.compose.complete", output=str(output_path))
         return output_path
