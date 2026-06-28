@@ -107,8 +107,10 @@ class FFmpegComposer:
 
         # One looped image input per scene; extra XFADE_DUR gives the filter
         # enough headroom to consume frames during the overlapping transition.
+        # -framerate 25 sets a defined input rate so xfade gets constant frame
+        # rate (older/stricter ffmpeg builds reject the default 1/0 rate).
         for img in scene_image_paths:
-            cmd += ["-loop", "1", "-t", str(dur + _XFADE_DUR), "-i", str(img)]
+            cmd += ["-loop", "1", "-framerate", "25", "-t", str(dur + _XFADE_DUR), "-i", str(img)]
         if audio_path is not None:
             cmd += ["-i", str(audio_path)]
 
@@ -117,10 +119,12 @@ class FFmpegComposer:
         # ── filter_complex ────────────────────────────────────────────────────
         parts: list[str] = []
 
-        # Scale + format every scene stream
+        # Scale + format every scene stream. fps=25 forces a constant frame rate:
+        # xfade requires CFR inputs and fails on stricter ffmpeg builds otherwise
+        # ("The inputs needs to be a constant frame rate; current rate of 1/0").
         for i in range(n):
             parts.append(
-                f"[{i}:v]{_SCALE},format=yuv420p,setpts=PTS-STARTPTS[v{i}]"
+                f"[{i}:v]{_SCALE},format=yuv420p,setpts=PTS-STARTPTS,fps=25[v{i}]"
             )
 
         # Chain xfades then wrap in global fades

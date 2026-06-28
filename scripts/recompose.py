@@ -119,17 +119,17 @@ def build_xfade_cmd(
 
     cmd = [ffmpeg, "-hide_banner", "-y"]
 
-    # One looped image input per scene
+    # One looped image input per scene (-framerate 25 → defined input rate for xfade)
     for p in scene_paths:
-        cmd += ["-loop", "1", "-t", str(scene_dur + _XDUR), "-i", str(p)]
+        cmd += ["-loop", "1", "-framerate", "25", "-t", str(scene_dur + _XDUR), "-i", str(p)]
     cmd += ["-i", str(audio_path)]
 
     audio_idx = n
     parts: list[str] = []
 
-    # Scale + format every scene stream
+    # Scale + format every scene stream (fps=25 → CFR, required by xfade)
     for i in range(n):
-        parts.append(f"[{i}:v]{_SCALE},format=yuv420p,setpts=PTS-STARTPTS[v{i}]")
+        parts.append(f"[{i}:v]{_SCALE},format=yuv420p,setpts=PTS-STARTPTS,fps=25[v{i}]")
 
     if n == 1:
         parts.append(

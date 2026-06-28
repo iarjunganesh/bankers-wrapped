@@ -111,6 +111,7 @@ The endpoint waits up to 10 s for the session to be created (SSE race-condition 
 - Global fade-in from black (0.5 s at start)
 - Global fade-out to black (0.5 s at end)
 - Scene duration auto-stretches from probed audio length so video always covers the full narration; `-shortest` trims to exact audio end
+- **Constant frame rate is mandatory** — each scene input sets `-framerate 25` and the filter chain ends with `fps=25`. Looped images default to rate `1/0`, which stricter ffmpeg builds (Railway) reject in xfade (*"inputs needs to be a constant frame rate"*)
 - H.264 libx264, **`-pix_fmt yuv420p`** (REQUIRED — seedream JPEGs are full-range 4:4:4; without this libx264 emits High 4:4:4 / `yuvj444p`, which plays in VLC but is "corrupt" in browsers), 1792×1024 (16:9), AAC 192 kbps audio
 - **`-movflags +faststart`** — moves the `moov` atom to the front for progressive browser streaming
 - `FFmpegComposer` derives `ffprobe` from `ffmpeg_bin` by replacing only the **filename** (not directory segments like `ffmpeg-8.1.1-full_build`)

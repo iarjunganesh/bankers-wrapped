@@ -179,6 +179,30 @@ class TestFFmpegComposer:
         assert cmd[cmd.index("-pix_fmt") + 1] == "yuv420p"
         assert "+faststart" in cmd
 
+    async def test_inputs_are_constant_frame_rate(self, composer, fake_scene_images, fake_audio, tmp_path):
+        """xfade requires CFR inputs — stricter ffmpeg builds (e.g. on Railway)
+        reject the looped-image default rate of 1/0. Each scene input must set
+        -framerate 25 and the filter chain must normalise with fps=25.
+        """
+        output = tmp_path / "recap.mp4"
+        captured: list = []
+
+        async def capture_thread(fn, cmd, **kwargs):  # type: ignore[no-untyped-def]
+            captured.append(cmd)
+            return MagicMock(returncode=0, stderr="")
+
+        with patch("backend.media.ffmpeg_composer.asyncio.to_thread", capture_thread):
+            await composer.compose(
+                scene_image_paths=fake_scene_images,
+                audio_path=fake_audio,
+                output_path=output,
+            )
+        cmd = captured[0]
+        # One -framerate 25 per looped scene input
+        assert cmd.count("-framerate") == len(fake_scene_images)
+        fc = cmd[cmd.index("-filter_complex") + 1]
+        assert "fps=25" in fc
+
     async def test_single_scene_no_xfade(self, composer, tmp_path):
         """A single scene skips xfade and goes straight to global fades."""
         single_img = tmp_path / "scene_00.jpg"
