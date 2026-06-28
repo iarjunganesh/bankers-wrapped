@@ -38,5 +38,13 @@ logs/
 .DS_Store
 Thumbs.db
 
+# IDEs
+.idea/
+.vscode/
+
+# Local recompose output (scripts/recompose.py)
+concat_*.mp4
+xfade_*.mp4
+
 # Scratch / temp
 .tmp/

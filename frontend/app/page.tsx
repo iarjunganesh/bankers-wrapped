@@ -44,20 +44,19 @@ const PIPELINE_STEPS = [
   { key: "analyzing",         label: "Calculating financial insights" },
   { key: "scripting",         label: "Writing narrative script" },
   { key: "generating_images", label: "Generating scenes + narration" },
-  { key: "scene_0_done",      label: "Scene 1 generated" },
-  { key: "scene_1_done",      label: "Scene 2 generated" },
-  { key: "scene_2_done",      label: "Scene 3 generated" },
-  { key: "scene_3_done",      label: "Scene 4 generated" },
-  { key: "scene_4_done",      label: "Scene 5 generated" },
   { key: "composing_video",   label: "Composing video with FFmpeg" },
-  { key: "uploading_to_b2",   label: "Uploading all artifacts to Backblaze B2" },
+  { key: "uploading_to_b2",   label: "Saving recap video to Backblaze B2" },
   { key: "uploading",         label: "Finalising recap" },
 ];
 
+const SCENE_KEYS = ["scene_0_done","scene_1_done","scene_2_done","scene_3_done","scene_4_done"];
+const TOTAL_SCENES = SCENE_KEYS.length;
+
+// Tuned to a realistic ~5 min total (observed range 4–7 min). Image generation
+// dominates; NIM 70B scripting is the next-largest chunk.
 const STAGE_WEIGHTS: Record<string, number> = {
-  parsing: 5, analyzing: 8, scripting: 15, generating_images: 5,
-  scene_0_done: 20, scene_1_done: 20, scene_2_done: 20, scene_3_done: 20, scene_4_done: 20,
-  composing_video: 28, uploading_to_b2: 15, uploading: 5,
+  parsing: 2, analyzing: 2, scripting: 55, generating_images: 200,
+  composing_video: 15, uploading_to_b2: 20, uploading: 6,
 };
 const TOTAL_ESTIMATED_S = Object.values(STAGE_WEIGHTS).reduce((a, b) => a + b, 0);
 
@@ -108,9 +107,9 @@ export default function Home() {
     return () => { sseRef.current?.close(); };
   }, []);
 
-  // Start pipeline timer on first SSE event
+  // Start pipeline timer on first SSE event (use > 0 to handle batched state updates)
   useEffect(() => {
-    if (progressEvents.length === 1 && pipelineStartTime === null) {
+    if (progressEvents.length > 0 && pipelineStartTime === null) {
       setPipelineStartTime(Date.now());
     }
   }, [progressEvents, pipelineStartTime]);
@@ -234,25 +233,46 @@ export default function Home() {
 
   const theme = result ? getTheme(result.insights.personality) : null;
   const completedKeys = new Set(progressEvents.map((e) => e.event));
+  const eventMap = new Map(progressEvents.map((e) => [e.event, e]));
+
+  // Count how many of the 5 scenes have completed (used for "X/5 scenes" sub-label)
+  const scenesDoneCount = SCENE_KEYS.filter((k) => completedKeys.has(k)).length;
+
+  // "Generating scenes + narration" stays active until composing_video fires
+  // (the generating_images SSE fires at the START of the media step, not the end)
+  const composingOrLaterDone = PIPELINE_STEPS
+    .slice(PIPELINE_STEPS.findIndex((s) => s.key === "composing_video"))
+    .some((s) => completedKeys.has(s.key));
+
   const currentIdx = (() => {
     for (let i = PIPELINE_STEPS.length - 1; i >= 0; i--) {
-      if (completedKeys.has(PIPELINE_STEPS[i].key)) return i;
+      const { key } = PIPELINE_STEPS[i];
+      // generating_images counts as done only once composing_video (or later) fires
+      const done = key === "generating_images" ? composingOrLaterDone : completedKeys.has(key);
+      if (done) return i;
     }
     return -1;
   })();
 
-  const eventMap = new Map(progressEvents.map((e) => [e.event, e]));
+  // Each SSE event marks the START of its step, so a step's duration is
+  // (start of the NEXT step) − (start of this step).
   const getStepDuration = (step: typeof PIPELINE_STEPS[0], stepIdx: number): string | null => {
-    const ev = eventMap.get(step.key);
-    if (!ev) return null;
-    for (let i = stepIdx - 1; i >= 0; i--) {
-      const prev = eventMap.get(PIPELINE_STEPS[i].key);
-      if (prev) return fmtDuration(ev.ts - prev.ts);
+    const startEv = eventMap.get(step.key);
+    if (!startEv) return null;
+    // Find the next pipeline step that has fired — its start is this step's end.
+    for (let i = stepIdx + 1; i < PIPELINE_STEPS.length; i++) {
+      const next = eventMap.get(PIPELINE_STEPS[i].key);
+      if (next) return fmtDuration(next.ts - startEv.ts);
     }
-    const first = progressEvents[0];
-    if (first && first.event !== step.key) return fmtDuration(ev.ts - first.ts);
+    // Last step ends at the terminal "complete" event.
+    const done = eventMap.get("complete");
+    if (done) return fmtDuration(done.ts - startEv.ts);
     return null;
   };
+
+  // Timestamp of the scripting event — used as baseline for generating_images timer
+  // so the counter doesn't reset on every scene_X_done event
+  const scriptingTs = eventMap.get("scripting")?.ts ?? null;
 
   // Timestamp of the most-recently-completed step — used as start of the active step's timer
   const lastCompletedTs = progressEvents.length > 0
@@ -319,12 +339,18 @@ export default function Home() {
             <p className="bw-processing-text">Generating your recap…</p>
             <div className="bw-steps">
               {PIPELINE_STEPS.map((step, i) => {
-                const done     = completedKeys.has(step.key);
+                const done   = step.key === "generating_images"
+                  ? composingOrLaterDone
+                  : completedKeys.has(step.key);
                 const active   = i === currentIdx + 1 && !done;
                 const duration = done ? getStepDuration(step, i) : null;
-                // Live elapsed timer for the active step — recalculates every second via elapsedS
-                const running  = (active && lastCompletedTs !== null)
-                  ? fmtDuration(Math.max(0, Date.now() / 1000 - lastCompletedTs))
+                // For generating_images, anchor the running timer to when scripting finished
+                // so it doesn't reset to 0 each time a scene_X_done event arrives
+                const timerBase = (active && step.key === "generating_images" && scriptingTs !== null)
+                  ? scriptingTs
+                  : lastCompletedTs;
+                const running  = (active && timerBase !== null)
+                  ? fmtDuration(Math.max(0, Date.now() / 1000 - timerBase))
                   : null;
                 return (
                   <div key={step.key} className="bw-step-row">
@@ -333,6 +359,9 @@ export default function Home() {
                     </span>
                     <span className={`bw-step-label ${done ? "bw-label-done" : active ? "bw-label-active" : "bw-label-idle"}`}>
                       {step.label}
+                      {step.key === "generating_images" && active && (
+                        <span className="bw-step-sublabel"> — {scenesDoneCount}/{TOTAL_SCENES} scenes</span>
+                      )}
                     </span>
                     {duration && <span className="bw-step-duration">{duration}</span>}
                     {running && !duration && <span className="bw-step-duration bw-step-running">{running}</span>}
@@ -400,7 +429,7 @@ export default function Home() {
             )}
 
             <div className="bw-video-section">
-              <video className="bw-video" src={result.video_url} controls autoPlay muted />
+              <video className="bw-video" src={result.video_url} poster={result.thumbnail_url} controls autoPlay muted />
               <div className="bw-video-actions">
                 <a className="bw-download-link" href={result.video_url} download="recap.mp4">
                   ↓ Download MP4

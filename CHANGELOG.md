@@ -13,6 +13,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ### Fixed
 
+- **Browser playback "file is corrupt"** (`ffmpeg_composer.py`) — output was H.264 **High 4:4:4 / `yuvj444p`** because seedream JPEGs are full-range 4:4:4 and the in-filter `format=yuv420p` did not survive xfade format negotiation. Browsers cannot decode 4:4:4 H.264 (VLC can — hence "plays locally, corrupt on web"). Forced `-pix_fmt yuv420p` as an explicit output option → `High` / 4:2:0, decodable everywhere. Added `-movflags +faststart` so the `moov` atom is at the front for progressive streaming. Regression test asserts both flags.
+- **Composer migrated to xfade `filter_complex`** as the permanent path (was concat demuxer). Scene duration now auto-stretches from the probed audio length so the video always covers the full narration; `-shortest` trims to the exact audio end — fixes narration being cut off (~40 s) on longer scripts.
+- **`ffprobe` path resolution** — deriving `ffprobe` from `ffmpeg` via a naive `replace("ffmpeg","ffprobe")` mangled install directories such as `ffmpeg-8.1.1-full_build`; now replaces only the filename. Same bug fixed in `scripts/recompose.py`.
+- **Thumbnail key extension** `.png` → `.jpg` (`b2_client.py`) — scene 0 is a JPEG; the `.png` key produced a content-type mismatch and a broken share-page thumbnail.
+- **Progress timer double-count** (`page.tsx`) — per-step duration was measured against the *previous* event, so "Generating scenes" and "Composing video" both counted the same span (the "6m30s → 5m2s" jump). Now measured forward: `(next step start) − (this step start)`. Pipeline timer also starts on the first SSE event (safe against React batched updates that skipped `length === 1`).
 - **FFmpeg 0-frame bug (root cause of 500 on Railway)** — `n_total = n + 1` without a matching lavfi input caused xfade to reference non-existent `[v5]`; added branded ending card (dark overlay + `drawtext` title) as the 6th input.
 - **Dockerfile** — added `fonts-liberation` so `drawtext` finds a system font on Debian slim.
 - **SSE race condition** (`progress.py`) — frontend opens SSE before the POST creates the session; previously returned 404 immediately ("spinner hangs forever"). Now polls up to 10 s for session creation.
@@ -21,9 +26,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ### Added
 
+- **`scripts/recompose.py`** — offline tool that downloads a session's existing B2 assets and rebuilds the MP4 locally with **zero API cost** (no image/LLM/TTS calls). Used to isolate and prove the pixel-format fix. Supports `--prefix USER_ID/SESSION_ID` (paste straight from the B2 console), `--ffmpeg PATH`, graceful `NoSuchKey` messaging, and UTF-8 console output on Windows.
+- **Video `poster` thumbnail** — the recap thumbnail is set as the `<video poster>` on both the main and share pages, so the preview frame shows instantly while the file buffers.
 - **Per-step latency** (`page.tsx` + `globals.css`) — each completed step shows elapsed time (e.g. `44.4s`, `1m 4s`) from consecutive SSE timestamps. Steps container widened to 360 px; `.bw-step-duration` class added.
 - **`FFMPEG_BIN` config** (`config.py` + `media_agent.py`) — override FFmpeg binary path via env var without rebuilding.
 - **README Interactive Demo Notebook section** — scenario table + quickstart added before "What Is This?" so it's the first thing judges see.
+
+### Changed
+
+- **Progress UI** (`page.tsx`) — collapsed the five per-scene rows into a single "Generating scenes + narration — X/5 scenes" sub-label; that step stays active (⏳) until `composing_video` fires (the `generating_images` event marks the *start* of media work). The "Uploading all artifacts" label corrected to "Saving recap video to Backblaze B2" (all `pipeline/` assets are already uploaded during scene generation). Estimated-time weights retuned to a realistic ~5 min total (observed 4–7 min).
 
 ---
 

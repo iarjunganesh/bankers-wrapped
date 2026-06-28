@@ -63,7 +63,7 @@ OpenAI TTS is wrapped inside `GenblazeClient.generate_narration_audio()` — no 
 {user_id}/{session_id}/pipeline/prompts.json         ← all image prompts + hashes
 {user_id}/{session_id}/pipeline/generation.json      ← model, provider, latency, retry per step
 {user_id}/{session_id}/pipeline/narration.mp3
-{user_id}/{session_id}/pipeline/thumbnail.png        ← scene 0 used as recap preview
+{user_id}/{session_id}/pipeline/thumbnail.jpg        ← scene 0 (a JPEG) reused as recap preview
 {user_id}/{session_id}/pipeline/scenes/scene_00.jpg … scene_04.jpg
 {user_id}/{session_id}/output/recap_{session_id}.mp4
 {user_id}/{session_id}/metadata/session_metadata.json
@@ -110,11 +110,14 @@ The endpoint waits up to 10 s for the session to be created (SSE race-condition 
 - xfade crossfade (0.5 s) between every consecutive scene pair
 - Global fade-in from black (0.5 s at start)
 - Global fade-out to black (0.5 s at end)
-- H.264 libx264, 25 fps, 1792×1024 (16:9), AAC 192 kbps audio
+- Scene duration auto-stretches from probed audio length so video always covers the full narration; `-shortest` trims to exact audio end
+- H.264 libx264, **`-pix_fmt yuv420p`** (REQUIRED — seedream JPEGs are full-range 4:4:4; without this libx264 emits High 4:4:4 / `yuvj444p`, which plays in VLC but is "corrupt" in browsers), 1792×1024 (16:9), AAC 192 kbps audio
+- **`-movflags +faststart`** — moves the `moov` atom to the front for progressive browser streaming
+- `FFmpegComposer` derives `ffprobe` from `ffmpeg_bin` by replacing only the **filename** (not directory segments like `ffmpeg-8.1.1-full_build`)
 
 ## Frontend Routes
 
-- `/` — CSV upload portal with 7-step live SSE progress + thumbnail + personality result + download ZIP + share button
+- `/` — CSV upload portal with 7-step live SSE progress (scene events collapsed into a "Generating scenes + narration — X/5 scenes" sub-label; per-step latency; ~5 min ETA) + thumbnail (also set as `<video poster>`) + personality result + download ZIP + share button
 - `/recap/{session_id}` — Public share page: thumbnail, personality badge, stats, video player, download ZIP, full B2 artifact list with paths
 
 ## Personality Themes (for UI)

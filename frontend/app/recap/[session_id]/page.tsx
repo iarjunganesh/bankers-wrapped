@@ -188,7 +188,7 @@ export default function SharePage() {
           )}
 
           <div className="bw-video-section">
-            <video className="bw-video" src={data.video_url} controls autoPlay muted />
+            <video className="bw-video" src={data.video_url} poster={data.thumbnail_url} controls autoPlay muted />
             <div className="bw-video-actions">
               <a className="bw-download-link" href={data.video_url} download="recap.mp4">
                 ↓ Download MP4

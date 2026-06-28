@@ -91,7 +91,8 @@ class TestB2Client:
 
     def test_thumbnail_key_format(self):
         key = B2Client.thumbnail_key("user1", "sess1")
-        assert key == "user1/sess1/pipeline/thumbnail.png"
+        # .jpg, not .png — scene 0 (a JPEG) is reused as the thumbnail
+        assert key == "user1/sess1/pipeline/thumbnail.jpg"
 
     def test_download_bytes_calls_get_object(self, b2, mock_boto3):
         b2._client.get_object.return_value = {"Body": _FakeBytesIO(b"image data")}

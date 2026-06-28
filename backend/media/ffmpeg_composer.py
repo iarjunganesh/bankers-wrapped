@@ -2,41 +2,69 @@
 FFmpeg Compositor.
 
 Combines:
-  - Scene images (one per scene, displayed for N seconds each)
-  - Narration audio (optional MP3 spanning all scenes)
+  - Scene images (one per scene)
+  - Narration audio (optional MP3)
 
-Visual effects applied:
-  - Scale + letterbox to 1792x1024 (16:9) via concat demuxer
-  - Global 0.5 s fade-in from black at the start
-  - Global 0.5 s fade-out to black at the end
+Visual effects:
+  - Per-scene xfade crossfade (0.5 s) between every consecutive pair
+  - Global fade-in from black (0.5 s at start)
+  - Global fade-out to black  (0.5 s at end)
+  - Scale + letterbox to 1792×1024 (16:9)
 
-Output: recap.mp4 (H.264, 1792x1024, 25 fps; AAC audio when provided)
+Scene duration is computed dynamically from the audio length so the video
+always covers the full narration. -shortest then trims to the exact audio end.
+
+Output: H.264 libx264, 1792×1024, AAC 192 kbps audio.
 """
 
 from __future__ import annotations
 
 import asyncio
+import math
 import shutil
 import subprocess
-import tempfile
 from pathlib import Path
 
 import structlog
 
 log = structlog.get_logger()
 
-FFMPEG_BIN = shutil.which("ffmpeg") or "ffmpeg"
-_FADE_DUR = 0.5
-_FPS = 25
-_SCALE = "scale=1792:1024:force_original_aspect_ratio=decrease,pad=1792:1024:(ow-iw)/2:(oh-ih)/2"
+FFMPEG_BIN  = shutil.which("ffmpeg")  or "ffmpeg"
+_XFADE_DUR  = 0.5   # crossfade duration between consecutive scenes (seconds)
+_FADE_DUR   = 0.5   # global fade-in / fade-out duration (seconds)
+_SCALE = (
+    "scale=1792:1024:force_original_aspect_ratio=decrease,"
+    "pad=1792:1024:(ow-iw)/2:(oh-ih)/2"
+)
 
 
 class FFmpegComposer:
-    """Composes scene images + audio track into a final MP4."""
+    """Composes scene images + audio into a final MP4 using xfade transitions."""
 
     def __init__(self, scene_duration_seconds: int = 8, ffmpeg_bin: str = FFMPEG_BIN) -> None:
         self.scene_duration = scene_duration_seconds
-        self.ffmpeg_bin = ffmpeg_bin
+        self.ffmpeg_bin     = ffmpeg_bin
+        # Replace only the filename, not directory segments that may also contain "ffmpeg"
+        _p = Path(ffmpeg_bin)
+        self._ffprobe_bin   = str(_p.parent / _p.name.replace("ffmpeg", "ffprobe"))
+
+    def _probe_audio_duration(self, audio_path: Path) -> float:
+        """Return audio duration in seconds via ffprobe. Returns 0.0 on failure."""
+        try:
+            result = subprocess.run(
+                [
+                    self._ffprobe_bin, "-v", "quiet",
+                    "-show_entries", "format=duration",
+                    "-of", "csv=p=0",
+                    str(audio_path),
+                ],
+                capture_output=True,
+                text=True,
+            )
+            return float(result.stdout.strip())
+        except (OSError, ValueError):
+            log.warning("ffprobe.unavailable", ffprobe=self._ffprobe_bin)
+            return 0.0
 
     async def compose(
         self,
@@ -47,82 +75,127 @@ class FFmpegComposer:
         personality: str = "Financial Builder",
     ) -> Path:
         """
-        Compose a final recap.mp4 using the concat demuxer.
+        Compose a recap MP4 using xfade crossfades between every scene pair.
 
-        Each scene image is displayed for `scene_duration` seconds with a
-        global fade-in at the start and fade-out at the end.
+        Scene duration is stretched automatically so the video length covers
+        the full narration. -shortest then trims the video to the audio end.
 
-        Args:
-            scene_image_paths: List of JPEG/PNG image files, one per scene.
-            output_path: Destination for the output MP4.
-            audio_path: Optional MP3 narration audio.
-            title: Reserved for future overlay use.
-            personality: Reserved for future overlay use.
-
-        Returns:
-            Path to the composed MP4 file.
+        xfade offset for transition k (0-indexed): (k+1) * (scene_dur - XFADE_DUR)
+        Total video duration before -shortest:      n*scene_dur - (n-1)*XFADE_DUR
         """
-        n = len(scene_image_paths)
+        n   = len(scene_image_paths)
         dur = self.scene_duration
-        total_dur = n * dur
+
+        # Stretch scene duration if narration is longer than default video length
+        if audio_path is not None:
+            audio_dur = self._probe_audio_duration(audio_path)
+            if audio_dur > 0:
+                min_scene_dur = audio_dur / n
+                if min_scene_dur > dur:
+                    dur = math.ceil(min_scene_dur)
+                    log.info(
+                        "ffmpeg.scene_dur_adjusted",
+                        audio_dur_s=f"{audio_dur:.1f}",
+                        scene_dur_s=dur,
+                    )
+
+        total_dur      = n * dur - (n - 1) * _XFADE_DUR
         fade_out_start = total_dur - _FADE_DUR
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmp = Path(tmpdir)
+        # ── Build FFmpeg command ───────────────────────────────────────────────
+        cmd = [self.ffmpeg_bin, "-hide_banner", "-y"]
 
-            # Build concat.txt: each image for scene_duration seconds.
-            # The concat demuxer requires the last file to be listed twice
-            # (FFmpeg quirk) to ensure the final frame duration is honoured.
-            lines: list[str] = []
-            for img_path in scene_image_paths:
-                lines.append(f"file '{img_path.resolve().as_posix()}'")
-                lines.append(f"duration {dur}")
-            if scene_image_paths:
-                lines.append(f"file '{scene_image_paths[-1].resolve().as_posix()}'")
+        # One looped image input per scene; extra XFADE_DUR gives the filter
+        # enough headroom to consume frames during the overlapping transition.
+        for img in scene_image_paths:
+            cmd += ["-loop", "1", "-t", str(dur + _XFADE_DUR), "-i", str(img)]
+        if audio_path is not None:
+            cmd += ["-i", str(audio_path)]
 
-            concat_file = tmp / "concat.txt"
-            concat_file.write_text("\n".join(lines))
+        audio_idx = n  # audio is the (n+1)-th input, 0-indexed
 
-            vf = (
-                f"{_SCALE},"
-                f"format=yuv420p,"
+        # ── filter_complex ────────────────────────────────────────────────────
+        parts: list[str] = []
+
+        # Scale + format every scene stream
+        for i in range(n):
+            parts.append(
+                f"[{i}:v]{_SCALE},format=yuv420p,setpts=PTS-STARTPTS[v{i}]"
+            )
+
+        # Chain xfades then wrap in global fades
+        if n == 1:
+            parts.append(
+                f"[v0]"
                 f"fade=t=in:st=0:d={_FADE_DUR},"
-                f"fade=t=out:st={fade_out_start}:d={_FADE_DUR}"
+                f"fade=t=out:st={fade_out_start:.3f}:d={_FADE_DUR}"
+                f"[out]"
+            )
+        else:
+            prev = "v0"
+            for k in range(n - 1):
+                offset  = (k + 1) * (dur - _XFADE_DUR)
+                out_lbl = f"xf{k}" if k < n - 2 else "xfall"
+                parts.append(
+                    f"[{prev}][v{k+1}]"
+                    f"xfade=transition=fade:duration={_XFADE_DUR}:offset={offset:.3f}"
+                    f"[{out_lbl}]"
+                )
+                prev = out_lbl
+            parts.append(
+                f"[{prev}]"
+                f"fade=t=in:st=0:d={_FADE_DUR},"
+                f"fade=t=out:st={fade_out_start:.3f}:d={_FADE_DUR}"
+                f"[out]"
             )
 
-            cmd = [
-                self.ffmpeg_bin, "-hide_banner", "-y",
-                "-f", "concat", "-safe", "0", "-i", str(concat_file),
-            ]
-            if audio_path is not None:
-                cmd += ["-i", str(audio_path)]
+        cmd += ["-filter_complex", "; ".join(parts)]
+        cmd += ["-map", "[out]"]
+        if audio_path is not None:
+            cmd += ["-map", f"{audio_idx}:a"]
 
-            cmd += [
-                "-vf", vf,
-                "-c:v", "libx264",
-                "-preset", "fast",
-                "-crf", "23",
-                "-r", str(_FPS),
-            ]
-            if audio_path is not None:
-                cmd += ["-c:a", "aac", "-b:a", "192k", "-shortest"]
+        # -pix_fmt yuv420p is REQUIRED for browser playback. seedream JPEGs are
+        # full-range 4:4:4; without this, libx264 emits High 4:4:4 (yuvj444p) which
+        # plays in VLC but is undecodable in browsers ("file is corrupt"). The
+        # in-filter format=yuv420p does not survive xfade negotiation, so force it here.
+        cmd += [
+            "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-preset", "fast", "-crf", "23", "-movflags", "+faststart",
+        ]
+        if audio_path is not None:
+            cmd += ["-c:a", "aac", "-b:a", "192k", "-shortest"]
 
-            cmd.append(str(output_path))
+        cmd.append(str(output_path))
 
+        # ── Log inputs ────────────────────────────────────────────────────────
+        for img in scene_image_paths:
             log.info(
-                "ffmpeg.compose.start",
-                scenes=n,
-                audio=audio_path is not None,
-                total_dur_s=f"{total_dur:.1f}",
+                "ffmpeg.input.scene",
+                path=str(img),
+                exists=img.exists(),
+                size=img.stat().st_size if img.exists() else None,
             )
+        if audio_path is not None:
+            log.info(
+                "ffmpeg.input.audio",
+                path=str(audio_path),
+                exists=audio_path.exists(),
+                size=audio_path.stat().st_size if audio_path.exists() else None,
+            )
+        log.info(
+            "ffmpeg.compose.start",
+            scenes=n,
+            audio=audio_path is not None,
+            total_dur_s=f"{total_dur:.1f}",
+        )
 
-            result = await asyncio.to_thread(
-                subprocess.run,
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=300,
-            )
+        result = await asyncio.to_thread(
+            subprocess.run,
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
 
         if result.returncode != 0:
             log.error("ffmpeg.compose.failed", stderr=result.stderr[-2000:])

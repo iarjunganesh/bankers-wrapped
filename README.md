@@ -152,12 +152,12 @@ bankers-wrapped-assets/
     │   ├── analytics.json        ← financial insights snapshot
     │   ├── prompts.json          ← image prompts + SHA-256 hashes per scene
     │   ├── generation.json       ← model, provider, latency, retry count per step
-    │   ├── thumbnail.png         ← scene 0 used as recap preview image
+    │   ├── thumbnail.jpg         ← scene 0 (a JPEG) reused as recap preview image
     │   ├── narration.mp3         ← OpenAI TTS (alloy voice)
     │   └── scenes/
-    │       ├── scene_00.png … scene_04.png   ← GMI Cloud Seedream 1344×768
+    │       ├── scene_00.jpg … scene_04.jpg   ← GMI Cloud Seedream
     ├── output/
-    │   └── recap_{session_id}.mp4   ← H.264/AAC, xfade transitions
+    │   └── recap_{session_id}.mp4   ← H.264 yuv420p + faststart / AAC, xfade transitions
     └── metadata/
         └── session_metadata.json    ← top-level provenance record
 ```

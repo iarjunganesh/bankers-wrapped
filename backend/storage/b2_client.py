@@ -114,7 +114,7 @@ class B2Client:
 
     @staticmethod
     def thumbnail_key(user_id: str, session_id: str) -> str:
-        return f"{user_id}/{session_id}/pipeline/thumbnail.png"
+        return f"{user_id}/{session_id}/pipeline/thumbnail.jpg"
 
     # ── Presigned URL ─────────────────────────────────────────────────────────
 
