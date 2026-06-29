@@ -1,8 +1,15 @@
 # ADR-003: FFmpeg for Composition; Runway ML Excluded
-**Status:** Accepted | **Date:** 2026-06-25
+**Status:** Accepted (implementation revised in v1.6.0) | **Date:** 2026-06-25
 
 ## Decision
 FFmpeg for video composition. Runway ML and Luma AI excluded from hackathon scope.
+
+> **Update (v1.6.0):** the core decision (FFmpeg over hosted video models) stands, but the
+> *implementation* below changed. The monolithic `xfade filter_complex` OOM-killed on
+> memory-limited containers (it buffers every looped input's frames). It was replaced by a
+> **memory-bounded segment + concat** compositor with **dip-to-black** transitions (no
+> crossfade, no `drawtext` ending card). See CHANGELOG 1.6.0. The rationale below is retained
+> as the original decision record.
 
 ## Rationale
 - Runway/Luma add latency, quota risk, cost with no judging advantage

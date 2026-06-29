@@ -10,8 +10,8 @@
 | Criterion | How Banker's Wrapped Addresses It |
 | --- | --- |
 | **Real-World Utility** | Solves chronically low engagement in banking apps — turns opaque data into a story people want to share. Clear target market: retail banks and fintechs. |
-| **Production Readiness** | CI/CD with 80%+ coverage gate (currently 94%), structured JSON logging, health endpoint, rate limiting (5 req/hr/IP), binary CSV validation, 6 ADRs, synthetic demo data committed. Not a prototype — a deployable system. |
-| **B2 Storage + Orchestration** | B2 stores all **10 artifact types** per session under `{user_id}/{session_id}/`: input CSV, script, analytics, prompts, generation telemetry, thumbnail, 5 scene images, narration audio, video, and session metadata. All artifact keys returned in API response. Presigned URLs serve video + thumbnail; `/download` endpoint streams a full ZIP. |
+| **Production Readiness** | CI/CD with 80%+ coverage gate (currently 93%), structured JSON logging, health endpoint, rate limiting (5 req/hr/IP), binary CSV validation, 6 ADRs, synthetic demo data committed. Memory-bounded compositor + non-blocking event loop — battle-tested under a 0.5 GB container. Not a prototype — a deployable system. |
+| **B2 Storage + Orchestration** | B2 stores **14 files across 10 artifact types** per session under `{user_id}/{session_id}/`: input CSV, script, analytics, prompts, generation telemetry, thumbnail, 5 scene images, narration audio, video, and session metadata. All artifact keys returned in API response. Presigned URLs (regenerated per request, never expire) serve video + thumbnail; `/download` endpoint streams a full ZIP. |
 | **Genblaze Usage** | Genblaze is the **sole** media generation layer — image generation (GMI Cloud Seedream) and narration audio (OpenAI TTS) both route exclusively through `GenblazeClient`. No provider is called directly outside `genblaze_client.py`. |
 
 ---
@@ -26,7 +26,7 @@
 
 ---
 
-## Pipeline Artifacts Stored in B2 (10 artifacts / session)
+## Pipeline Artifacts Stored in B2 (14 files / 10 types per session)
 
 ```text
 {user_id}/{session_id}/input/transactions.csv
@@ -34,7 +34,7 @@
 {user_id}/{session_id}/pipeline/analytics.json         ← financial insights snapshot
 {user_id}/{session_id}/pipeline/prompts.json           ← image prompts + SHA-256 hashes
 {user_id}/{session_id}/pipeline/generation.json        ← model, latency, retry per step
-{user_id}/{session_id}/pipeline/thumbnail.png          ← scene 0 preview image
+{user_id}/{session_id}/pipeline/thumbnail.jpg          ← scene 0 preview image
 {user_id}/{session_id}/pipeline/narration.mp3          ← OpenAI TTS via GenblazeClient
 {user_id}/{session_id}/pipeline/scenes/scene_00.jpg … scene_04.jpg
 {user_id}/{session_id}/output/recap_{session_id}.mp4
@@ -47,11 +47,11 @@
 
 1. Open `https://bankers-wrapped.vercel.app`
 2. Upload `data/synthetic/transactions_jan_2026.csv` (Financial Builder personality)
-3. Show the **live 12-step SSE progress** while the 4-agent pipeline runs — per-step latency visible next to each completed stage *(jump-cut the ~4 min generation wait)*
-4. Play the generated **narrated MP4 recap video** (H.264 + AAC, xfade transitions, OpenAI TTS voice)
+3. Show the **live 7-step SSE progress** while the 4-agent pipeline runs — per-step latency visible next to each completed stage *(jump-cut the ~2–4 min generation wait)*
+4. Play the generated **narrated MP4 recap video** (H.264 + AAC, dip-to-black transitions, OpenAI TTS voice)
 5. Click **"Share your recap →"** — open the public share page at `/recap/{session_id}` showing thumbnail + artifact list
-6. Click **"Download full package"** — show the ZIP download of all 10 B2 artifacts
-7. Open the **B2 bucket** in the Backblaze console — show the 10-artifact structured layout per session
+6. Click **"Download full package"** — show the ZIP download of all 14 B2 files
+7. Open the **B2 bucket** in the Backblaze console — show the 14-file (10-type) structured layout per session
 8. Open `generation.json` — show per-step model, latency, retry counts; open `session_metadata.json` for top-level provenance
 9. *(Optional)* Repeat with `data/synthetic/transactions_q4_2025.csv` to show a different personality
 

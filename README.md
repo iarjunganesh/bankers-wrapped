@@ -36,12 +36,12 @@
 
 | Scenario | API cost | Time | What you'll see |
 | --- | --- | --- | --- |
-| **A — Financial Builder** (Jan 2026) | LLM + 5 images + TTS | ~4 min | Full end-to-end run · amber personality · 5-scene video |
-| **B — Financial Explorer** (Q4 2025) | LLM + 5 images + TTS | ~4 min | Second personality type · teal theme · 39-transaction dataset |
-| **C — Pre-generated session** | **None** | < 5 s | Fetch a completed session from B2 · inspect all 10 artifacts |
+| **A — Financial Builder** (Jan 2026) | LLM + 5 images + TTS | ~2–3 min | Full end-to-end run · amber personality · 5-scene video |
+| **B — Financial Explorer** (Q4 2025) | LLM + 5 images + TTS | ~2–3 min | Second personality type · teal theme · 39-transaction dataset |
+| **C — Pre-generated session** | **None** | < 5 s | Fetch a completed session from B2 · inspect all 14 artifacts |
 | Comparison chart | — | instant | Income vs expenses side-by-side across both datasets |
-| Timing chart | — | instant | Where the ~4 min goes — image generation dominates (74%) |
-| B2 inspection | — | instant | Full 10-artifact B2 layout printed per session |
+| Timing chart | — | instant | Where the ~2 min goes — image generation dominates |
+| B2 inspection | — | instant | Full 14-file (10-type) B2 layout printed per session |
 
 ```bash
 # Run against the live production API — no local setup needed
@@ -77,7 +77,7 @@ Banker's Wrapped solves this with an agentic pipeline that reads your transactio
 6. **Scene images** generated via **Genblaze → GMI Cloud** (Seedream 4.0, 1344×768) — all 5 in parallel (with automatic 3× retry + exponential backoff)
 7. **Voice narration** synthesised via **Genblaze → OpenAI TTS** (tts-1, alloy voice) — concatenated scene text
 8. **FFmpeg** composes the final MP4: each scene rendered to a segment, then concat-joined with narration — **dip-to-black** transitions between scenes, browser-safe H.264 `yuv420p` + `faststart` / AAC (memory-bounded so it runs on any host)
-9. **10 artifacts** uploaded to **Backblaze B2** (video, thumbnail, script, analytics, prompts, generation provenance, scenes, narration, CSV, metadata); presigned URL + download ZIP returned
+9. **14 files** (10 artifact types) uploaded to **Backblaze B2** (video, thumbnail, script, analytics, prompts, generation provenance, 5 scenes, narration, CSV, metadata); presigned URL + download ZIP returned
 
 ---
 
@@ -97,7 +97,7 @@ graph LR
     U(["👤 User"]):::user
     API["⚡ FastAPI<br/>rate-limit 5/hr"]:::api
     PL["🤖 Agent Pipeline<br/>Semantic Kernel"]:::sk
-    B2[("☁️ Backblaze B2<br/>10 artifacts")]:::b2
+    B2[("☁️ Backblaze B2<br/>14 files")]:::b2
 
     U ==> API ==> PL ==> B2
 
@@ -130,17 +130,17 @@ Measured on a live run against `transactions_jan_2026.csv` (22 transactions, 5 s
 | CSV parse + normalise | DocumentAgent | < 1 s |
 | Spending analytics + personality | AnalyticsAgent | < 1 s |
 | Narrative script (5 scenes) | NarrativeAgent · NVIDIA NIM Llama 3.1 70B | ~30 s |
-| Scene images × 5 | MediaAgent · Genblaze → GMI Cloud Seedream (parallel, retry ×3) | ~180 s |
-| Voice narration | GenblazeClient → OpenAI TTS (tts-1, alloy, retry ×3) | ~7 s |
-| MP4 composition | FFmpeg (H.264/AAC, segment + concat, dip-to-black) | ~5 s |
-| B2 uploads (10 artifacts) | Backblaze B2 | ~3 s |
-| **Total wall-clock** | | **~224 s** |
+| Scene images × 5 | MediaAgent · Genblaze → GMI Cloud Seedream (parallel, retry ×3) | ~45–180 s |
+| Voice narration | GenblazeClient → OpenAI TTS (tts-1, alloy, retry ×3) | ~17 s |
+| MP4 composition | FFmpeg (H.264/AAC, segment + concat, dip-to-black) | ~6 s |
+| B2 uploads (14 files) | Backblaze B2 | ~3 s |
+| **Total wall-clock** | | **~2–4 min** |
 
-Image generation dominates. `asyncio.gather` dispatches all 5 scenes concurrently — GMI Cloud queues them server-side per API key, so wall time reflects their queue depth rather than true parallel execution. Per-step latency and retry counts are recorded in `generation.json`.
+Image generation dominates. Since v1.6.0 the blocking image-gen call is offloaded to a worker thread, so `asyncio.gather` truly dispatches all 5 scenes concurrently (previously the event loop serialized them). Wall time now depends on GMI Cloud's server-side concurrency per API key. Per-step latency and retry counts are recorded in `generation.json`.
 
 ### B2 Storage Layout
 
-Every recap produces **10 artifacts** — B2 is the complete source of truth for the entire media pipeline:
+Every recap produces **14 files** (10 artifact types) — B2 is the complete source of truth for the entire media pipeline:
 
 ```text
 bankers-wrapped-assets/
