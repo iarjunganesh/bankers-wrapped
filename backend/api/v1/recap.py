@@ -267,6 +267,7 @@ async def generate_recap(
 async def get_recap(
     session_id: str,
     store: SessionStore = Depends(get_session_store),
+    b2: B2Client = Depends(get_b2),
 ) -> RecapResponse:
     """Fetch a completed recap by session ID — used by the share page and frontend."""
     session = store.get(session_id)
@@ -279,11 +280,27 @@ async def get_recap(
         insights = InsightsSummary(**meta["insights"])
     except (KeyError, TypeError):
         raise HTTPException(status_code=404, detail="Recap data unavailable") from None
+
+    # Regenerate presigned URLs from the stored B2 keys on every request. The URLs
+    # minted at generation time expire after b2_presigned_url_expiry (1h), which
+    # would break the share page / notebook Scenario C for any recap opened later.
+    b2_keys: dict[str, str] = meta.get("b2_keys", {})
+    video_key = b2_keys.get("video")
+    thumb_key = b2_keys.get("thumbnail")
+    video_url = (
+        await asyncio.to_thread(b2.presigned_url, video_key)
+        if video_key else session["output_url"]
+    )
+    thumbnail_url = (
+        await asyncio.to_thread(b2.presigned_url, thumb_key)
+        if thumb_key else meta.get("thumbnail_url", "")
+    )
+
     return RecapResponse(
         session_id=session_id,
-        video_url=session["output_url"],
-        thumbnail_url=meta.get("thumbnail_url", ""),
-        b2_keys=meta.get("b2_keys", {}),
+        video_url=video_url,
+        thumbnail_url=thumbnail_url,
+        b2_keys=b2_keys,
         insights=insights,
         processing_time_ms=meta.get("processing_time_ms", 0),
     )

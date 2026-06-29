@@ -23,6 +23,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ### Fixed
 
+- **Share links no longer expire** (`GET /recap/{id}`) — the endpoint returned the presigned video/thumbnail URLs minted at generation time, which expire after `b2_presigned_url_expiry` (1 h), so any share page or notebook Scenario C opened later showed a dead video. Now it **regenerates presigned URLs from the stored B2 keys on every request**, so links stay valid indefinitely.
+- **Session DB path is configurable** (`SESSION_DB_PATH` env) so the SQLite store can live on a Railway persistent volume and survive redeploys (Railway's default filesystem is ephemeral — sessions were wiped on every deploy).
+- **Demo notebook (`DEMO_RUNBOOK.ipynb`) refreshed** for v1.6.0: parallel-image timings (~2–3 min, was ~4–5), correct artifact count (14 files / 10 types), and Scenario C durability notes.
 - **Event loop no longer blocked by synchronous I/O during the pipeline** — `generate_scene_image` ran the genblaze pipeline `.run()` and a sync `httpx.Client` fetch directly inside an `async` function, freezing the loop for the entire ~3–4 min image phase. That starved the SSE progress stream: the connection dropped and the frontend hung on "Writing narrative script" even though the backend completed. Fixes:
   - **`genblaze_client.generate_scene_image`** — blocking genblaze run + HTTP fetch moved into `asyncio.to_thread`. Side benefit: the 5 image generations now actually run **in parallel** via the existing `asyncio.gather` (image phase ~3.3 min → ~40–50 s; total pipeline ~5.4 min → ~2.5–3 min).
   - **`MediaAgent`** — all 13 synchronous boto3 B2 calls (`upload_bytes`/`upload_json`/`presigned_url`) offloaded via small `_b2_*` `to_thread` helpers.

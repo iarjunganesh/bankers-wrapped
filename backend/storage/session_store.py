@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import os
 import sqlite3
 import time
 from datetime import UTC, datetime
@@ -19,7 +20,10 @@ import structlog
 
 log = structlog.get_logger()
 
-DB_PATH = Path("bankers_wrapped.db")
+# Override with SESSION_DB_PATH to point at a Railway persistent volume (e.g.
+# /data/bankers_wrapped.db) so sessions survive redeploys. Railway's default
+# filesystem is ephemeral — without a volume, the SQLite DB is wiped on deploy.
+DB_PATH = Path(os.environ.get("SESSION_DB_PATH", "bankers_wrapped.db"))
 
 
 def _now() -> str:
