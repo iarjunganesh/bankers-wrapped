@@ -21,6 +21,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 - **Per-scene duration = narration_length / N** (float), so the slideshow covers the narration exactly (no `-shortest` trimming artefacts).
 - `scripts/recompose.py` comparison labels clarified (`segments (new)` vs `old-xfade`) to match the new compositor.
 
+### Fixed
+
+- **Event loop no longer blocked by synchronous I/O during the pipeline** — `generate_scene_image` ran the genblaze pipeline `.run()` and a sync `httpx.Client` fetch directly inside an `async` function, freezing the loop for the entire ~3–4 min image phase. That starved the SSE progress stream: the connection dropped and the frontend hung on "Writing narrative script" even though the backend completed. Fixes:
+  - **`genblaze_client.generate_scene_image`** — blocking genblaze run + HTTP fetch moved into `asyncio.to_thread`. Side benefit: the 5 image generations now actually run **in parallel** via the existing `asyncio.gather` (image phase ~3.3 min → ~40–50 s; total pipeline ~5.4 min → ~2.5–3 min).
+  - **`MediaAgent`** — all 13 synchronous boto3 B2 calls (`upload_bytes`/`upload_json`/`presigned_url`) offloaded via small `_b2_*` `to_thread` helpers.
+  - **`GET /recap/{id}/download`** — the blocking B2-download + ZIP build offloaded via `asyncio.to_thread`, so a ZIP download no longer stalls every other request.
+  - Left synchronous intentionally: ffprobe (sub-ms local read), SQLite session store (sub-ms local), key-builders / pure logic / tests.
+
 ---
 
 ## [1.5.0] — 2026-06-28

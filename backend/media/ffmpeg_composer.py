@@ -103,6 +103,7 @@ class FFmpegComposer:
         n = len(scene_image_paths)
 
         # Per-scene duration: split the narration evenly so total == audio length.
+        # (ffprobe is a sub-millisecond local metadata read — not worth offloading.)
         audio_dur = self._probe_audio_duration(audio_path) if audio_path is not None else 0.0
         dur = (audio_dur / n) if audio_dur > 0 else float(self.scene_duration)
         fade = min(_SEG_FADE, dur / 3)  # guard against fades overlapping on short scenes

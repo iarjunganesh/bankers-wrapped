@@ -87,6 +87,17 @@ class MediaAgent(BaseAgent):
         if self.progress_callback:
             self.progress_callback(event, detail)
 
+    # B2 (boto3) is synchronous; offload every call so it never blocks the event
+    # loop (which would freeze the SSE progress stream during the pipeline).
+    async def _b2_bytes(self, key: str, data: bytes, content_type: str) -> str:
+        return await asyncio.to_thread(self.b2.upload_bytes, key, data, content_type)
+
+    async def _b2_json(self, key: str, data: dict) -> str:  # type: ignore[type-arg]
+        return await asyncio.to_thread(self.b2.upload_json, key, data)
+
+    async def _b2_presign(self, key: str) -> str:
+        return await asyncio.to_thread(self.b2.presigned_url, key)
+
     async def run(self, input_data: MediaAgentInput) -> MediaAgentOutput:
         start_ms = int(time.time() * 1000)
         script = input_data.script_output.script
@@ -100,12 +111,12 @@ class MediaAgent(BaseAgent):
 
             # ── 1. Upload raw CSV to B2 input/ ──────────────────────────────
             csv_key = B2Client.input_key(user_id, session_id, input_data.input_filename)
-            self.b2.upload_bytes(csv_key, input_data.csv_bytes, "text/csv")
+            await self._b2_bytes(csv_key, input_data.csv_bytes, "text/csv")
             b2_keys["csv"] = csv_key
 
             # ── 2. Upload narrative script to B2 pipeline/ ──────────────────
             script_key = B2Client.pipeline_key(user_id, session_id, "script.json")
-            self.b2.upload_json(script_key, script.model_dump())
+            await self._b2_json(script_key, script.model_dump())
             b2_keys["script"] = script_key
 
             # ── 3. Upload analytics snapshot to B2 pipeline/ ────────────────
@@ -114,7 +125,7 @@ class MediaAgent(BaseAgent):
                 analytics_dict = json.loads(
                     input_data.analytics_output.insights.model_dump_json()
                 )
-                self.b2.upload_json(analytics_key, analytics_dict)
+                await self._b2_json(analytics_key, analytics_dict)
                 b2_keys["analytics"] = analytics_key
 
             # ── 4. Generate scene images in parallel via Genblaze → GMI Cloud ─
@@ -140,16 +151,16 @@ class MediaAgent(BaseAgent):
                 scene_image_paths.append(img_path)
 
                 scene_key = B2Client.scene_key(user_id, session_id, idx)
-                self.b2.upload_bytes(scene_key, image_result.image_bytes, "image/jpeg")
+                await self._b2_bytes(scene_key, image_result.image_bytes, "image/jpeg")
                 b2_keys[f"scene_{idx}"] = scene_key
 
             # ── 5. Upload thumbnail (scene 0) to B2 pipeline/ ──────────────
             thumbnail_key = B2Client.thumbnail_key(user_id, session_id)
-            self.b2.upload_bytes(
+            await self._b2_bytes(
                 thumbnail_key, image_results[0].image_bytes, "image/jpeg"
             )
             b2_keys["thumbnail"] = thumbnail_key
-            thumbnail_url = self.b2.presigned_url(thumbnail_key)
+            thumbnail_url = await self._b2_presign(thumbnail_key)
 
             # ── 6. Upload prompts manifest to B2 pipeline/ ──────────────────
             full_narration = " ".join(scene.narration for scene in script.scenes)
@@ -175,7 +186,7 @@ class MediaAgent(BaseAgent):
                 ).hexdigest()[:16],
             }
             prompts_key = B2Client.prompts_key(user_id, session_id)
-            self.b2.upload_json(prompts_key, prompts_payload)
+            await self._b2_json(prompts_key, prompts_payload)
             b2_keys["prompts"] = prompts_key
 
             # ── 7. Synthesise narration audio via Genblaze (OpenAI TTS) ────
@@ -189,7 +200,7 @@ class MediaAgent(BaseAgent):
             narration_path.write_bytes(audio_result.audio_bytes)
 
             narration_key = B2Client.narration_key(user_id, session_id)
-            self.b2.upload_bytes(narration_key, audio_result.audio_bytes, "audio/mpeg")
+            await self._b2_bytes(narration_key, audio_result.audio_bytes, "audio/mpeg")
             b2_keys["narration"] = narration_key
 
             # ── 8. Compose final MP4 with FFmpeg (images + narration audio) ─
@@ -210,10 +221,10 @@ class MediaAgent(BaseAgent):
             self._emit("uploading_to_b2", "Uploading artifacts to Backblaze B2")
             video_key = B2Client.output_key(user_id, session_id)
             video_bytes = output_path.read_bytes()
-            self.b2.upload_bytes(video_key, video_bytes, "video/mp4")
+            await self._b2_bytes(video_key, video_bytes, "video/mp4")
             b2_keys["video"] = video_key
 
-            video_url = self.b2.presigned_url(video_key)
+            video_url = await self._b2_presign(video_key)
 
             # ── 10. Build and upload provenance metadata ─────────────────────
             elapsed_ms = int(time.time() * 1000) - start_ms
@@ -241,7 +252,7 @@ class MediaAgent(BaseAgent):
             )
 
             meta_key = B2Client.metadata_key(user_id, session_id)
-            self.b2.upload_json(meta_key, json.loads(metadata.model_dump_json()))
+            await self._b2_json(meta_key, json.loads(metadata.model_dump_json()))
             b2_keys["metadata"] = meta_key
 
             # ── 11. Upload generation provenance to B2 pipeline/ ────────────
@@ -281,7 +292,7 @@ class MediaAgent(BaseAgent):
                 "total_latency_ms": elapsed_ms,
             }
             gen_key = B2Client.generation_key(user_id, session_id)
-            self.b2.upload_json(gen_key, generation_payload)
+            await self._b2_json(gen_key, generation_payload)
             b2_keys["generation"] = gen_key
 
             self.log.info(

@@ -142,6 +142,7 @@ The endpoint waits up to 10 s for the session to be created (SSE race-condition 
 - Coverage gate: 80% (currently 93%)
 - Retry: tenacity-based, 3 attempts, exponential backoff 2–30 s on all media generation calls
 - Structured logging via structlog on every pipeline step
+- **Non-blocking event loop**: all synchronous I/O on the async path is offloaded with `asyncio.to_thread` — genblaze image gen (`generate_scene_image`), every B2/boto3 call in `MediaAgent` (`_b2_*` helpers), FFmpeg/ffprobe subprocess, and the ZIP-download endpoint. Blocking the loop starves the SSE progress stream (hangs the frontend) and serialises work; offloading also lets the 5 image gens run truly in parallel via `asyncio.gather`
 
 ## Deployment
 

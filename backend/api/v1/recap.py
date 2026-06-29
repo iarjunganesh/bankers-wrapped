@@ -6,6 +6,7 @@ GET  /api/v1/recap/{session_id}/download  — stream ZIP of all B2 artifacts
 
 from __future__ import annotations
 
+import asyncio
 import io
 import os
 import uuid
@@ -305,17 +306,23 @@ async def download_recap_zip(
     if not b2_keys:
         raise HTTPException(status_code=404, detail="No artifacts found")
 
-    zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-        for artifact_name, b2_key in b2_keys.items():
-            try:
-                data = b2.download_bytes(b2_key)
-                ext = Path(b2_key).suffix or ".bin"
-                zf.writestr(f"{artifact_name}{ext}", data)
-            except Exception:
-                log.warning("download_zip.skip", artifact=artifact_name, key=b2_key)
+    def _build_zip() -> io.BytesIO:
+        """Blocking: download each artifact from B2 and zip it (runs off the loop)."""
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            for artifact_name, b2_key in b2_keys.items():
+                try:
+                    data = b2.download_bytes(b2_key)
+                    ext = Path(b2_key).suffix or ".bin"
+                    zf.writestr(f"{artifact_name}{ext}", data)
+                except Exception:
+                    log.warning("download_zip.skip", artifact=artifact_name, key=b2_key)
+        buf.seek(0)
+        return buf
 
-    zip_buffer.seek(0)
+    # boto3 downloads + zip compression are synchronous — offload so the ZIP build
+    # doesn't block the event loop (and stall every other request) while it runs.
+    zip_buffer = await asyncio.to_thread(_build_zip)
     short_id = session_id[:8]
 
     return StreamingResponse(

@@ -16,6 +16,7 @@ are returned in each result for provenance tracking.
 
 from __future__ import annotations
 
+import asyncio
 import os
 import time
 from dataclasses import dataclass, field
@@ -113,29 +114,37 @@ class GenblazeClient:
             retry=retry_if_exception_type(Exception),
             reraise=True,
         )
+        def _sync_generate() -> tuple[bytes, str]:
+            """Blocking genblaze pipeline run + image fetch (runs off the loop)."""
+            from genblaze_core import Modality, Pipeline
+            from genblaze_gmicloud import GMICloudImageProvider
+
+            pr = (
+                Pipeline("bankers-wrapped-image")
+                .step(
+                    GMICloudImageProvider(),
+                    model=model,
+                    prompt=prompt,
+                    modality=Modality.IMAGE,
+                    width=width,
+                    height=height,
+                )
+                .run(timeout=timeout, raise_on_failure=True)
+            )
+            asset = pr.run.steps[0].assets[0]
+            with httpx.Client(timeout=30) as http:
+                image_bytes = http.get(asset.url).content
+            return image_bytes, pr.manifest.canonical_hash
+
         async def _attempt() -> ImageResult:
             nonlocal attempt_count
             t0 = int(time.time() * 1000)
             try:
-                from genblaze_core import Modality, Pipeline
-                from genblaze_gmicloud import GMICloudImageProvider
-
-                pr = (
-                    Pipeline("bankers-wrapped-image")
-                    .step(
-                        GMICloudImageProvider(),
-                        model=model,
-                        prompt=prompt,
-                        modality=Modality.IMAGE,
-                        width=width,
-                        height=height,
-                    )
-                    .run(timeout=timeout, raise_on_failure=True)
-                )
-
-                asset = pr.run.steps[0].assets[0]
-                with httpx.Client(timeout=30) as http:
-                    image_bytes = http.get(asset.url).content
+                # Offload the SYNCHRONOUS genblaze run + HTTP fetch to a worker
+                # thread so it doesn't block the event loop. This lets concurrent
+                # image generations (via asyncio.gather) actually run in parallel
+                # and keeps the SSE progress stream live during generation.
+                image_bytes, manifest_hash = await asyncio.to_thread(_sync_generate)
 
                 latency = int(time.time() * 1000) - t0
                 log.info(
@@ -148,7 +157,7 @@ class GenblazeClient:
                 )
                 return ImageResult(
                     image_bytes=image_bytes,
-                    manifest_hash=pr.manifest.canonical_hash,
+                    manifest_hash=manifest_hash,
                     latency_ms=latency,
                     retry_count=attempt_count,
                 )
@@ -171,8 +180,6 @@ class GenblazeClient:
         no direct openai.audio calls outside this module.
         Retries up to 3 times with exponential backoff.
         """
-        import asyncio
-
         attempt_count = 0
 
         @retry(
