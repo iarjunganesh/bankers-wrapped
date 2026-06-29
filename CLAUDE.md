@@ -6,7 +6,9 @@ AI-powered financial storytelling platform entered in the **Backblaze Generative
 
 Upload a CSV → 4-agent pipeline → personalized narrated MP4 recap video stored on Backblaze B2.
 
-**Current phase**: v1.6.0 — FFmpeg compositor rewritten to a memory-bounded **segment + concat** strategy (dip-to-black transitions) after the monolithic xfade OOM-killed on Railway; browser-safe `yuv420p` + `+faststart` + CFR; active-step progress timer. Remaining work: demo video (≤3 min) + Devpost form submission + seed Scenario C session ID in notebook.
+**Current phase**: v1.6.0 shipped — memory-bounded **segment + concat** compositor (dip-to-black) after the monolithic xfade OOM-killed on Railway; non-blocking event loop (parallel image gen); durable share links; working demo notebook.
+
+**Next**: v1.7.0 is planned (roadmap only, no code yet) — see [`docs/ROADMAP-v1.7.0.md`](docs/ROADMAP-v1.7.0.md). Goal: push every judging criterion toward >9.5 via Genblaze-as-sole-AI-layer (ADR-007), B2-as-source-of-truth (ADR-008, also fixes ephemeral sessions), B2 lifecycle + integrity (ADR-009), Plaid sandbox (ADR-010), and submission polish (prompt 16). Build specs: `.github/prompts/12–16`. Remaining manual: demo video (≤3 min) + Devpost form + GMI credit top-up.
 
 ## Key Commands
 

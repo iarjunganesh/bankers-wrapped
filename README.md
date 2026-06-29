@@ -347,16 +347,20 @@ bankers-wrapped/
 
 ## Architecture Decision Records
 
-Six decisions documented — see [`docs/adr/`](docs/adr/) for full rationale.
+Ten decisions documented (001–006 accepted; 007–010 proposed for v1.7.0) — see [`docs/adr/`](docs/adr/) for full rationale.
 
 | ADR | Decision |
 | --- | --- |
 | [001](docs/adr/001-genblaze-central.md) | Genblaze as sole media generation layer — no direct provider calls |
 | [002](docs/adr/002-semantic-kernel-orchestration.md) | Semantic Kernel for agent orchestration — typed plugins, native async |
-| [003](docs/adr/003-ffmpeg-over-remotion.md) | FFmpeg for composition; Runway ML / Luma AI excluded — no quota risk |
+| [003](docs/adr/003-ffmpeg-over-remotion.md) | FFmpeg for composition; Runway ML / Luma AI excluded (impl revised in v1.6.0) |
 | [004](docs/adr/004-sqlite-for-mvp.md) | SQLite for MVP, PostgreSQL as documented production upgrade |
 | [005](docs/adr/005-financial-personality-core.md) | Financial Personality promoted to required scope — the emotional hook |
 | [006](docs/adr/006-observability-scope.md) | structlog JSON logging only — OpenTelemetry is post-hackathon |
+| [007](docs/adr/007-genblaze-sole-ai-layer.md) | *(proposed)* Route the narrative LLM through Genblaze — sole AI layer |
+| [008](docs/adr/008-b2-source-of-truth.md) | *(proposed)* B2 as session source of truth — durable across redeploys |
+| [009](docs/adr/009-b2-lifecycle-integrity.md) | *(proposed)* B2 lifecycle rules + per-artifact SHA-256 integrity |
+| [010](docs/adr/010-plaid-sandbox-ingestion.md) | *(proposed)* Plaid sandbox connector — optional "connect a bank" path |
 
 ---
 
@@ -423,6 +427,10 @@ Hackathon judging criteria and submission checklist: [`docs/SUBMISSION.md`](docs
 ---
 
 ## Future Roadmap
+
+**Next release — [v1.7.0 plan](docs/ROADMAP-v1.7.0.md)** (push every judging criterion toward >9.5): Genblaze as sole AI layer (route the LLM through Genblaze), B2 as source of truth (durable sessions), B2 lifecycle + integrity hashing, an optional Plaid-sandbox "connect a bank" path, and submission/hardening polish.
+
+Beyond v1.7.0:
 
 - PDF statement parsing (Azure Document Intelligence)
 - Goal Tracking Agent — savings milestones, debt payoff detection

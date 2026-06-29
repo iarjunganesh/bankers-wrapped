@@ -9,6 +9,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ---
 
+## [1.7.0] — Planned (roadmap only; no code yet)
+
+Full plan: [`docs/ROADMAP-v1.7.0.md`](docs/ROADMAP-v1.7.0.md). Goal: lift every judging criterion
+toward >9.5. Decision records ADR-007–010; build specs prompts 12–16.
+
+### Planned
+
+- **WS-1 — Genblaze as sole AI layer** ([ADR-007](docs/adr/007-genblaze-sole-ai-layer.md)) — route the narrative LLM through Genblaze (GMI chat/reasoning) so 3 of 4 AI steps go through it; optional Genblaze video scene. *Needs GMI credit top-up.*
+- **WS-2 — B2 as source of truth** ([ADR-008](docs/adr/008-b2-source-of-truth.md)) — self-contained session manifest on B2 + `get_recap` fallback, so share links survive Railway redeploys (fixes the ephemeral-SQLite gap). *No credits.*
+- **WS-3 — B2 lifecycle + integrity** ([ADR-009](docs/adr/009-b2-lifecycle-integrity.md)) — retention rule + SHA-256 per artifact in `generation.json`. *No credits.*
+- **WS-4 — Plaid sandbox connector** ([ADR-010](docs/adr/010-plaid-sandbox-ingestion.md)) — optional "connect a bank" ingestion path; CSV stays default. *No credits.*
+- **WS-5 — Submission polish + hardening++** (prompt 16) — 7th ADR, k6 load test, security review, CI badge, honest Postgres claim, demo assets, utility signal.
+
+---
+
 ## [1.6.0] — 2026-06-29
 
 ### Changed
