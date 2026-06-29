@@ -1,4 +1,4 @@
-"""Unit tests for FFmpegComposer — mocks subprocess."""
+"""Unit tests for FFmpegComposer — segment + concat strategy, mocks subprocess."""
 
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -32,20 +32,35 @@ def fake_audio(tmp_path) -> Path:
 
 @pytest.fixture(autouse=True)
 def mock_probe(composer):
-    """Prevent real ffprobe calls in every test; default to 0.0 (no adjustment)."""
+    """Prevent real ffprobe calls in every test; default to 0.0 (no audio length)."""
     with patch.object(FFmpegComposer, "_probe_audio_duration", return_value=0.0):
         yield
 
 
-def _make_thread_mock(returncode: int = 0, stderr: str = "") -> AsyncMock:
-    proc = MagicMock(returncode=returncode, stderr=stderr)
-    return AsyncMock(return_value=proc)
+def _capture():
+    """Return (captured_cmds, patched_to_thread) where each call appends its cmd."""
+    captured: list[list[str]] = []
+
+    async def capture_thread(fn, cmd, **kwargs):  # type: ignore[no-untyped-def]
+        captured.append(cmd)
+        return MagicMock(returncode=0, stderr="")
+
+    return captured, capture_thread
+
+
+def _is_segment(cmd: list[str]) -> bool:
+    return "-loop" in cmd
+
+
+def _is_concat(cmd: list[str]) -> bool:
+    return "concat" in cmd
 
 
 class TestFFmpegComposer:
-    async def test_compose_calls_subprocess(self, composer, fake_scene_images, fake_audio, tmp_path):
+    async def test_compose_returns_output_path(self, composer, fake_scene_images, fake_audio, tmp_path):
         output = tmp_path / "recap.mp4"
-        with patch("backend.media.ffmpeg_composer.asyncio.to_thread", _make_thread_mock()):
+        _, capture_thread = _capture()
+        with patch("backend.media.ffmpeg_composer.asyncio.to_thread", capture_thread):
             result = await composer.compose(
                 scene_image_paths=fake_scene_images,
                 audio_path=fake_audio,
@@ -53,175 +68,122 @@ class TestFFmpegComposer:
             )
         assert result == output
 
-    async def test_compose_includes_ffmpeg_in_command(self, composer, fake_scene_images, fake_audio, tmp_path):
+    async def test_one_segment_render_per_scene_plus_concat(self, composer, fake_scene_images, fake_audio, tmp_path):
+        """N scenes → N segment renders + exactly one concat pass."""
         output = tmp_path / "recap.mp4"
-        captured: list = []
-
-        async def capture_thread(fn, cmd, **kwargs):  # type: ignore[no-untyped-def]
-            captured.append(cmd)
-            return MagicMock(returncode=0, stderr="")
-
+        captured, capture_thread = _capture()
         with patch("backend.media.ffmpeg_composer.asyncio.to_thread", capture_thread):
             await composer.compose(
                 scene_image_paths=fake_scene_images,
                 audio_path=fake_audio,
                 output_path=output,
             )
-        assert captured
-        assert "ffmpeg" in captured[0][0]
+        segs = [c for c in captured if _is_segment(c)]
+        concats = [c for c in captured if _is_concat(c)]
+        assert len(segs) == len(fake_scene_images)
+        assert len(concats) == 1
 
-    async def test_compose_raises_on_ffmpeg_failure(self, composer, fake_scene_images, fake_audio, tmp_path):
+    async def test_segments_are_browser_safe_yuv420p(self, composer, fake_scene_images, fake_audio, tmp_path):
+        """Every segment must encode yuv420p, else browsers report 'file is corrupt'."""
         output = tmp_path / "recap.mp4"
-        with patch(
-            "backend.media.ffmpeg_composer.asyncio.to_thread",
-            _make_thread_mock(returncode=1, stderr="Error: bad input"),
-        ), pytest.raises(RuntimeError, match="FFmpeg failed"):
-            await composer.compose(
-                scene_image_paths=fake_scene_images,
-                audio_path=fake_audio,
-                output_path=output,
-            )
-
-    async def test_uses_xfade_filter_complex(self, composer, fake_scene_images, fake_audio, tmp_path):
-        output = tmp_path / "recap.mp4"
-        captured: list = []
-
-        async def capture_thread(fn, cmd, **kwargs):  # type: ignore[no-untyped-def]
-            captured.append(cmd)
-            return MagicMock(returncode=0, stderr="")
-
+        captured, capture_thread = _capture()
         with patch("backend.media.ffmpeg_composer.asyncio.to_thread", capture_thread):
             await composer.compose(
                 scene_image_paths=fake_scene_images,
                 audio_path=fake_audio,
                 output_path=output,
             )
-        assert captured
-        cmd_str = " ".join(captured[0])
-        assert "-filter_complex" in cmd_str
-        assert "xfade" in cmd_str
+        for seg in [c for c in captured if _is_segment(c)]:
+            assert "-pix_fmt" in seg
+            assert seg[seg.index("-pix_fmt") + 1] == "yuv420p"
+            assert "-threads" in seg  # libx264 thread cap (container OOM guard)
 
-    async def test_fade_in_out_applied(self, composer, fake_scene_images, fake_audio, tmp_path):
+    async def test_dip_to_black_fades_on_segments(self, composer, fake_scene_images, fake_audio, tmp_path):
         output = tmp_path / "recap.mp4"
-        captured: list = []
-
-        async def capture_thread(fn, cmd, **kwargs):  # type: ignore[no-untyped-def]
-            captured.append(cmd)
-            return MagicMock(returncode=0, stderr="")
-
+        captured, capture_thread = _capture()
         with patch("backend.media.ffmpeg_composer.asyncio.to_thread", capture_thread):
             await composer.compose(
                 scene_image_paths=fake_scene_images,
                 audio_path=fake_audio,
                 output_path=output,
             )
-        cmd_str = " ".join(captured[0])
-        assert "fade=t=in" in cmd_str
-        assert "fade=t=out" in cmd_str
+        seg = next(c for c in captured if _is_segment(c))
+        vf = seg[seg.index("-vf") + 1]
+        assert "fade=t=in" in vf
+        assert "fade=t=out" in vf
 
-    async def test_scene_duration_applied(self, fake_scene_images, fake_audio, tmp_path):
-        composer = FFmpegComposer(scene_duration_seconds=10)
+    async def test_concat_stream_copies_and_faststarts(self, composer, fake_scene_images, fake_audio, tmp_path):
+        """Final pass concat-copies video (no re-encode) and writes faststart MP4."""
         output = tmp_path / "recap.mp4"
-        with patch("backend.media.ffmpeg_composer.asyncio.to_thread", _make_thread_mock()):
+        captured, capture_thread = _capture()
+        with patch("backend.media.ffmpeg_composer.asyncio.to_thread", capture_thread):
             await composer.compose(
                 scene_image_paths=fake_scene_images,
                 audio_path=fake_audio,
                 output_path=output,
             )
-        assert composer.scene_duration == 10
+        concat = next(c for c in captured if _is_concat(c))
+        assert concat[concat.index("-c:v") + 1] == "copy"
+        assert "+faststart" in concat
+        # narration muxed as AAC
+        assert "-c:a" in concat
+        assert concat[concat.index("-c:a") + 1] == "aac"
+        assert str(fake_audio) in concat
 
-    async def test_scene_duration_stretched_for_long_audio(self, fake_scene_images, fake_audio, tmp_path):
-        """Scene duration stretches so the video covers audio longer than default.
+    async def test_no_audio_skips_audio_mux(self, composer, fake_scene_images, tmp_path):
+        output = tmp_path / "recap.mp4"
+        captured, capture_thread = _capture()
+        with patch("backend.media.ffmpeg_composer.asyncio.to_thread", capture_thread):
+            await composer.compose(
+                scene_image_paths=fake_scene_images,
+                output_path=output,
+            )
+        concat = next(c for c in captured if _is_concat(c))
+        assert "-c:a" not in concat
+        assert "-shortest" not in concat
 
-        n=4, default=5s, audio=61s → dur=ceil(61/4)=16s/scene
-        total_dur = 4*16 - 3*0.5 = 62.5s  →  fade_out at 62.5-0.5 = 62.000
+    async def test_per_scene_duration_from_audio(self, fake_scene_images, fake_audio, tmp_path):
+        """dur = audio_dur / n so the slideshow exactly covers the narration.
+
+        n=4, audio=60s → 15.000s per segment.
         """
         composer = FFmpegComposer(scene_duration_seconds=5)
-        output   = tmp_path / "recap.mp4"
-        captured: list = []
-
-        async def capture_thread(fn, cmd, **kwargs):  # type: ignore[no-untyped-def]
-            captured.append(cmd)
-            return MagicMock(returncode=0, stderr="")
-
-        with patch.object(FFmpegComposer, "_probe_audio_duration", return_value=61.0), \
+        output = tmp_path / "recap.mp4"
+        captured, capture_thread = _capture()
+        with patch.object(FFmpegComposer, "_probe_audio_duration", return_value=60.0), \
              patch("backend.media.ffmpeg_composer.asyncio.to_thread", capture_thread):
             await composer.compose(
                 scene_image_paths=fake_scene_images,
                 audio_path=fake_audio,
                 output_path=output,
             )
+        seg = next(c for c in captured if _is_segment(c))
+        assert seg[seg.index("-t") + 1] == "15.000"
 
-        cmd_str = " ".join(captured[0])
-        assert "fade=t=out:st=62.000" in cmd_str
-
-    async def test_output_is_browser_compatible(self, composer, fake_scene_images, fake_audio, tmp_path):
-        """Output MUST be yuv420p + faststart, else browsers report 'file is corrupt'.
-
-        seedream JPEGs are full-range 4:4:4; without an explicit -pix_fmt yuv420p
-        libx264 emits High 4:4:4 (yuvj444p) which plays in VLC but not in browsers.
-        """
-        output = tmp_path / "recap.mp4"
-        captured: list = []
-
-        async def capture_thread(fn, cmd, **kwargs):  # type: ignore[no-untyped-def]
-            captured.append(cmd)
-            return MagicMock(returncode=0, stderr="")
-
-        with patch("backend.media.ffmpeg_composer.asyncio.to_thread", capture_thread):
-            await composer.compose(
-                scene_image_paths=fake_scene_images,
-                audio_path=fake_audio,
-                output_path=output,
-            )
-        cmd = captured[0]
-        assert "-pix_fmt" in cmd
-        assert cmd[cmd.index("-pix_fmt") + 1] == "yuv420p"
-        assert "+faststart" in cmd
-
-    async def test_inputs_are_constant_frame_rate(self, composer, fake_scene_images, fake_audio, tmp_path):
-        """xfade requires CFR inputs — stricter ffmpeg builds (e.g. on Railway)
-        reject the looped-image default rate of 1/0. Each scene input must set
-        -framerate 25 and the filter chain must normalise with fps=25.
-        """
-        output = tmp_path / "recap.mp4"
-        captured: list = []
-
-        async def capture_thread(fn, cmd, **kwargs):  # type: ignore[no-untyped-def]
-            captured.append(cmd)
-            return MagicMock(returncode=0, stderr="")
-
-        with patch("backend.media.ffmpeg_composer.asyncio.to_thread", capture_thread):
-            await composer.compose(
-                scene_image_paths=fake_scene_images,
-                audio_path=fake_audio,
-                output_path=output,
-            )
-        cmd = captured[0]
-        # One -framerate 25 per looped scene input
-        assert cmd.count("-framerate") == len(fake_scene_images)
-        fc = cmd[cmd.index("-filter_complex") + 1]
-        assert "fps=25" in fc
-
-    async def test_single_scene_no_xfade(self, composer, tmp_path):
-        """A single scene skips xfade and goes straight to global fades."""
+    async def test_single_scene(self, composer, tmp_path):
         single_img = tmp_path / "scene_00.jpg"
         single_img.write_bytes(b"\xff\xd8\xff" + b"\x00" * 64)
-        output   = tmp_path / "recap.mp4"
-        captured: list = []
-
-        async def capture_thread(fn, cmd, **kwargs):  # type: ignore[no-untyped-def]
-            captured.append(cmd)
-            return MagicMock(returncode=0, stderr="")
-
+        output = tmp_path / "recap.mp4"
+        captured, capture_thread = _capture()
         with patch("backend.media.ffmpeg_composer.asyncio.to_thread", capture_thread):
             await composer.compose(
                 scene_image_paths=[single_img],
                 output_path=output,
             )
-        cmd = captured[0]
-        assert "-filter_complex" in cmd
-        # Extract the filter_complex value (the token after the flag)
-        fc = cmd[cmd.index("-filter_complex") + 1]
-        assert "xfade" not in fc   # no transitions with a single scene
-        assert "fade=t=in" in fc
+        assert len([c for c in captured if _is_segment(c)]) == 1
+        assert len([c for c in captured if _is_concat(c)]) == 1
+
+    async def test_raises_on_segment_failure(self, composer, fake_scene_images, fake_audio, tmp_path):
+        output = tmp_path / "recap.mp4"
+
+        def _fail(returncode: int = 1, stderr: str = "boom") -> AsyncMock:
+            proc = MagicMock(returncode=returncode, stderr=stderr)
+            return AsyncMock(return_value=proc)
+
+        with patch("backend.media.ffmpeg_composer.asyncio.to_thread", _fail()), \
+             pytest.raises(RuntimeError, match="FFmpeg segment failed"):
+            await composer.compose(
+                scene_image_paths=fake_scene_images,
+                audio_path=fake_audio,
+                output_path=output,
+            )

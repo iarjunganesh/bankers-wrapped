@@ -6,7 +6,7 @@ AI-powered financial storytelling platform entered in the **Backblaze Generative
 
 Upload a CSV → 4-agent pipeline → personalized narrated MP4 recap video stored on Backblaze B2.
 
-**Current phase**: v1.5.0 — FFmpeg ending card (fixed 0-frame bug), SSE race condition fixed, per-step latency in UI, `FFMPEG_BIN` config, README notebook section. Remaining work: demo video (≤3 min) + Devpost form submission + seed Scenario C session ID in notebook.
+**Current phase**: v1.6.0 — FFmpeg compositor rewritten to a memory-bounded **segment + concat** strategy (dip-to-black transitions) after the monolithic xfade OOM-killed on Railway; browser-safe `yuv420p` + `+faststart` + CFR; active-step progress timer. Remaining work: demo video (≤3 min) + Devpost form submission + seed Scenario C session ID in notebook.
 
 ## Key Commands
 
@@ -27,7 +27,7 @@ make demo-stop    # stop all services
 1. `DocumentAgent` — CSV parse + normalise → `List[Transaction]`
 2. `AnalyticsAgent` — insights + Financial Personality → `FinancialInsights`
 3. `NarrativeAgent` — NVIDIA NIM (Llama 3.1 70B) structured script → `NarrativeScript` (**5 scenes**)
-4. `MediaAgent` — Genblaze → GMI Cloud Seedream (images, parallel) + OpenAI TTS (narration) + FFmpeg (xfade) → `recap.mp4` → B2
+4. `MediaAgent` — Genblaze → GMI Cloud Seedream (images, parallel) + OpenAI TTS (narration) + FFmpeg (segment + concat) → `recap.mp4` → B2
 
 All AI media calls route through the **Genblaze SDK** (`genblaze-core`, `genblaze-gmicloud`).  
 OpenAI TTS is wrapped inside `GenblazeClient.generate_narration_audio()` — no direct provider calls outside that wrapper.
@@ -105,15 +105,19 @@ The endpoint waits up to 10 s for the session to be created (SSE race-condition 
 4. **Personalized Advice** — one concrete, actionable tip for this personality
 5. **Motivational Close** — forward-looking encouragement, warm sign-off
 
-## FFmpeg Composition — Visual Effects
+## FFmpeg Composition — Memory-Bounded Segment + Concat
 
-- xfade crossfade (0.5 s) between every consecutive scene pair
-- Global fade-in from black (0.5 s at start)
-- Global fade-out to black (0.5 s at end)
-- Scene duration auto-stretches from probed audio length so video always covers the full narration; `-shortest` trims to exact audio end
-- **Constant frame rate is mandatory** — each scene input sets `-framerate 25` and the filter chain ends with `fps=25`. Looped images default to rate `1/0`, which stricter ffmpeg builds (Railway) reject in xfade (*"inputs needs to be a constant frame rate"*)
-- H.264 libx264, **`-pix_fmt yuv420p`** (REQUIRED — seedream JPEGs are full-range 4:4:4; without this libx264 emits High 4:4:4 / `yuvj444p`, which plays in VLC but is "corrupt" in browsers), 1792×1024 (16:9), AAC 192 kbps audio
-- **`-movflags +faststart`** — moves the `moov` atom to the front for progressive browser streaming
+**Why not one xfade `filter_complex`?** A monolithic xfade graph with N looped image inputs buffers every input's frames until its staggered transition offset — several GB at 1792×1024 — and the OOM-killer SIGKILL's it (`returncode -9`, 0 frames) on memory-limited containers (Railway). Capping threads was not enough; the design itself had to change (v1.6.0).
+
+`FFmpegComposer.compose()` now:
+
+1. **Renders each scene to its own short MP4 segment** — one image in RAM at a time (sequential, never parallel), so peak memory ≈ a single small encode (~300 MB), not GBs. Each segment fades in from / out to black (**dip-to-black** transitions; no crossfade, since blending two scenes requires holding both in memory).
+2. **Concatenates the segments with the concat demuxer using `-c:v copy`** (stream copy — no decode, near-zero memory) and muxes the narration.
+
+- Per-scene duration = `narration_length / N` (float) so the slideshow covers the narration exactly
+- Each segment: `-framerate 25` + `fps=25` (CFR), `-threads 2`, `fade=t=in` / `fade=t=out`
+- **`-pix_fmt yuv420p`** is REQUIRED on every segment (seedream JPEGs are full-range 4:4:4; without it libx264 emits High 4:4:4 / `yuvj444p`, which plays in VLC but is "corrupt" in browsers)
+- Final concat pass adds **`-movflags +faststart`** (moov atom at front for progressive browser streaming) and AAC 192 kbps audio
 - `FFmpegComposer` derives `ffprobe` from `ffmpeg_bin` by replacing only the **filename** (not directory segments like `ffmpeg-8.1.1-full_build`)
 
 ## Frontend Routes

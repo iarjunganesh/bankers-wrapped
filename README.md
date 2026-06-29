@@ -63,7 +63,7 @@ Upload a CSV. Receive a 60-second video that tells the story of your financial y
 
 Banks generate mountains of transaction data but deliver it as an unreadable table. Customers disengage; apps go unused. Financial institutions lose the relationship. There is no moment that makes money *feel* meaningful.
 
-Banker's Wrapped solves this with an agentic pipeline that reads your transactions, assigns a financial personality, writes a 5-scene cinematic narrative, synthesizes voice narration, generates scene images with xfade transitions, and composes a sharable MP4 — end to end, no human in the loop.
+Banker's Wrapped solves this with an agentic pipeline that reads your transactions, assigns a financial personality, writes a 5-scene cinematic narrative, synthesizes voice narration, generates scene images, and composes a sharable MP4 with cinematic dip-to-black transitions — end to end, no human in the loop.
 
 ---
 
@@ -76,7 +76,7 @@ Banker's Wrapped solves this with an agentic pipeline that reads your transactio
 5. **Narrative Agent** (NVIDIA NIM / Llama 3.1 70B) generates a structured **5-scene cinematic video script** (Opening → Achievement → Insight → Advice → Close)
 6. **Scene images** generated via **Genblaze → GMI Cloud** (Seedream 4.0, 1344×768) — all 5 in parallel (with automatic 3× retry + exponential backoff)
 7. **Voice narration** synthesised via **Genblaze → OpenAI TTS** (tts-1, alloy voice) — concatenated scene text
-8. **FFmpeg** composes the final MP4: scene images + narration audio — **xfade crossfade** between scenes + global fade-in/out (H.264/AAC)
+8. **FFmpeg** composes the final MP4: each scene rendered to a segment, then concat-joined with narration — **dip-to-black** transitions between scenes, browser-safe H.264 `yuv420p` + `faststart` / AAC (memory-bounded so it runs on any host)
 9. **10 artifacts** uploaded to **Backblaze B2** (video, thumbnail, script, analytics, prompts, generation provenance, scenes, narration, CSV, metadata); presigned URL + download ZIP returned
 
 ---
@@ -108,7 +108,7 @@ graph LR
         A4["④ Media Agent<br/>retry ×3 · asset manifest"]:::sk
         GI["🖼️ GMI Cloud Seedream<br/>× 5 parallel"]:::gmi
         AU["🔊 OpenAI TTS<br/>narration.mp3"]:::tts
-        FF["🎬 FFmpeg<br/>xfade → H.264/AAC"]:::ff
+        FF["🎬 FFmpeg<br/>segments + concat → H.264/AAC"]:::ff
         A1 --> A2 --> A3 --> A4
         A4 -.-> GI
         A4 -.-> AU
@@ -132,7 +132,7 @@ Measured on a live run against `transactions_jan_2026.csv` (22 transactions, 5 s
 | Narrative script (5 scenes) | NarrativeAgent · NVIDIA NIM Llama 3.1 70B | ~30 s |
 | Scene images × 5 | MediaAgent · Genblaze → GMI Cloud Seedream (parallel, retry ×3) | ~180 s |
 | Voice narration | GenblazeClient → OpenAI TTS (tts-1, alloy, retry ×3) | ~7 s |
-| MP4 composition | FFmpeg (H.264/AAC, xfade transitions) | ~2 s |
+| MP4 composition | FFmpeg (H.264/AAC, segment + concat, dip-to-black) | ~5 s |
 | B2 uploads (10 artifacts) | Backblaze B2 | ~3 s |
 | **Total wall-clock** | | **~224 s** |
 
@@ -157,7 +157,7 @@ bankers-wrapped-assets/
     │   └── scenes/
     │       ├── scene_00.jpg … scene_04.jpg   ← GMI Cloud Seedream
     ├── output/
-    │   └── recap_{session_id}.mp4   ← H.264 yuv420p + faststart / AAC, xfade transitions
+    │   └── recap_{session_id}.mp4   ← H.264 yuv420p + faststart / AAC, dip-to-black transitions
     └── metadata/
         └── session_metadata.json    ← top-level provenance record
 ```
@@ -263,7 +263,7 @@ Every run produces **four machine-readable provenance files** in B2:
 | **Agent Framework** | [![Semantic Kernel](https://img.shields.io/badge/Semantic_Kernel-0078D4?logo=microsoft&logoColor=white)](https://learn.microsoft.com/en-us/semantic-kernel/) | Typed plugin contracts, native async |
 | **LLM** | [![NVIDIA NIM](https://img.shields.io/badge/NVIDIA_NIM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/) | Narrative script generation |
 | **Images** | [![GMI Cloud](https://img.shields.io/badge/GMI_Cloud-Seedream-0066CC)](https://cloud.gmi.ai/) | Scene visuals 1344×768, seedream-4-0-250828 (via Genblaze) — 5 parallel, retry ×3 |
-| **Video Compose** | [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/) | Scene images + narration → H.264/AAC MP4 with xfade transitions |
+| **Video Compose** | [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/) | Scene images + narration → H.264/AAC MP4 (segment + concat, dip-to-black) |
 | **Frontend** | [![Next.js](https://img.shields.io/badge/Next.js-16.2.9-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/) [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/) [![Node.js](https://img.shields.io/badge/Node.js-26.4.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) | Upload portal + video player |
 | **Session State** | [![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/) | Pipeline state tracking (SQLite → PostgreSQL) |
 | **Hosting** | [![Railway](https://img.shields.io/badge/Backend-Railway-0B0D0E?logo=railway&logoColor=white)](https://railway.app) [![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000?logo=vercel&logoColor=white)](https://vercel.com) | Backend on Railway · Frontend on Vercel |

@@ -226,9 +226,9 @@ async def main(session_id: str, user_id: str, ffmpeg_override: str | None) -> No
         print(f"\nAudio: {audio_dur:.2f}s  →  scene_dur: {scene_dur}s/scene  "
               f"(video before -shortest: {n * scene_dur}s)")
 
-        # ── approach 1: concat ────────────────────────────────────────────────
+        # ── approach 1: the REAL app compositor (segment + concat, dip-to-black)
         concat_out = tmp / f"concat_{id8}.mp4"
-        print("\n── CONCAT (concat demuxer + global fades) ──────────────────")
+        print("\n── SEGMENTS (new compositor: FFmpegComposer, dip-to-black) ──")
         composer = FFmpegComposer(
             scene_duration_seconds=_DEFAULT_SCENE_DUR,
             ffmpeg_bin=ffmpeg,
@@ -237,11 +237,11 @@ async def main(session_id: str, user_id: str, ffmpeg_override: str | None) -> No
         concat_dur  = probe_duration(ffprobe, concat_out)
         concat_size = concat_out.stat().st_size
 
-        # ── approach 2: xfade ─────────────────────────────────────────────────
+        # ── approach 2: legacy monolithic xfade (reference only; OOMs on Railway)
         xfade_out = tmp / f"xfade_{id8}.mp4"
-        print("\n── XFADE (per-scene crossfade transitions) ─────────────────")
+        print("\n── OLD-XFADE (legacy monolithic crossfade, reference only) ──")
         cmd = build_xfade_cmd(ffmpeg, scene_paths, narration_path, xfade_out, scene_dur)
-        run(cmd, "xfade")
+        run(cmd, "old-xfade")
         xfade_dur  = probe_duration(ffprobe, xfade_out)
         xfade_size = xfade_out.stat().st_size
 
@@ -259,8 +259,8 @@ async def main(session_id: str, user_id: str, ffmpeg_override: str | None) -> No
 ├──────────────┬──────────────┬───────────────────────────────┤
 │  approach    │  duration    │  size                         │
 ├──────────────┼──────────────┼───────────────────────────────┤
-│  concat      │  {concat_dur:>7.2f}s    │  {concat_size/1e6:>6.2f} MB                      │
-│  xfade       │  {xfade_dur:>7.2f}s    │  {xfade_size/1e6:>6.2f} MB                      │
+│  segments    │  {concat_dur:>7.2f}s    │  {concat_size/1e6:>6.2f} MB   (new compositor)  │
+│  old-xfade   │  {xfade_dur:>7.2f}s    │  {xfade_size/1e6:>6.2f} MB   (reference only)   │
 │  audio ref   │  {audio_dur:>7.2f}s    │  (narration.mp3)              │
 └──────────────┴──────────────┴───────────────────────────────┘
   concat_{id8}.mp4

@@ -9,6 +9,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ---
 
+## [1.6.0] — 2026-06-29
+
+### Changed
+
+- **FFmpeg compositor rewritten: monolithic xfade → memory-bounded segment + concat** (`ffmpeg_composer.py`). The single `xfade` `filter_complex` buffered every looped input's frames until its staggered transition offset — several GB at 1792×1024 — and the OOM-killer SIGKILL'd it (`returncode -9`, 0 frames) on memory-limited containers, even after capping threads. The new compositor:
+  1. **renders each scene to its own short MP4 segment** — only one image is in RAM at a time, so peak memory is a single small encode (~300 MB) instead of GBs;
+  2. **concatenates the segments with the concat demuxer using `-c:v copy`** (stream copy — no decode, near-zero memory) and muxes the narration.
+  Peak memory dropped from several GB to ~300 MB; it now runs on any container size (validated end-to-end against real B2 assets via `scripts/recompose.py`).
+- **Transitions: crossfade → dip-to-black.** True crossfades require holding two scenes' frames simultaneously — the exact buffering that OOMs — so each segment now fades in from / out to black, giving a memory-free cinematic dip between scenes. Output stays browser-safe (`yuv420p`, `+faststart`, CFR 25 fps, AAC).
+- **Per-scene duration = narration_length / N** (float), so the slideshow covers the narration exactly (no `-shortest` trimming artefacts).
+- `scripts/recompose.py` comparison labels clarified (`segments (new)` vs `old-xfade`) to match the new compositor.
+
+---
+
 ## [1.5.0] — 2026-06-28
 
 ### Fixed
