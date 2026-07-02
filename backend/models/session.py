@@ -12,8 +12,15 @@ class SessionStatus(StrEnum):
 
 
 class PipelineMetadata(BaseModel):
+    """Session manifest persisted to B2 (ADR-008: B2 is the source of truth).
+
+    Self-contained: holds everything RecapResponse needs so GET /recap/{id}
+    can be served from B2 alone when the SQLite cache is missing (redeploy).
+    """
+
     session_id: str
     user_id: str
+    status: str = "complete"
     created_at: datetime
     pipeline_version: str
     genblaze_version: str = "0.2.4"
@@ -23,6 +30,8 @@ class PipelineMetadata(BaseModel):
     output_url: str = ""
     processing_time_ms: int = 0
     synthetic_data: bool = False
+    insights: dict = {}  # InsightsSummary-shaped snapshot
+    b2_keys: dict[str, str] = {}
 
 
 class Session(BaseModel):

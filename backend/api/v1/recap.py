@@ -11,6 +11,7 @@ import io
 import os
 import uuid
 import zipfile
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
@@ -131,6 +132,24 @@ async def _run_pipeline(
     store: SessionStore,
 ) -> None:
     """Full 4-agent pipeline — runs as a background task after 202 is returned."""
+    # ADR-008: write the flat {session_id -> user_id} index to B2 first so the
+    # manifest can be located by session_id alone (share URLs carry no user_id),
+    # even after the SQLite cache is wiped by a redeploy. Non-fatal: an index
+    # write failure must not abort the generation (only redeploy durability is
+    # affected; if B2 is truly down, MediaAgent's uploads will fail anyway).
+    try:
+        await asyncio.to_thread(
+            b2.upload_json,
+            B2Client.session_index_key(session_id),
+            {
+                "session_id": session_id,
+                "user_id": user_id,
+                "created_at": datetime.now(UTC).isoformat(),
+            },
+        )
+    except Exception as exc:
+        log.warning("recap.session_index.write_failed", session_id=session_id, error=str(exc))
+
     try:
         store.append_event(session_id, "parsing", f"Parsing {safe_filename}")
         doc_agent = DocumentAgent()
@@ -207,6 +226,34 @@ async def _run_pipeline(
         log.error("recap.generate.failed", session_id=session_id, error=str(exc), exc_info=True)
 
 
+# ── B2 fallback (ADR-008: B2 is the source of truth, SQLite is a cache) ──────
+
+
+async def _manifest_from_b2(session_id: str, b2: B2Client) -> dict | None:  # type: ignore[type-arg]
+    """
+    Load the session manifest from B2 by session_id alone.
+
+    Resolves user_id via the flat index object, then reads
+    {user_id}/{session_id}/metadata/session_metadata.json. Returns None when
+    the session is unknown to B2 (or the manifest isn't complete yet).
+    """
+    try:
+        index = await asyncio.to_thread(
+            b2.download_json, B2Client.session_index_key(session_id)
+        )
+        user_id = index["user_id"]
+        manifest: dict = await asyncio.to_thread(  # type: ignore[type-arg]
+            b2.download_json, B2Client.metadata_key(user_id, session_id)
+        )
+    except Exception:
+        log.info("recap.b2_fallback.miss", session_id=session_id)
+        return None
+    if manifest.get("status") != "complete":
+        return None
+    log.info("recap.b2_fallback.hit", session_id=session_id)
+    return manifest
+
+
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 
@@ -271,11 +318,16 @@ async def get_recap(
 ) -> RecapResponse:
     """Fetch a completed recap by session ID — used by the share page and frontend."""
     session = store.get(session_id)
-    if not session:
-        raise HTTPException(status_code=404, detail="Recap not found")
-    if session["status"] != "complete":
-        raise HTTPException(status_code=404, detail="Recap not ready")
-    meta = session["metadata"]
+    if session and session["status"] == "complete":
+        meta = session["metadata"]  # fast path: SQLite cache
+    else:
+        # Cache miss (redeploy wiped SQLite, or row not complete) — fall back
+        # to the durable B2 manifest, which is a superset of the cached metadata.
+        manifest = await _manifest_from_b2(session_id, b2)
+        if manifest is None:
+            detail = "Recap not ready" if session else "Recap not found"
+            raise HTTPException(status_code=404, detail=detail)
+        meta = manifest
     try:
         insights = InsightsSummary(**meta["insights"])
     except (KeyError, TypeError):
@@ -289,7 +341,8 @@ async def get_recap(
     thumb_key = b2_keys.get("thumbnail")
     video_url = (
         await asyncio.to_thread(b2.presigned_url, video_key)
-        if video_key else session["output_url"]
+        if video_key
+        else (session["output_url"] if session else meta.get("output_url", ""))
     )
     thumbnail_url = (
         await asyncio.to_thread(b2.presigned_url, thumb_key)
@@ -314,12 +367,15 @@ async def download_recap_zip(
 ) -> StreamingResponse:
     """Download all recap artifacts as a ZIP package."""
     session = store.get(session_id)
-    if not session:
-        raise HTTPException(status_code=404, detail="Recap not found")
-    if session["status"] != "complete":
-        raise HTTPException(status_code=404, detail="Recap not ready yet")
-
-    b2_keys: dict[str, str] = session["metadata"].get("b2_keys", {})
+    if session and session["status"] == "complete":
+        b2_keys: dict[str, str] = session["metadata"].get("b2_keys", {})
+    else:
+        # Same B2 fallback as get_recap — ZIP download must survive a redeploy.
+        manifest = await _manifest_from_b2(session_id, b2)
+        if manifest is None:
+            detail = "Recap not ready yet" if session else "Recap not found"
+            raise HTTPException(status_code=404, detail=detail)
+        b2_keys = manifest.get("b2_keys", {})
     if not b2_keys:
         raise HTTPException(status_code=404, detail="No artifacts found")
 

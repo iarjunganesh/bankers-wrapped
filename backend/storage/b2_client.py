@@ -17,6 +17,7 @@ from pathlib import Path
 import boto3
 import structlog
 from botocore.config import Config
+from botocore.exceptions import ClientError
 
 log = structlog.get_logger()
 
@@ -74,6 +75,19 @@ class B2Client:
         log.info("b2.download", key=key, bytes=len(data))
         return data
 
+    def download_json(self, key: str) -> dict:  # type: ignore[type-arg]
+        """Download a JSON object from B2 and return it as a dict."""
+        result: dict = json.loads(self.download_bytes(key).decode("utf-8"))  # type: ignore[type-arg]
+        return result
+
+    def exists(self, key: str) -> bool:
+        """Return True if an object exists at the given key."""
+        try:
+            self._client.head_object(Bucket=self.bucket, Key=key)
+            return True
+        except ClientError:
+            return False
+
     # ── Key builders ──────────────────────────────────────────────────────────
 
     @staticmethod
@@ -115,6 +129,11 @@ class B2Client:
     @staticmethod
     def thumbnail_key(user_id: str, session_id: str) -> str:
         return f"{user_id}/{session_id}/pipeline/thumbnail.jpg"
+
+    @staticmethod
+    def session_index_key(session_id: str) -> str:
+        """Flat {session_id -> user_id} index so share URLs need no user_id."""
+        return f"index/{session_id}.json"
 
     # ── Presigned URL ─────────────────────────────────────────────────────────
 

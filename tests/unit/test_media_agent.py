@@ -370,6 +370,62 @@ class TestMediaAgentAssetManifest:
         output, _, _ = await self._run()
         assert output.thumbnail_url.startswith("https://")
 
+    async def test_session_manifest_is_self_contained(self):
+        """ADR-008: the B2 manifest alone must be able to serve GET /recap/{id}."""
+        settings = _make_settings()
+        agent_input = _make_input()
+        uploaded_json: dict[str, dict] = {}
+
+        mock_genblaze = MagicMock()
+        mock_genblaze.generate_scene_image = AsyncMock(
+            return_value=ImageResult(image_bytes=FAKE_PNG, manifest_hash="sha256:img")
+        )
+        mock_genblaze.generate_narration_audio = AsyncMock(
+            return_value=AudioResult(audio_bytes=FAKE_MP3, model="tts-1", voice="alloy")
+        )
+        mock_b2 = MagicMock()
+        mock_b2.upload_bytes.return_value = "b2://bucket/key"
+        mock_b2.upload_json.side_effect = (
+            lambda k, d: uploaded_json.__setitem__(k, d) or "b2://bucket/meta"
+        )
+        mock_b2.presigned_url.return_value = "https://presigned.url/recap.mp4"
+
+        with patch("backend.agents.media_agent.FFmpegComposer") as MockComposer, \
+             patch("backend.agents.media_agent.B2Client.input_key", return_value="u/s/input/f.csv"), \
+             patch("backend.agents.media_agent.B2Client.pipeline_key", return_value="u/s/pipeline/script.json"), \
+             patch("backend.agents.media_agent.B2Client.scene_key", return_value="u/s/scene.png"), \
+             patch("backend.agents.media_agent.B2Client.narration_key", return_value="u/s/pipeline/narration.mp3"), \
+             patch("backend.agents.media_agent.B2Client.output_key", return_value="u/s/output/recap.mp4"), \
+             patch("backend.agents.media_agent.B2Client.metadata_key", return_value="u/s/metadata/meta.json"), \
+             patch("backend.agents.media_agent.B2Client.analytics_key", return_value="u/s/pipeline/analytics.json"), \
+             patch("backend.agents.media_agent.B2Client.prompts_key", return_value="u/s/pipeline/prompts.json"), \
+             patch("backend.agents.media_agent.B2Client.generation_key", return_value="u/s/pipeline/generation.json"), \
+             patch("backend.agents.media_agent.B2Client.thumbnail_key", return_value="u/s/pipeline/thumbnail.png"):
+            async def _compose_and_write(**kwargs: object) -> Path:
+                p = kwargs["output_path"]
+                assert isinstance(p, Path)
+                p.write_bytes(FAKE_VIDEO)
+                return p
+
+            MockComposer.return_value.compose = AsyncMock(side_effect=_compose_and_write)
+            agent = MediaAgent(settings=settings, genblaze=mock_genblaze, b2=mock_b2)
+            output = await agent(agent_input)
+
+        manifest = uploaded_json["u/s/metadata/meta.json"]
+        assert manifest["status"] == "complete"
+        # Full insights snapshot — enough to hydrate InsightsSummary
+        assert manifest["insights"]["personality"] == "Financial Builder"
+        assert manifest["insights"]["savings_rate"] == 40.0
+        assert manifest["insights"]["top_categories"][0]["category"] == "Food"
+        # Every artifact key, including the manifest's own key and generation.json
+        for name in ("csv", "script", "analytics", "prompts", "narration",
+                     "thumbnail", "video", "metadata", "generation",
+                     "scene_0", "scene_4"):
+            assert name in manifest["b2_keys"], f"manifest missing b2 key: {name}"
+        assert manifest["b2_keys"] == output.b2_keys
+        assert manifest["processing_time_ms"] >= 0
+        assert "llm" in manifest["models_used"]
+
     async def test_progress_callback_called(self):
         settings = _make_settings()
         agent_input = _make_input()

@@ -6,9 +6,9 @@ AI-powered financial storytelling platform entered in the **Backblaze Generative
 
 Upload a CSV → 4-agent pipeline → personalized narrated MP4 recap video stored on Backblaze B2.
 
-**Current phase**: v1.6.0 shipped — memory-bounded **segment + concat** compositor (dip-to-black) after the monolithic xfade OOM-killed on Railway; non-blocking event loop (parallel image gen); durable share links; working demo notebook.
+**Current phase**: v1.7.0 in progress — WS-2 (B2 as source of truth, ADR-008) implemented: SQLite is now a cache, the self-contained B2 session manifest is the durable record, share links + ZIP download survive redeploys. v1.6.0 shipped the memory-bounded **segment + concat** compositor (dip-to-black), non-blocking event loop (parallel image gen), and working demo notebook.
 
-**Next**: v1.7.0 is planned (roadmap only, no code yet) — see [`docs/ROADMAP-v1.7.0.md`](docs/ROADMAP-v1.7.0.md). Goal: push every judging criterion toward >9.5 via Genblaze-as-sole-AI-layer (ADR-007), B2-as-source-of-truth (ADR-008, also fixes ephemeral sessions), B2 lifecycle + integrity (ADR-009), Plaid sandbox (ADR-010), and submission polish (prompt 16). Build specs: `.github/prompts/12–16`. Remaining manual: demo video (≤3 min) + Devpost form + GMI credit top-up.
+**Next**: remaining v1.7.0 workstreams — see [`docs/ROADMAP-v1.7.0.md`](docs/ROADMAP-v1.7.0.md): B2 lifecycle + integrity (ADR-009, WS-3), submission polish (prompt 16, WS-5), Plaid sandbox (ADR-010, WS-4), Genblaze LLM routing (ADR-007, WS-1 — gated on GMI credits). Build specs: `.github/prompts/12–16`. Remaining manual: demo video (≤3 min) + Devpost form + GMI credit top-up.
 
 ## Key Commands
 
@@ -40,7 +40,7 @@ OpenAI TTS is wrapped inside `GenblazeClient.generate_narration_audio()` — no 
 - **B2 stores everything** — input CSV, script, analytics, prompts, generation provenance, images, thumbnail, narration audio, video, metadata
 - `get_settings()` uses `@lru_cache` — call `get_settings.cache_clear()` in tests that need different env vars
 - FFmpeg must be installed on the host: Linux `sudo apt-get install ffmpeg` · Windows `winget install ffmpeg`
-- SQLite for MVP; PostgreSQL via `DATABASE_URL` env var is the documented upgrade path (ADR-004)
+- **B2 is the source of truth** (ADR-008): SQLite is a read cache. `GET /recap/{id}` + ZIP download fall back to the B2 manifest (`index/{session_id}.json` → `metadata/session_metadata.json`) when the SQLite row is missing. The manifest is self-contained (insights + all b2_keys + timings + status) and uploaded **last** by `MediaAgent` so its `b2_keys` map is complete. PostgreSQL remains the documented scale path for the cache (ADR-004, amended)
 - `FFmpegComposer.compose()` is `async def` — always `await` it; `audio_path` param is now used
 - Coverage gate: ≥ **80%** enforced in CI (currently at 93%)
 - `MediaAgentOutput` now has `thumbnail_url` field — always populated
@@ -59,6 +59,7 @@ OpenAI TTS is wrapped inside `GenblazeClient.generate_narration_audio()` — no 
 ## B2 Key Layout (Full Asset Manifest)
 
 ```
+index/{session_id}.json                              ← flat session→user index (ADR-008)
 {user_id}/{session_id}/input/transactions.csv
 {user_id}/{session_id}/pipeline/script.json          ← narrative script
 {user_id}/{session_id}/pipeline/analytics.json       ← financial insights snapshot

@@ -7,6 +7,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+### Added
+
+- **WS-2 — B2 as source of truth** ([ADR-008](docs/adr/008-b2-source-of-truth.md)): sessions now survive Railway redeploys.
+  - `session_metadata.json` is a **self-contained manifest** — full `InsightsSummary` snapshot, `status`, `processing_time_ms`, `models_used`, and every B2 key (including its own); uploaded **last** so its `b2_keys` map is complete.
+  - Flat `index/{session_id}.json` object written to B2 at pipeline start maps `session_id → user_id` (share URLs stay clean).
+  - `GET /recap/{id}` and `GET /recap/{id}/download` fall back to the B2 manifest when the SQLite row is missing; presigned URLs are re-minted per request. SQLite is now a cache (ADR-004 amended).
+  - `B2Client`: new `download_json`, `exists`, `session_index_key` helpers.
+
 ---
 
 ## [1.7.0] — Planned (roadmap only; no code yet)

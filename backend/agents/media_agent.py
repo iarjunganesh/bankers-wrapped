@@ -226,39 +226,12 @@ class MediaAgent(BaseAgent):
 
             video_url = await self._b2_presign(video_key)
 
-            # ── 10. Build and upload provenance metadata ─────────────────────
+            # ── 10. Upload generation provenance to B2 pipeline/ ────────────
             elapsed_ms = int(time.time() * 1000) - start_ms
-            llm_label = (
-                f"nvidia-nim/{self.settings.nvidia_nim_model}"
-                if self.settings.nvidia_nim_api_key
-                else self.settings.openai_model
-            )
-            metadata = PipelineMetadata(
-                session_id=session_id,
-                user_id=user_id,
-                created_at=datetime.now(UTC),
-                pipeline_version=self.settings.pipeline_version,
-                models_used={
-                    "llm": llm_label,
-                    "image": f"gmi-cloud/{self.settings.gmi_image_model}",
-                    "audio": f"openai/{audio_result.model}",
-                    "compositor": "ffmpeg",
-                },
-                input_filename=input_data.input_filename,
-                input_hash=input_data.input_hash,
-                output_url=video_url,
-                processing_time_ms=elapsed_ms,
-                synthetic_data=False,
-            )
-
-            meta_key = B2Client.metadata_key(user_id, session_id)
-            await self._b2_json(meta_key, json.loads(metadata.model_dump_json()))
-            b2_keys["metadata"] = meta_key
-
-            # ── 11. Upload generation provenance to B2 pipeline/ ────────────
+            created_at = datetime.now(UTC)
             generation_payload = {
                 "session_id": session_id,
-                "generated_at": metadata.created_at.isoformat(),
+                "generated_at": created_at.isoformat(),
                 "pipeline_version": self.settings.pipeline_version,
                 "images": [
                     {
@@ -294,6 +267,44 @@ class MediaAgent(BaseAgent):
             gen_key = B2Client.generation_key(user_id, session_id)
             await self._b2_json(gen_key, generation_payload)
             b2_keys["generation"] = gen_key
+
+            # ── 11. Build and upload the session manifest (LAST, self-contained) ─
+            # ADR-008: this manifest is the durable source of truth. It carries
+            # the full insights snapshot and every B2 key (including its own) so
+            # GET /recap/{id} can be hydrated from B2 alone after a redeploy.
+            llm_label = (
+                f"nvidia-nim/{self.settings.nvidia_nim_model}"
+                if self.settings.nvidia_nim_api_key
+                else self.settings.openai_model
+            )
+            insights_dict: dict = {}
+            if input_data.analytics_output is not None:
+                ins = input_data.analytics_output.insights
+                insights_dict = json.loads(ins.model_dump_json())
+
+            meta_key = B2Client.metadata_key(user_id, session_id)
+            b2_keys["metadata"] = meta_key
+            metadata = PipelineMetadata(
+                session_id=session_id,
+                user_id=user_id,
+                status="complete",
+                created_at=created_at,
+                pipeline_version=self.settings.pipeline_version,
+                models_used={
+                    "llm": llm_label,
+                    "image": f"gmi-cloud/{self.settings.gmi_image_model}",
+                    "audio": f"openai/{audio_result.model}",
+                    "compositor": "ffmpeg",
+                },
+                input_filename=input_data.input_filename,
+                input_hash=input_data.input_hash,
+                output_url=video_url,
+                processing_time_ms=elapsed_ms,
+                synthetic_data=False,
+                insights=insights_dict,
+                b2_keys=dict(b2_keys),
+            )
+            await self._b2_json(meta_key, json.loads(metadata.model_dump_json()))
 
             self.log.info(
                 "media_agent.complete",

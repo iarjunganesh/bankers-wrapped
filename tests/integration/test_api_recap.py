@@ -3,8 +3,59 @@
 import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from backend.api.v1.recap import get_session_store
+from backend.api.v1.recap import get_b2, get_session_store
 from tests.conftest import SYNTHETIC_CSV
+
+INSIGHTS_DICT = {
+    "period_label": "January 2026",
+    "total_income": 5000.0,
+    "total_expenses": 3000.0,
+    "savings_amount": 2000.0,
+    "savings_rate": 40.0,
+    "top_categories": [{"category": "Food", "amount": 800.0, "percentage": 26.7}],
+    "achievements": ["Saved 40% of income"],
+    "personality": "Financial Builder",
+    "personality_reason": "Strong saver.",
+    "currency": "USD",
+}
+
+
+def _override_b2(api_client) -> MagicMock:
+    """Stub the B2 dependency so pipeline tests never touch the network."""
+    from backend.main import app
+
+    fake_b2 = MagicMock()
+    fake_b2.upload_json.return_value = "b2://bucket/index"
+    fake_b2.presigned_url.return_value = "https://f000.backblazeb2.com/artifact?token=fresh"
+    app.dependency_overrides[get_b2] = lambda: fake_b2
+    return fake_b2
+
+
+def _fake_b2_with_manifest(session_id: str, user_id: str = "user-b2") -> MagicMock:
+    """A B2Client double serving the flat index + a complete session manifest."""
+    manifest = {
+        "session_id": session_id,
+        "user_id": user_id,
+        "status": "complete",
+        "insights": INSIGHTS_DICT,
+        "b2_keys": {
+            "video": f"{user_id}/{session_id}/output/recap_{session_id}.mp4",
+            "thumbnail": f"{user_id}/{session_id}/pipeline/thumbnail.jpg",
+            "metadata": f"{user_id}/{session_id}/metadata/session_metadata.json",
+        },
+        "processing_time_ms": 4242,
+        "models_used": {"llm": "nvidia-nim/meta/llama-3.1-70b-instruct"},
+        "output_url": "https://stale.presigned.url/recap.mp4",
+    }
+    fake_b2 = MagicMock()
+    fake_b2.download_json.side_effect = lambda key: (
+        {"session_id": session_id, "user_id": user_id}
+        if key.startswith("index/")
+        else manifest
+    )
+    fake_b2.presigned_url.return_value = "https://fresh.presigned.url/artifact"
+    fake_b2.download_bytes.return_value = b"fake artifact bytes"
+    return fake_b2
 
 
 class TestRecapEndpoint:
@@ -42,6 +93,7 @@ class TestRecapEndpoint:
         assert response.status_code == 422
 
     def test_generate_returns_202_with_session_id(self, api_client):
+        _override_b2(api_client)
         with (
             patch("backend.api.v1.recap.NarrativeAgent") as MockNarrative,
             patch("backend.api.v1.recap.MediaAgent") as MockMedia,
@@ -61,6 +113,7 @@ class TestRecapEndpoint:
 
     def test_generate_result_available_via_get(self, api_client):
         """After 202, the GET endpoint returns the completed recap."""
+        _override_b2(api_client)
         with (
             patch("backend.api.v1.recap.NarrativeAgent") as MockNarrative,
             patch("backend.api.v1.recap.MediaAgent") as MockMedia,
@@ -84,6 +137,7 @@ class TestRecapEndpoint:
         assert isinstance(data["b2_keys"], dict)
 
     def test_generate_result_has_insights(self, api_client):
+        _override_b2(api_client)
         with (
             patch("backend.api.v1.recap.NarrativeAgent") as MockNarrative,
             patch("backend.api.v1.recap.MediaAgent") as MockMedia,
@@ -146,6 +200,76 @@ class TestRecapEndpoint:
 
         assert response.status_code == 200
         assert response.headers["content-type"] == "application/zip"
+
+
+class TestB2SourceOfTruth:
+    """ADR-008: sessions survive a redeploy — B2 manifest serves cache misses."""
+
+    def test_get_recap_falls_back_to_b2_when_sqlite_missing(self, api_client):
+        from backend.main import app
+
+        sid = str(uuid.uuid4())  # never written to the SQLite store
+        app.dependency_overrides[get_b2] = lambda: _fake_b2_with_manifest(sid)
+
+        response = api_client.get(f"/api/v1/recap/{sid}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["session_id"] == sid
+        assert data["insights"]["personality"] == "Financial Builder"
+        assert data["processing_time_ms"] == 4242
+        # Presigned URLs are re-minted from the manifest's b2_keys, not reused
+        assert data["video_url"] == "https://fresh.presigned.url/artifact"
+        assert data["thumbnail_url"] == "https://fresh.presigned.url/artifact"
+
+    def test_get_recap_404_when_b2_has_no_manifest(self, api_client):
+        from backend.main import app
+
+        fake_b2 = MagicMock()
+        fake_b2.download_json.side_effect = Exception("NoSuchKey")
+        app.dependency_overrides[get_b2] = lambda: fake_b2
+
+        response = api_client.get(f"/api/v1/recap/{uuid.uuid4()}")
+        assert response.status_code == 404
+
+    def test_download_zip_falls_back_to_b2_when_sqlite_missing(self, api_client):
+        from backend.main import app
+
+        sid = str(uuid.uuid4())
+        app.dependency_overrides[get_b2] = lambda: _fake_b2_with_manifest(sid)
+
+        response = api_client.get(f"/api/v1/recap/{sid}/download")
+
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/zip"
+
+    def test_session_index_written_at_pipeline_start(self, api_client):
+        from backend.main import app
+
+        fake_b2 = MagicMock()
+        fake_b2.upload_json.return_value = "b2://bucket/index"
+        app.dependency_overrides[get_b2] = lambda: fake_b2
+
+        with (
+            patch("backend.api.v1.recap.NarrativeAgent") as MockNarrative,
+            patch("backend.api.v1.recap.MediaAgent") as MockMedia,
+        ):
+            _setup_narrative_mock(MockNarrative)
+            _setup_media_mock(MockMedia)
+
+            response = api_client.post(
+                "/api/v1/recap/generate",
+                files={"file": ("jan.csv", SYNTHETIC_CSV, "text/csv")},
+            )
+
+        assert response.status_code == 202
+        sid = response.json()["session_id"]
+        index_calls = [
+            c for c in fake_b2.upload_json.call_args_list
+            if c.args[0] == f"index/{sid}.json"
+        ]
+        assert len(index_calls) == 1
+        assert index_calls[0].args[1]["user_id"]  # index maps session -> user
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

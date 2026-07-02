@@ -1,5 +1,5 @@
 # ADR-008: Backblaze B2 as the Session Source of Truth
-**Status:** Proposed (v1.7.0) | **Date:** 2026-06-30
+**Status:** Accepted (implemented in v1.7.0 WS-2) | **Date:** 2026-06-30
 
 ## Decision
 Persist a complete, self-contained **session manifest** to B2 at
