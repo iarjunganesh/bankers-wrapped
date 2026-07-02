@@ -1,8 +1,12 @@
 # Devpost Submission — Banker's Wrapped
 
 Hackathon: [Backblaze Generative Media Hackathon 2026](https://devpost.com/submit-to/30205-backblaze-generative-media-hackathon-build-with-genblaze-on-b2/manage/submissions)
-Deadline: **August 3, 2026**
+Deadline: **August 3, 2026 (5 PM ET)** · Judging: **Aug 5–11** · Winners: ~Aug 12
 Target: **Grand Prize (top 1–3 of 300+ participants)**
+
+> Per the [rules](https://backblaze-generative-media.devpost.com/rules): app stays live + free for
+> judges through **Aug 11**; video **publicly visible** on YouTube/Vimeo/Youku, <3 min, **no
+> copyrighted music**; no modifications after the deadline. Budget/runway: [`COSTS.md`](COSTS.md).
 
 ---
 
@@ -29,11 +33,14 @@ Target: **Grand Prize (top 1–3 of 300+ participants)**
 - [x] B2 and Genblaze usage drafted
 
 ### Project Media
-- [ ] Demo video (≤ 3 min) — record and upload
+- [ ] Demo video (≤ 3 min) — record and upload (public; no copyrighted music)
 - [ ] Screenshot: upload + live SSE progress UI
 - [ ] Screenshot: share page (video player + B2 artifact list)
 - [ ] Screenshot: personality result (one of the 4 types)
 - [ ] Generated scene image(s) from a real run
+
+### Feedback Prize (free extra — 10 winners, stackable with an overall prize)
+- [ ] File genuine product feedback (bug report / feature request) via [Genblaze GitHub Issues](https://github.com/backblaze-labs/genblaze/issues) and reference it in the submission
 
 ---
 

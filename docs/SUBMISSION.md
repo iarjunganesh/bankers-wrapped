@@ -1,7 +1,10 @@
 # Hackathon Submission — Backblaze Generative Media Hackathon 2026
 
-> Submission deadline: **August 3, 2026**
-> Required deliverables: working hosted URL + ≤ 3-min demo video
+> Submission deadline: **August 3, 2026 (5 PM ET)** · Judging: **August 5–11** · Winners: ~August 12
+> Required deliverables: working hosted URL + ≤ 3-min demo video (public on YouTube/Vimeo/Youku)
+> ⚠️ Per the [official rules](https://backblaze-generative-media.devpost.com/rules), the app must stay
+> **live, free, and unrestricted for judges until the Judging Period ends (Aug 11)** — keep Railway,
+> Vercel, B2, and all API keys funded through Aug 12 (see [`docs/COSTS.md`](COSTS.md)).
 
 ---
 
@@ -10,7 +13,7 @@
 | Criterion | How Banker's Wrapped Addresses It |
 | --- | --- |
 | **Real-World Utility** | Solves chronically low engagement in banking apps — turns opaque data into a story people want to share. Clear target market: retail banks and fintechs. |
-| **Production Readiness** | CI/CD with 80%+ coverage gate (currently 93%), structured JSON logging, health endpoint, rate limiting (5 req/hr/IP), binary CSV validation, 6 ADRs, synthetic demo data committed. Memory-bounded compositor + non-blocking event loop — battle-tested under a 0.5 GB container. Not a prototype — a deployable system. |
+| **Production Readiness** | CI/CD with 80%+ coverage gate (currently 93%), structured JSON logging, health endpoint, rate limiting (5 req/hr/IP), binary CSV validation, 10 ADRs (7 accepted), synthetic demo data committed. Sessions survive redeploys — B2 is the source of truth (ADR-008), SQLite is a cache. Memory-bounded compositor + non-blocking event loop — battle-tested under a 0.5 GB container. Not a prototype — a deployable system. |
 | **B2 Storage + Orchestration** | B2 stores **14 files across 10 artifact types** per session under `{user_id}/{session_id}/`: input CSV, script, analytics, prompts, generation telemetry, thumbnail, 5 scene images, narration audio, video, and session metadata. All artifact keys returned in API response. Presigned URLs (regenerated per request, never expire) serve video + thumbnail; `/download` endpoint streams a full ZIP. |
 | **Genblaze Usage** | Genblaze is the **sole** media generation layer — image generation (GMI Cloud Seedream) and narration audio (OpenAI TTS) both route exclusively through `GenblazeClient`. No provider is called directly outside `genblaze_client.py`. |
 
@@ -19,10 +22,12 @@
 ## Deliverables Checklist
 
 - [x] Working hosted URL (`https://bankers-wrapped.vercel.app`)
-- [ ] Demo video ≤ 3 min uploaded to YouTube
+- [ ] Demo video ≤ 3 min uploaded to YouTube — **public**, no copyrighted music (rules)
 - [ ] Devpost submission form completed
 - [ ] README links to demo video and hosted URL
 - [ ] `make demo` runs clean on a fresh clone
+- [ ] Product feedback filed via [Genblaze GitHub Issues](https://github.com/backblaze-labs/genblaze/issues) — qualifies for one of 10 **Feedback Prizes** (mentorship), winnable in addition to an overall prize
+- [ ] App + APIs stay funded and live through **Aug 11** (end of judging) — see [`COSTS.md`](COSTS.md)
 
 ---
 

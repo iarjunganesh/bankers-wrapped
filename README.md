@@ -347,7 +347,7 @@ bankers-wrapped/
 
 ## Architecture Decision Records
 
-Ten decisions documented (001–006 accepted; 007–010 proposed for v1.7.0) — see [`docs/adr/`](docs/adr/) for full rationale.
+Ten decisions documented (001–006 and 008 accepted; 007, 009, 010 proposed for v1.7.0) — see [`docs/adr/`](docs/adr/) for full rationale.
 
 | ADR | Decision |
 | --- | --- |
@@ -358,7 +358,7 @@ Ten decisions documented (001–006 accepted; 007–010 proposed for v1.7.0) —
 | [005](docs/adr/005-financial-personality-core.md) | Financial Personality promoted to required scope — the emotional hook |
 | [006](docs/adr/006-observability-scope.md) | structlog JSON logging only — OpenTelemetry is post-hackathon |
 | [007](docs/adr/007-genblaze-sole-ai-layer.md) | *(proposed)* Route the narrative LLM through Genblaze — sole AI layer |
-| [008](docs/adr/008-b2-source-of-truth.md) | *(proposed)* B2 as session source of truth — durable across redeploys |
+| [008](docs/adr/008-b2-source-of-truth.md) | B2 as session source of truth — SQLite is a cache; sessions survive redeploys |
 | [009](docs/adr/009-b2-lifecycle-integrity.md) | *(proposed)* B2 lifecycle rules + per-artifact SHA-256 integrity |
 | [010](docs/adr/010-plaid-sandbox-ingestion.md) | *(proposed)* Plaid sandbox connector — optional "connect a bank" path |
 

@@ -2,7 +2,9 @@
 
 > **Status:** Planned (no code yet) · **Target window:** 2026-06-30 → 2026-08-03 (judging)
 > **Goal:** lift every judging criterion from its current honest estimate toward >9.5.
-> **Hard constraints:** ~1 month, limited GMI Cloud credits (top-up pending), Railway Hobby (8 GB).
+> **Hard constraints:** ~1 month, GMI Cloud credits capped at a **one-time $10 top-up** (≈ $0.15–0.25
+> per full pipeline run at 5 Seedream images; LLM chat is pennies — the optional video scene is the
+> only real credit risk and is cut), Railway Hobby (8 GB).
 
 This document is the master plan. Each workstream has a decision record (ADR) and a build
 spec (prompt). **Nothing here is implemented yet** — v1.7.0 ships as the work lands.
