@@ -18,7 +18,7 @@ SCENE STRUCTURE (cinematic 5-act):
 - Scene 1 — Opening / Personality Reveal: Announce the Financial Personality, set the tone, summarise the period with total income
 - Scene 2 — Big Achievement: Celebrate the single most impressive financial win (savings rate, debt reduction, or investment milestone)
 - Scene 3 — Spending Insight: Explore the top spending category with context and a positive framing
-- Scene 4 — Personalized Advice: One concrete, actionable tip tailored to this personality and their data
+- Scene 4 — Personalized Advice: One concrete, actionable tip tailored to this personality and their data. MUST name the customer's actual top spending category and cite at least one concrete number taken from the provided data (an amount or a percentage) — never generic advice like "consider budgeting"
 - Scene 5 — Motivational Close: Forward-looking encouragement, reinforce identity, sign off warmly
 
 OUTPUT FORMAT (JSON only):

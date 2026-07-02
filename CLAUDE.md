@@ -141,7 +141,7 @@ The endpoint waits up to 10 s for the session to be created (SSE race-condition 
 
 - Rate limiting: `slowapi` — 5 uploads per hour per IP on `POST /api/v1/recap/generate`
 - CSV byte-level validation: check for printable ASCII / UTF-8 headers, reject binary files
-- PostgreSQL: `DATABASE_URL` env var in `config.py`; `SessionStore` uses SQLAlchemy if set, SQLite otherwise
+- Durability: B2 session manifest is the source of truth (ADR-008); SQLite is a local read cache (`SESSION_DB_PATH` optionally points at a volume). PostgreSQL is a *documented scale path only* — no `DATABASE_URL` code path exists; do not claim otherwise in judge-facing docs
 - Coverage gate: 80% (currently 93%)
 - Retry: tenacity-based, 3 attempts, exponential backoff 2–30 s on all media generation calls
 - Structured logging via structlog on every pipeline step
@@ -151,7 +151,7 @@ The endpoint waits up to 10 s for the session to be created (SSE race-condition 
 
 - Backend: Railway (Dockerfile or Procfile) or Render (`render.yaml`)
 - Frontend: Vercel (`vercel.json`)
-- Env vars required: `GMI_API_KEY`, `NVIDIA_NIM_API_KEY`, `OPENAI_API_KEY`, `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_ENDPOINT_URL`, `B2_BUCKET_NAME`, `DATABASE_URL` (optional)
+- Env vars required: `GMI_API_KEY`, `NVIDIA_NIM_API_KEY`, `OPENAI_API_KEY`, `B2_KEY_ID`, `B2_APPLICATION_KEY`, `B2_ENDPOINT_URL`, `B2_BUCKET_NAME`; optional: `SESSION_DB_PATH`, `PLAID_CLIENT_ID`/`PLAID_SECRET`/`PLAID_ENV` (WS-4)
 
 ## Hackathon Deadline
 

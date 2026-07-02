@@ -270,7 +270,7 @@ Every run produces **four machine-readable provenance files** in B2:
 | **Images** | [![GMI Cloud](https://img.shields.io/badge/GMI_Cloud-Seedream-0066CC)](https://cloud.gmi.ai/) | Scene visuals 1344×768, seedream-4-0-250828 (via Genblaze) — 5 parallel, retry ×3 |
 | **Video Compose** | [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/) | Scene images + narration → H.264/AAC MP4 (segment + concat, dip-to-black) |
 | **Frontend** | [![Next.js](https://img.shields.io/badge/Next.js-16.2.9-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/) [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/) [![Node.js](https://img.shields.io/badge/Node.js-26.4.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) | Upload portal + video player |
-| **Session State** | [![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/) | Pipeline state tracking (SQLite → PostgreSQL) |
+| **Session State** | [![Backblaze B2](https://img.shields.io/badge/B2-source_of_truth-FF0000?logo=backblaze&logoColor=white)](https://www.backblaze.com/cloud-storage) [![SQLite](https://img.shields.io/badge/SQLite-cache-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/) | B2 manifest is the durable record (ADR-008); SQLite is a fast read cache |
 | **Hosting** | [![Railway](https://img.shields.io/badge/Backend-Railway-0B0D0E?logo=railway&logoColor=white)](https://railway.app) [![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000?logo=vercel&logoColor=white)](https://vercel.com) | Backend on Railway · Frontend on Vercel |
 | **Observability** | [![structlog](https://img.shields.io/badge/structlog-JSON-4A90E2)](https://www.structlog.org/) | Structured request + agent logging |
 
@@ -352,7 +352,7 @@ bankers-wrapped/
 
 ## Architecture Decision Records
 
-Ten decisions documented (001–006 and 008 accepted; 007, 009, 010 proposed for v1.7.0) — see [`docs/adr/`](docs/adr/) for full rationale.
+Eleven decisions documented (001–006, 008, 009, 011 accepted; 007 and 010 proposed) — see [`docs/adr/`](docs/adr/) for full rationale.
 
 | ADR | Decision |
 | --- | --- |
@@ -364,8 +364,9 @@ Ten decisions documented (001–006 and 008 accepted; 007, 009, 010 proposed for
 | [006](docs/adr/006-observability-scope.md) | structlog JSON logging only — OpenTelemetry is post-hackathon |
 | [007](docs/adr/007-genblaze-sole-ai-layer.md) | *(proposed)* Route the narrative LLM through Genblaze — sole AI layer |
 | [008](docs/adr/008-b2-source-of-truth.md) | B2 as session source of truth — SQLite is a cache; sessions survive redeploys |
-| [009](docs/adr/009-b2-lifecycle-integrity.md) | *(proposed)* B2 lifecycle rules + per-artifact SHA-256 integrity |
+| [009](docs/adr/009-b2-lifecycle-integrity.md) | B2 lifecycle rules (45-day retention) + per-artifact SHA-256 integrity |
 | [010](docs/adr/010-plaid-sandbox-ingestion.md) | *(proposed)* Plaid sandbox connector — optional "connect a bank" path |
+| [011](docs/adr/011-compositor-redesign.md) | Memory-bounded segment+concat compositor + non-blocking event loop (v1.6.0 redesign) |
 
 ---
 
@@ -415,6 +416,16 @@ push → ruff lint → mypy type-check → pytest (≥80% coverage gate) → Cod
 ```
 
 See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+
+### Load Testing (manual, not in CI)
+
+[`tests/load/k6_smoke.js`](tests/load/k6_smoke.js) ramps 20 concurrent users against `/health` (threshold: p95 < 500 ms), exercises the B2 fallback 404 path, and verifies the rate limiter answers `/generate` abuse with graceful 429s (never 5xx):
+
+```bash
+winget install k6   # or: brew install k6
+k6 run tests/load/k6_smoke.js                                  # local backend
+k6 run -e BASE_URL=https://<railway-url> tests/load/k6_smoke.js  # production
+```
 
 ---
 

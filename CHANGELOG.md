@@ -17,6 +17,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 - **WS-3 — B2 lifecycle + artifact integrity** ([ADR-009](docs/adr/009-b2-lifecycle-integrity.md)):
   - `generation.json` now carries an `artifacts` list — **SHA-256 + size for each of the 12 content artifacts** uploaded per session, computed from the exact bytes stored.
   - Bucket retention rule committed as `infra/b2-lifecycle.json` (45-day expiry — outlives the Aug 5–11 judging window for all hackathon sessions) and applied idempotently by `scripts/apply_b2_lifecycle.py`.
+- **WS-5 — hardening + polish** (prompt 16):
+  - [ADR-011](docs/adr/011-compositor-redesign.md): the v1.6.0 compositor + non-blocking-loop redesign recorded as a decision record.
+  - `tests/load/k6_smoke.js`: manual k6 smoke test — /health p95 < 500 ms under 20 VUs; rate limiter must 429 (never 5xx) under /generate abuse.
+  - Narrative prompt: Scene 4 advice must name the actual top spending category and cite a concrete number from the data (no generic advice).
+
+### Fixed
+
+- Removed aspirational PostgreSQL claims (no `DATABASE_URL` code path exists): B2 is the source of truth, SQLite is a cache, Postgres stays a documented scale path only.
 
 ---
 
