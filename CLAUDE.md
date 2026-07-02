@@ -6,9 +6,9 @@ AI-powered financial storytelling platform entered in the **Backblaze Generative
 
 Upload a CSV → 4-agent pipeline → personalized narrated MP4 recap video stored on Backblaze B2.
 
-**Current phase**: v1.7.0 in progress — WS-2 (B2 as source of truth, ADR-008) implemented: SQLite is now a cache, the self-contained B2 session manifest is the durable record, share links + ZIP download survive redeploys. v1.6.0 shipped the memory-bounded **segment + concat** compositor (dip-to-black), non-blocking event loop (parallel image gen), and working demo notebook.
+**Current phase**: v1.7.0 in progress — shipped: WS-2 (B2 as source of truth, ADR-008 — SQLite is a cache, sessions survive redeploys) and WS-3 (ADR-009 — SHA-256 per artifact in `generation.json` `artifacts` list; 45-day lifecycle rule in `infra/b2-lifecycle.json`, applied by `scripts/apply_b2_lifecycle.py`).
 
-**Next**: remaining v1.7.0 workstreams — see [`docs/ROADMAP-v1.7.0.md`](docs/ROADMAP-v1.7.0.md): B2 lifecycle + integrity (ADR-009, WS-3), submission polish (prompt 16, WS-5), Plaid sandbox (ADR-010, WS-4), Genblaze LLM routing (ADR-007, WS-1 — gated on GMI credits). Build specs: `.github/prompts/12–16`. Remaining manual: demo video (≤3 min) + Devpost form + GMI credit top-up.
+**Next**: remaining v1.7.0 workstreams — see [`docs/ROADMAP-v1.7.0.md`](docs/ROADMAP-v1.7.0.md): submission polish (prompt 16, WS-5), Plaid sandbox (ADR-010, WS-4), Genblaze LLM routing (ADR-007, WS-1 — live flip gated on GMI credits). Ship as **v1.8.0** when the batch lands (v1.7.0 tag = roadmap only, already public). Remaining manual: demo video (≤3 min) + Devpost form + GMI credit top-up (docs/COSTS.md).
 
 ## Key Commands
 

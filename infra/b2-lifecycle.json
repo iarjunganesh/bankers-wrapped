@@ -1,0 +1,11 @@
+{
+  "_comment": "B2 lifecycle rule (ADR-009), applied via the S3-compatible API by scripts/apply_b2_lifecycle.py. 45 days retention: every session created during the hackathon window (Jun 22+) outlives the judging period (ends Aug 11, 2026), then expires automatically to keep storage near zero.",
+  "Rules": [
+    {
+      "ID": "expire-recap-sessions-45d",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "" },
+      "Expiration": { "Days": 45 }
+    }
+  ]
+}

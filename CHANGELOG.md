@@ -14,6 +14,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
   - Flat `index/{session_id}.json` object written to B2 at pipeline start maps `session_id → user_id` (share URLs stay clean).
   - `GET /recap/{id}` and `GET /recap/{id}/download` fall back to the B2 manifest when the SQLite row is missing; presigned URLs are re-minted per request. SQLite is now a cache (ADR-004 amended).
   - `B2Client`: new `download_json`, `exists`, `session_index_key` helpers.
+- **WS-3 — B2 lifecycle + artifact integrity** ([ADR-009](docs/adr/009-b2-lifecycle-integrity.md)):
+  - `generation.json` now carries an `artifacts` list — **SHA-256 + size for each of the 12 content artifacts** uploaded per session, computed from the exact bytes stored.
+  - Bucket retention rule committed as `infra/b2-lifecycle.json` (45-day expiry — outlives the Aug 5–11 judging window for all hackathon sessions) and applied idempotently by `scripts/apply_b2_lifecycle.py`.
 
 ---
 

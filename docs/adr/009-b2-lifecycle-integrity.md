@@ -1,5 +1,5 @@
 # ADR-009: B2 Lifecycle Rules + Per-Artifact Integrity Hashes
-**Status:** Proposed (v1.7.0) | **Date:** 2026-06-30
+**Status:** Accepted (implemented in v1.7.0 WS-3) | **Date:** 2026-06-30
 
 ## Decision
 1. Apply a **B2 Lifecycle Rule** that retains demo/session artifacts for a bounded window

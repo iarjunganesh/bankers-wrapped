@@ -162,6 +162,11 @@ bankers-wrapped-assets/
         └── session_metadata.json    ← top-level provenance record
 ```
 
+### B2 Data Lifecycle & Integrity
+
+- **Retention (ADR-009):** a bucket lifecycle rule (committed as [`infra/b2-lifecycle.json`](infra/b2-lifecycle.json), applied idempotently via `uv run python scripts/apply_b2_lifecycle.py`) expires session artifacts **45 days after upload** — long enough that every hackathon-period session outlives the judging window, short enough that storage stays near zero afterwards.
+- **Integrity:** `generation.json` records a **SHA-256 per stored artifact** (key, size, hash — 12 content artifacts per session). To verify any download: `sha256sum scene_00.jpg` and compare against the `artifacts` entry for that key. The two manifests themselves (`generation.json`, `session_metadata.json`) are the verification root and are not self-listed.
+
 ---
 
 ## Financial Personality

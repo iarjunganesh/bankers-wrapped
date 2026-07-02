@@ -82,17 +82,32 @@ class MediaAgent(BaseAgent):
             scene_duration_seconds=settings.ffmpeg_scene_duration,
             ffmpeg_bin=settings.ffmpeg_bin,
         )
+        # ADR-009: per-artifact integrity log — {key, bytes, sha256} for every
+        # upload, recorded into generation.json so the manifest is verifiable.
+        self._artifact_log: list[dict[str, object]] = []
 
     def _emit(self, event: str, detail: str) -> None:
         if self.progress_callback:
             self.progress_callback(event, detail)
 
+    def _log_artifact(self, key: str, data: bytes) -> None:
+        self._artifact_log.append({
+            "key": key,
+            "bytes": len(data),
+            "sha256": hashlib.sha256(data).hexdigest(),
+        })
+
     # B2 (boto3) is synchronous; offload every call so it never blocks the event
     # loop (which would freeze the SSE progress stream during the pipeline).
     async def _b2_bytes(self, key: str, data: bytes, content_type: str) -> str:
+        self._log_artifact(key, data)
         return await asyncio.to_thread(self.b2.upload_bytes, key, data, content_type)
 
     async def _b2_json(self, key: str, data: dict) -> str:  # type: ignore[type-arg]
+        # Must serialise exactly like B2Client.upload_json so the recorded
+        # SHA-256 matches the bytes actually stored in the bucket.
+        payload = json.dumps(data, indent=2, default=str).encode("utf-8")
+        self._log_artifact(key, payload)
         return await asyncio.to_thread(self.b2.upload_json, key, data)
 
     async def _b2_presign(self, key: str) -> str:
@@ -105,6 +120,7 @@ class MediaAgent(BaseAgent):
         user_id = input_data.user_id
 
         b2_keys: dict[str, str] = {}
+        self._artifact_log = []  # fresh integrity log per run
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
@@ -263,6 +279,10 @@ class MediaAgent(BaseAgent):
                     "success": True,
                 },
                 "total_latency_ms": elapsed_ms,
+                # ADR-009: SHA-256 per stored artifact (all content uploads that
+                # precede this manifest — generation.json and session_metadata.json
+                # are the verification manifests themselves, so not self-listed).
+                "artifacts": list(self._artifact_log),
             }
             gen_key = B2Client.generation_key(user_id, session_id)
             await self._b2_json(gen_key, generation_payload)
