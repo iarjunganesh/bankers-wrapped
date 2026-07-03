@@ -1,5 +1,5 @@
 # ADR-010: Plaid Sandbox Connector as an Optional Ingestion Path
-**Status:** Proposed (v1.7.0) | **Date:** 2026-06-30
+**Status:** Accepted (implemented in v1.7.0 WS-4; Plaid REST via httpx — no plaid-python dependency) | **Date:** 2026-06-30
 
 ## Decision
 Add an **optional** "Connect a bank (sandbox)" ingestion path using **Plaid Sandbox**, alongside

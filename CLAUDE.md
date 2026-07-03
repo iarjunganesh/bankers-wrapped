@@ -6,9 +6,9 @@ AI-powered financial storytelling platform entered in the **Backblaze Generative
 
 Upload a CSV → 4-agent pipeline → personalized narrated MP4 recap video stored on Backblaze B2.
 
-**Current phase**: v1.7.0 in progress — shipped: WS-2 (B2 as source of truth, ADR-008 — SQLite is a cache, sessions survive redeploys) and WS-3 (ADR-009 — SHA-256 per artifact in `generation.json` `artifacts` list; 45-day lifecycle rule in `infra/b2-lifecycle.json`, applied by `scripts/apply_b2_lifecycle.py`).
+**Current phase**: v1.7.0 batch nearly complete — shipped: WS-2 (B2 as source of truth, ADR-008), WS-3 (lifecycle + SHA-256 integrity, ADR-009 — rule applied to live bucket), WS-5 code items (ADR-011, k6 smoke test, specific-advice prompt, Postgres-claim honesty sweep), WS-4 (Plaid sandbox connector, ADR-010 — httpx REST, no plaid-python; Plaid txns → CSV → unchanged pipeline; feature-flagged off without keys).
 
-**Next**: remaining v1.7.0 workstreams — see [`docs/ROADMAP-v1.7.0.md`](docs/ROADMAP-v1.7.0.md): submission polish (prompt 16, WS-5), Plaid sandbox (ADR-010, WS-4), Genblaze LLM routing (ADR-007, WS-1 — live flip gated on GMI credits). Ship as **v1.8.0** when the batch lands (v1.7.0 tag = roadmap only, already public). Remaining manual: demo video (≤3 min) + Devpost form + GMI credit top-up (docs/COSTS.md).
+**Next**: WS-1 Genblaze LLM routing (ADR-007 — code + mocked tests now, default stays `nvidia-nim`; live flip after GMI top-up). Ship as **v1.8.0** when the batch lands (v1.7.0 tag = roadmap only, already public). Remaining manual: demo video (≤3 min) + Devpost form + GMI credit top-up + screenshots into docs/media/ (docs/COSTS.md).
 
 ## Key Commands
 
@@ -98,7 +98,9 @@ The endpoint waits up to 10 s for the session to be created (SSE race-condition 
 - `GET  /api/v1/recap/{session_id}` — fetch completed recap by session ID (used by share page)
 - `GET  /api/v1/recap/{session_id}/progress` — SSE stream of pipeline stage events
 - `GET  /api/v1/recap/{session_id}/download` — **Download ZIP** of all B2 artifacts (video, images, audio, metadata, prompts)
-- `GET  /api/v1/health` — health check; returns version + status
+- `GET  /api/v1/health` — health check; returns version + status + `plaid_enabled`
+- `POST /api/v1/plaid/link-token` — mint Plaid Link token (404 unless `PLAID_*` keys set)
+- `POST /api/v1/plaid/exchange` — public_token → sandbox transactions → CSV → same pipeline; rate-limited 5/hr/IP; accepts `X-Session-ID` for SSE
 
 ## Narrative — 5-Scene Cinematic Structure
 
@@ -125,7 +127,7 @@ The endpoint waits up to 10 s for the session to be created (SSE race-condition 
 
 ## Frontend Routes
 
-- `/` — CSV upload portal with 7-step live SSE progress (scene events collapsed into a "Generating scenes + narration — X/5 scenes" sub-label; per-step latency; ~5 min ETA) + thumbnail (also set as `<video poster>`) + personality result + download ZIP + share button
+- `/` — CSV upload portal (+ "Connect a bank (sandbox)" button when `/health` reports `plaid_enabled`) with 7-step live SSE progress (scene events collapsed into a "Generating scenes + narration — X/5 scenes" sub-label; per-step latency; ~5 min ETA) + thumbnail (also set as `<video poster>`) + personality result + download ZIP + share button
 - `/recap/{session_id}` — Public share page: thumbnail, personality badge, stats, video player, download ZIP, full B2 artifact list with paths
 
 ## Personality Themes (for UI)

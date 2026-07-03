@@ -19,7 +19,7 @@ from slowapi.errors import RateLimitExceeded
 
 from backend.api.limiter import limiter
 from backend.api.middleware.logging import RequestLoggingMiddleware
-from backend.api.v1 import health, progress, recap
+from backend.api.v1 import health, plaid, progress, recap
 from backend.config import get_settings
 
 # ── Logging configuration ─────────────────────────────────────────────────────
@@ -80,6 +80,9 @@ app.add_middleware(RequestLoggingMiddleware)
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
 app.include_router(recap.router, prefix="/api/v1/recap", tags=["recap"])
 app.include_router(progress.router, prefix="/api/v1/recap", tags=["progress"])
+# Plaid routes are always mounted but answer 404 unless PLAID_* keys are set
+# (ADR-010) — the app boots and behaves identically without Plaid credentials.
+app.include_router(plaid.router, prefix="/api/v1/plaid", tags=["plaid"])
 
 
 @app.get("/")

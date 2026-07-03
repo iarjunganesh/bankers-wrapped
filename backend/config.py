@@ -43,6 +43,16 @@ class Settings(BaseSettings):
     nvidia_nim_base_url: str = "https://integrate.api.nvidia.com/v1"
     nvidia_nim_model: str = "meta/llama-3.1-70b-instruct"
 
+    # Plaid — optional "connect a bank (sandbox)" ingestion path (ADR-010).
+    # Leave blank to disable; the CSV upload path is unaffected.
+    plaid_client_id: str = ""
+    plaid_secret: str = ""
+    plaid_env: str = "sandbox"
+
+    @property
+    def plaid_enabled(self) -> bool:
+        return bool(self.plaid_client_id and self.plaid_secret)
+
 
 @lru_cache
 def get_settings() -> Settings:

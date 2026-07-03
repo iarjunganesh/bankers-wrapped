@@ -17,6 +17,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 - **WS-3 — B2 lifecycle + artifact integrity** ([ADR-009](docs/adr/009-b2-lifecycle-integrity.md)):
   - `generation.json` now carries an `artifacts` list — **SHA-256 + size for each of the 12 content artifacts** uploaded per session, computed from the exact bytes stored.
   - Bucket retention rule committed as `infra/b2-lifecycle.json` (45-day expiry — outlives the Aug 5–11 judging window for all hackathon sessions) and applied idempotently by `scripts/apply_b2_lifecycle.py`.
+- **WS-4 — Plaid sandbox connector** ([ADR-010](docs/adr/010-plaid-sandbox-ingestion.md)): optional "Connect a bank (sandbox)" ingestion path.
+  - `backend/ingest/plaid_connector.py`: Plaid REST via httpx (async; no `plaid-python` dep) — link token, public-token exchange, paginated `/transactions/get`, category mapping to our taxonomy, sign-convention flip (Plaid outflow-positive → ours income-positive).
+  - Plaid transactions are serialised back to our CSV schema and fed to the **unchanged** pipeline — identical B2 artifact trail, `DocumentAgent` revalidates everything.
+  - `POST /api/v1/plaid/link-token` + `POST /api/v1/plaid/exchange` (rate-limited 5/hr/IP, same SSE progress). Feature-flagged: without `PLAID_CLIENT_ID`/`PLAID_SECRET` the routes answer 404 and the app is unchanged; `/health` now reports `plaid_enabled`.
+  - Frontend: "🏦 Connect a bank (sandbox)" button (Plaid Link via CDN, loaded on demand), shown only when the backend reports Plaid enabled.
+  - Test hermeticity fix: `test_settings` now explicitly blanks Plaid keys so a developer's real `.env` can never trigger live calls in the suite.
 - **WS-5 — hardening + polish** (prompt 16):
   - [ADR-011](docs/adr/011-compositor-redesign.md): the v1.6.0 compositor + non-blocking-loop redesign recorded as a decision record.
   - `tests/load/k6_smoke.js`: manual k6 smoke test — /health p95 < 500 ms under 20 VUs; rate limiter must 429 (never 5xx) under /generate abuse.

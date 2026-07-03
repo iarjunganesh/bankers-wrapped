@@ -34,6 +34,33 @@ interface ProgressEvent {
 
 type Stage = "idle" | "uploading" | "processing" | "done" | "error";
 
+// Plaid Link (loaded on demand from the CDN — only when the user clicks
+// "Connect a bank"; the backend exposes plaid_enabled via /health)
+interface PlaidHandler { open: () => void }
+interface PlaidGlobal {
+  create: (config: {
+    token: string;
+    onSuccess: (public_token: string) => void;
+    onExit?: () => void;
+  }) => PlaidHandler;
+}
+declare global { interface Window { Plaid?: PlaidGlobal } }
+
+const PLAID_SCRIPT_URL = "https://cdn.plaid.com/link/v2/stable/link-initialize.js";
+
+function loadPlaidScript(): Promise<PlaidGlobal> {
+  return new Promise((resolve, reject) => {
+    if (window.Plaid) return resolve(window.Plaid);
+    const s = document.createElement("script");
+    s.src = PLAID_SCRIPT_URL;
+    s.onload = () => window.Plaid
+      ? resolve(window.Plaid)
+      : reject(new Error("Plaid Link failed to initialise"));
+    s.onerror = () => reject(new Error("Failed to load Plaid Link"));
+    document.head.appendChild(s);
+  });
+}
+
 function fmtDuration(seconds: number): string {
   if (seconds < 60) return `${seconds.toFixed(1)}s`;
   return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`;
@@ -100,11 +127,20 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [pipelineStartTime, setPipelineStartTime] = useState<number | null>(null);
   const [elapsedS, setElapsedS] = useState(0);
+  const [plaidEnabled, setPlaidEnabled] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const sseRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
     return () => { sseRef.current?.close(); };
+  }, []);
+
+  // Show "Connect a bank (sandbox)" only when the backend has Plaid keys
+  useEffect(() => {
+    fetch(`${API_URL}/api/v1/health`)
+      .then((r) => r.json() as Promise<{ plaid_enabled?: boolean }>)
+      .then((d) => setPlaidEnabled(Boolean(d.plaid_enabled)))
+      .catch(() => {});
   }, []);
 
   // Start pipeline timer on first SSE event (use > 0 to handle batched state updates)
@@ -123,18 +159,13 @@ export default function Home() {
     return () => clearInterval(id);
   }, [pipelineStartTime, stage]);
 
-  const handleFile = async (file: File) => {
-    if (!file.name.endsWith(".csv")) {
-      setError("Please upload a .csv file.");
-      return;
-    }
-    setStage("uploading");
+  // Shared by the CSV upload and Plaid paths: reset progress state and open
+  // the SSE progress stream for a client-generated session id.
+  const startSession = (sessionId: string): EventSource => {
     setError("");
     setProgressEvents([]);
     setPipelineStartTime(null);
     setElapsedS(0);
-
-    const sessionId = crypto.randomUUID();
 
     sseRef.current?.close();
     const sse = new EventSource(`${API_URL}/api/v1/recap/${sessionId}/progress`);
@@ -171,6 +202,17 @@ export default function Home() {
     };
 
     sse.onerror = () => sse.close();
+    return sse;
+  };
+
+  const handleFile = async (file: File) => {
+    if (!file.name.endsWith(".csv")) {
+      setError("Please upload a .csv file.");
+      return;
+    }
+    setStage("uploading");
+    const sessionId = crypto.randomUUID();
+    const sse = startSession(sessionId);
 
     const form = new FormData();
     form.append("file", file);
@@ -193,6 +235,50 @@ export default function Home() {
       sse.close();
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
       setStage("error");
+    }
+  };
+
+  // Plaid sandbox flow: link token → Plaid Link dialog → public_token →
+  // /exchange kicks the exact same pipeline + SSE progress as a CSV upload.
+  const connectBank = async () => {
+    try {
+      setError("");
+      const r = await fetch(`${API_URL}/api/v1/plaid/link-token`, { method: "POST" });
+      if (!r.ok) throw new Error("Plaid is not available right now");
+      const { link_token } = await r.json() as { link_token: string };
+      const Plaid = await loadPlaidScript();
+      const handler = Plaid.create({
+        token: link_token,
+        onSuccess: (public_token: string) => {
+          void (async () => {
+            setStage("processing");
+            const sessionId = crypto.randomUUID();
+            const sse = startSession(sessionId);
+            try {
+              const res = await fetch(`${API_URL}/api/v1/plaid/exchange`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-Session-ID": sessionId,
+                },
+                body: JSON.stringify({ public_token }),
+              });
+              if (!res.ok) {
+                const data = await res.json() as { detail?: string };
+                sse.close();
+                throw new Error(data.detail ?? "Bank connection failed");
+              }
+            } catch (err: unknown) {
+              sse.close();
+              setError(err instanceof Error ? err.message : "Bank connection failed");
+              setStage("error");
+            }
+          })();
+        },
+      });
+      handler.open();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Plaid is not available right now");
     }
   };
 
@@ -316,6 +402,15 @@ export default function Home() {
             >
               Try demo dataset
             </button>
+            {plaidEnabled && (
+              <button
+                type="button"
+                className="bw-demo-btn"
+                onClick={(e) => { e.stopPropagation(); void connectBank(); }}
+              >
+                🏦 Connect a bank (sandbox)
+              </button>
+            )}
           </div>
         )}
 

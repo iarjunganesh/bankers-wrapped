@@ -56,6 +56,11 @@ def test_settings() -> Settings:
         b2_application_key="b2-test-app-key",
         b2_endpoint_url="https://s3.us-west-004.backblazeb2.com",
         b2_bucket_name="test-bucket",
+        # Explicitly blank so a developer's real .env (pydantic-settings reads
+        # it for any unset field) can never enable Plaid — or any live call —
+        # inside the test suite.
+        plaid_client_id="",
+        plaid_secret="",
     )
 
 
