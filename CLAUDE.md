@@ -28,11 +28,11 @@ make demo-stop    # stop all services
 
 1. `DocumentAgent` — CSV parse + normalise → `List[Transaction]`
 2. `AnalyticsAgent` — insights + Financial Personality → `FinancialInsights`
-3. `NarrativeAgent` — NVIDIA NIM (Llama 3.1 70B) structured script → `NarrativeScript` (**5 scenes**)
+3. `NarrativeAgent` — structured script → `NarrativeScript` (**5 scenes**); Genblaze → GMI chat when `NARRATIVE_PROVIDER=genblaze` (ADR-007), else direct NVIDIA NIM (Llama 3.1 70B); auto-fallback to NIM on invalid JSON
 4. `MediaAgent` — Genblaze → GMI Cloud Seedream (images, parallel) + OpenAI TTS (narration) + FFmpeg (segment + concat) → `recap.mp4` → B2
 
-All AI media calls route through the **Genblaze SDK** (`genblaze-core`, `genblaze-gmicloud`).  
-OpenAI TTS is wrapped inside `GenblazeClient.generate_narration_audio()` — no direct provider calls outside that wrapper.
+**3 of 4 AI steps route through the Genblaze SDK** (`genblaze-core`, `genblaze-gmicloud`): images, chat (flag), TTS.  
+OpenAI TTS is wrapped inside `GenblazeClient.generate_narration_audio()` — no direct provider calls outside `genblaze_client.py`. Optional ingest: Plaid sandbox (`backend/ingest/`) → CSV → same pipeline.
 
 ## Critical Constraints
 
@@ -42,10 +42,10 @@ OpenAI TTS is wrapped inside `GenblazeClient.generate_narration_audio()` — no 
 - FFmpeg must be installed on the host: Linux `sudo apt-get install ffmpeg` · Windows `winget install ffmpeg`
 - **B2 is the source of truth** (ADR-008): SQLite is a read cache. `GET /recap/{id}` + ZIP download fall back to the B2 manifest (`index/{session_id}.json` → `metadata/session_metadata.json`) when the SQLite row is missing. The manifest is self-contained (insights + all b2_keys + timings + status) and uploaded **last** by `MediaAgent` so its `b2_keys` map is complete. PostgreSQL remains the documented scale path for the cache (ADR-004, amended)
 - `FFmpegComposer.compose()` is `async def` — always `await` it; `audio_path` param is now used
-- Coverage gate: ≥ **80%** enforced in CI (currently at 93%)
+- Coverage gate: ≥ **80%** enforced in CI (currently at 98%)
 - `MediaAgentOutput` now has `thumbnail_url` field — always populated
 - `MediaAgentInput` now has optional `analytics_output` field — pass it from the API layer
-- Retry: `GenblazeClient` wraps image + audio generation with tenacity (3 attempts, exponential backoff 2–30 s)
+- Retry: `GenblazeClient` wraps image + chat + audio generation with tenacity (3 attempts, exponential backoff 2–30 s)
 - `MediaAgent` accepts `progress_callback: Callable[[str, str], None]` — used by API to emit mid-agent SSE events
 
 ## Testing Strategy
@@ -144,7 +144,7 @@ The endpoint waits up to 10 s for the session to be created (SSE race-condition 
 - Rate limiting: `slowapi` — 5 uploads per hour per IP on `POST /api/v1/recap/generate`
 - CSV byte-level validation: check for printable ASCII / UTF-8 headers, reject binary files
 - Durability: B2 session manifest is the source of truth (ADR-008); SQLite is a local read cache (`SESSION_DB_PATH` optionally points at a volume). PostgreSQL is a *documented scale path only* — no `DATABASE_URL` code path exists; do not claim otherwise in judge-facing docs
-- Coverage gate: 80% (currently 93%)
+- Coverage gate: 80% (currently 98%)
 - Retry: tenacity-based, 3 attempts, exponential backoff 2–30 s on all media generation calls
 - Structured logging via structlog on every pipeline step
 - **Non-blocking event loop**: all synchronous I/O on the async path is offloaded with `asyncio.to_thread` — genblaze image gen (`generate_scene_image`), every B2/boto3 call in `MediaAgent` (`_b2_*` helpers), FFmpeg/ffprobe subprocess, and the ZIP-download endpoint. Blocking the loop starves the SSE progress stream (hangs the frontend) and serialises work; offloading also lets the 5 image gens run truly in parallel via `asyncio.gather`
@@ -162,6 +162,6 @@ Submission due: **August 3, 2026**. Required deliverables: working hosted URL + 
 ## Judging Criteria (all equally weighted)
 
 1. **Real-World Utility** — solves low engagement in banking; clear market (retail banks / fintechs)
-2. **Production Readiness** — CI/CD, 93% coverage, rate limiting, structured logging, health endpoint, retry logic, 6 ADRs
+2. **Production Readiness** — CI/CD, 98% coverage, rate limiting, structured logging, health endpoint, retry logic, 11 ADRs
 3. **B2 Storage & Data Orchestration** — 10 artifact types stored per session; complete provenance manifest; share page + ZIP download show full B2 layout
 4. **Use of Genblaze** — image generation (Genblaze → GMI Cloud) + narration audio (OpenAI TTS via GenblazeClient); two provider types; retry tracking in generation.json

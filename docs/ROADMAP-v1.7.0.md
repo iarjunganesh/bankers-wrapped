@@ -1,5 +1,11 @@
 # Roadmap — v1.7.0 ("Push to >9.5 across all judging criteria")
 
+> **Status: ALL FIVE WORKSTREAMS CODE-COMPLETE — 2026-07-03, shipped as v1.8.0.**
+> WS-2 ✅ · WS-3 ✅ (lifecycle applied to live bucket) · WS-5 ✅ · WS-4 ✅ · WS-1 ✅ (live flip
+> pending GMI top-up: set `NARRATIVE_PROVIDER=genblaze` on Railway). Remaining: human-owned
+> submission assets (demo video, screenshots, testimonials) + credit top-up.
+>
+> *(Original planning header below, kept for provenance.)*
 > **Status:** Planned (no code yet) · **Target window:** 2026-06-30 → 2026-08-03 (judging)
 > **Goal:** lift every judging criterion from its current honest estimate toward >9.5.
 > **Hard constraints:** ~1 month, GMI Cloud credits capped at a **one-time $10 top-up** (≈ $0.15–0.25
@@ -70,4 +76,4 @@ WS-1 is gated on credits; everything else is free and can start immediately.
 - Plaid sandbox path demoable (or cleanly behind a flag if deferred).
 - Load test + security review committed; CI badge green in README.
 - All docs (README, SUBMISSION, DEVPOST, CLAUDE) consistent with shipped reality.
-- Coverage gate still ≥80% (target: hold ~93%).
+- Coverage gate still ≥80% (achieved: 98%).

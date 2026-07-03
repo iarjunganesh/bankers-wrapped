@@ -7,7 +7,8 @@ No AI provider is called directly — every request goes through genblaze-core.
 Providers used:
   - genblaze-gmicloud  → GMI Cloud Seedream image generation
   - genblaze-s3        → Backblaze B2 storage sink
-  - openai (TTS)       → Narration audio synthesis (wrapped here; no direct calls elsewhere)
+    - genblaze chat      → Narrative script generation (provider inferred from model id)
+    - openai (TTS)       → Narration audio synthesis (wrapped here; no direct calls elsewhere)
 
 Retry policy: up to 3 attempts with exponential backoff (2s, 4s) for both
 image generation and audio synthesis. Retry count and wall-clock latency
@@ -34,7 +35,6 @@ from tenacity import (
 log = structlog.get_logger()
 
 
-
 @dataclass
 class ImageResult:
     image_bytes: bytes
@@ -56,6 +56,7 @@ class AudioResult:
 class ScriptResult:
     text: str
     model: str
+    provider: str = field(default="gmi-cloud")
     latency_ms: int = field(default=0)
     retry_count: int = field(default=0)
     tokens_in: int | None = field(default=None)
@@ -101,6 +102,23 @@ class GenblazeClient:
             app_key=self.b2_app_key,
         )
         return ObjectStorageSink(backend, key_strategy=KeyStrategy.HIERARCHICAL)
+
+    @staticmethod
+    def _provider_from_model(model: str) -> str:
+        """
+        Infer provider label from a provider-prefixed model id.
+
+        Examples:
+          - nvidia-nim/meta/llama-3.1-70b-instruct -> nvidia-nim
+          - openai/gpt-4o-mini -> openai
+          - meta-llama/Llama-3.3-70B-Instruct -> gmi-cloud (default)
+        """
+        if "/" not in model:
+            return "gmi-cloud"
+        prefix = model.split("/", 1)[0]
+        if prefix in {"nvidia-nim", "openai", "gmi-cloud"}:
+            return prefix
+        return "gmi-cloud"
 
     async def generate_scene_image(
         self,
@@ -188,7 +206,7 @@ class GenblazeClient:
         temperature: float = 0.7,
     ) -> ScriptResult:
         """
-        Generate the narrative script via Genblaze → GMI Cloud chat (ADR-007).
+        Generate the narrative script via Genblaze chat (ADR-007).
 
         Same non-blocking + retry pattern as image generation: the blocking
         SDK call (with its tenacity retry loop) runs in a worker thread.
@@ -225,9 +243,10 @@ class GenblazeClient:
         t0 = int(time.time() * 1000)
         resp = await asyncio.to_thread(_sync_chat)
         latency = int(time.time() * 1000) - t0
+        provider = self._provider_from_model(resp.model)
         log.info(
             "genblaze.chat.generate",
-            provider="gmi-cloud",
+            provider=provider,
             model=resp.model,
             latency_ms=latency,
             tokens_in=resp.tokens_in,
@@ -238,6 +257,7 @@ class GenblazeClient:
         return ScriptResult(
             text=resp.text,
             model=resp.model,
+            provider=provider,
             latency_ms=latency,
             retry_count=attempt_count,
             tokens_in=resp.tokens_in,

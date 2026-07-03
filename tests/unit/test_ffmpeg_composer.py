@@ -187,3 +187,39 @@ class TestFFmpegComposer:
                 audio_path=fake_audio,
                 output_path=output,
             )
+
+
+# ── ffprobe duration probe ───────────────────────────────────────────────────
+
+from unittest.mock import MagicMock as _MM  # noqa: E402
+from unittest.mock import patch as _patch  # noqa: E402
+
+from backend.media.ffmpeg_composer import FFmpegComposer as _FC  # noqa: E402
+
+# Captured at import time — the autouse mock_probe fixture patches the class
+# attribute per-test, so this is the only reachable handle to the real method.
+_REAL_PROBE = _FC._probe_audio_duration
+
+
+class TestProbeAudioDuration:
+    def test_returns_parsed_duration(self, tmp_path):
+        composer = _FC(ffmpeg_bin="ffmpeg")
+        fake = _MM(stdout="12.34\n", returncode=0)
+        with _patch("backend.media.ffmpeg_composer.subprocess.run", return_value=fake):
+            assert _REAL_PROBE(composer, tmp_path / "a.mp3") == 12.34
+
+    def test_returns_zero_when_ffprobe_missing(self, tmp_path):
+        composer = _FC(ffmpeg_bin="ffmpeg")
+        with _patch(
+            "backend.media.ffmpeg_composer.subprocess.run",
+            side_effect=OSError("not found"),
+        ):
+            assert _REAL_PROBE(composer, tmp_path / "a.mp3") == 0.0
+
+    def test_ffprobe_derived_from_filename_only(self):
+        # Forward slashes parse as separators on BOTH win32 and posix — a raw
+        # Windows path here would be a single filename component on Linux CI.
+        composer = _FC(ffmpeg_bin="/opt/ffmpeg-8.1.1-full_build/bin/ffmpeg")
+        # Only the FILENAME is replaced — the directory keeps "ffmpeg" in it
+        assert composer._ffprobe_bin.endswith("ffprobe")
+        assert "ffmpeg-8.1.1-full_build" in composer._ffprobe_bin

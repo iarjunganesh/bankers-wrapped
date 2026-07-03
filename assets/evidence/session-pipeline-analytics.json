@@ -1,0 +1,31 @@
+{
+  "period_label": "October 2025",
+  "total_income": 42000.0,
+  "total_expenses": 12055.98,
+  "savings_amount": 3300.0,
+  "savings_rate": 7.9,
+  "top_categories": [
+    {
+      "category": "housing",
+      "amount": 3600.0,
+      "percentage": 29.9
+    },
+    {
+      "category": "savings",
+      "amount": 3300.0,
+      "percentage": 27.4
+    },
+    {
+      "category": "investment",
+      "amount": 1750.0,
+      "percentage": 14.5
+    }
+  ],
+  "achievements": [
+    "Reduced debt by 750",
+    "Invested 1,750 toward your future"
+  ],
+  "personality": "Financial Builder",
+  "personality_reason": "You consistently prioritise savings and debt reduction \u2014 building a strong financial foundation.",
+  "currency": "USD"
+}

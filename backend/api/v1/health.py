@@ -17,7 +17,7 @@ class HealthResponse(BaseModel):
 async def health_check(settings: Settings = Depends(get_settings)) -> HealthResponse:
     return HealthResponse(
         status="ok",
-        version="1.0.0",
+        version=settings.app_version,
         pipeline_version=settings.pipeline_version,
         # Lets the frontend show "Connect a bank (sandbox)" only when usable
         plaid_enabled=settings.plaid_enabled,

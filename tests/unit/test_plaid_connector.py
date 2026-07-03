@@ -1,7 +1,7 @@
 """Unit tests for the Plaid sandbox connector (ADR-010) — Plaid API mocked."""
 
 from datetime import date
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -231,3 +231,76 @@ class TestPlaidRoutes:
         get_resp = plaid_api_client.get(f"/api/v1/recap/{session_id}")
         assert get_resp.status_code == 200
         assert get_resp.json()["insights"]["personality"].startswith("Financial")
+
+
+class TestPlaidHttpLayer:
+    async def test_post_sends_credentials_and_returns_json(self):
+        connector = PlaidConnector(_plaid_settings())
+        resp = MagicMock()
+        resp.json.return_value = {"link_token": "link-sandbox-abc"}
+        resp.raise_for_status.return_value = None
+        http = MagicMock()
+        http.post = AsyncMock(return_value=resp)
+        http.__aenter__ = AsyncMock(return_value=http)
+        http.__aexit__ = AsyncMock(return_value=False)
+
+        with patch("backend.ingest.plaid_connector.httpx.AsyncClient", return_value=http):
+            token = await connector.create_link_token(user_id="u-1")
+
+        assert token == "link-sandbox-abc"
+        url, kwargs = http.post.call_args.args[0], http.post.call_args.kwargs
+        assert url == "https://sandbox.plaid.com/link/token/create"
+        assert kwargs["json"]["client_id"] == "test-plaid-id"
+        assert kwargs["json"]["secret"] == "test-plaid-secret"
+        assert kwargs["json"]["products"] == ["transactions"]
+
+    async def test_exchange_public_token_returns_access_token(self):
+        connector = PlaidConnector(_plaid_settings())
+        resp = MagicMock()
+        resp.json.return_value = {"access_token": "access-sandbox-xyz"}
+        resp.raise_for_status.return_value = None
+        http = MagicMock()
+        http.post = AsyncMock(return_value=resp)
+        http.__aenter__ = AsyncMock(return_value=http)
+        http.__aexit__ = AsyncMock(return_value=False)
+
+        with patch("backend.ingest.plaid_connector.httpx.AsyncClient", return_value=http):
+            token = await connector.exchange_public_token("public-sandbox-1")
+
+        assert token == "access-sandbox-xyz"
+        assert http.post.call_args.args[0].endswith("/item/public_token/exchange")
+
+
+class TestCsvQuoting:
+    def test_descriptions_with_commas_are_quoted(self):
+        txns = [
+            Transaction(date=date(2026, 6, 1), description="Store, The Big One",
+                        amount=-5.0, currency="USD",
+                        category=TransactionCategory.OTHER),
+        ]
+        csv_text = transactions_to_csv(txns).decode()
+        assert '"Store, The Big One"' in csv_text
+
+
+class TestFetchEdgeCases:
+    async def test_empty_page_breaks_pagination(self):
+        connector = PlaidConnector(_plaid_settings())
+        # Claims 5 totals but returns an empty page — must not loop forever
+        page = {"total_transactions": 5, "transactions": []}
+        with patch.object(PlaidConnector, "_post", new=AsyncMock(return_value=page)):
+            result = await connector.fetch_transactions(
+                "access-token", date(2026, 6, 1), date(2026, 6, 30)
+            )
+        assert result == []
+
+
+class TestExchangeValidation:
+    def test_exchange_422_when_no_transactions(self, plaid_api_client):
+        with patch("backend.api.v1.plaid.PlaidConnector") as MockConnector:
+            instance = MockConnector.return_value
+            instance.exchange_public_token = AsyncMock(return_value="access-token")
+            instance.fetch_transactions = AsyncMock(return_value=[])
+            resp = plaid_api_client.post(
+                "/api/v1/plaid/exchange", json={"public_token": "public-sandbox-x"}
+            )
+        assert resp.status_code == 422

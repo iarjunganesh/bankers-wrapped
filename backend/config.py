@@ -8,13 +8,13 @@ class Settings(BaseSettings):
 
     # App
     app_name: str = "Banker's Wrapped"
-    app_version: str = "1.6.0"
+    app_version: str = "1.8.0"
     debug: bool = False
 
     # CORS — defaults to wildcard for hackathon; override via CORS_ALLOW_ORIGINS env var in production
     cors_allow_origins: list[str] = ["*"]
 
-    # OpenAI — LLM fallback in NarrativeAgent + TTS narration via GenblazeClient
+    # OpenAI — TTS narration via GenblazeClient
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
     openai_tts_model: str = "tts-1"
@@ -43,13 +43,13 @@ class Settings(BaseSettings):
     nvidia_nim_base_url: str = "https://integrate.api.nvidia.com/v1"
     nvidia_nim_model: str = "meta/llama-3.1-70b-instruct"
 
-    # Narrative LLM routing (ADR-007 / WS-1).
-    # "genblaze" routes the script LLM through Genblaze → GMI Cloud so 3 of 4
-    # AI steps use Genblaze. Default stays "nvidia-nim" until the GMI credit
-    # top-up is live — flip via NARRATIVE_PROVIDER=genblaze (falls back to the
-    # NIM path automatically on invalid JSON or provider failure).
-    narrative_provider: str = "nvidia-nim"  # "genblaze" | "nvidia-nim"
-    gmi_chat_model: str = "meta-llama/Llama-3.3-70B-Instruct"
+    # Narrative LLM routing (ADR-007 / WS-1), SDK-only.
+    # The narrative agent always calls Genblaze chat; narrative_provider selects
+    # which backend model to request through that SDK path.
+    #   - narrative_provider=genblaze   -> use gmi_chat_model
+    #   - narrative_provider=nvidia-nim -> force nvidia-nim/<nvidia_nim_model>
+    narrative_provider: str = "genblaze"  # "genblaze" | "nvidia-nim"
+    gmi_chat_model: str = "nvidia-nim/meta/llama-3.1-70b-instruct"
 
     # Plaid — optional "connect a bank (sandbox)" ingestion path (ADR-010).
     # Leave blank to disable; the CSV upload path is unaffected.

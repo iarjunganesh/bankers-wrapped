@@ -62,7 +62,7 @@ We wanted to bring that energy to personal finance — not a dashboard, but a ci
 
 #### What it does
 
-Banker's Wrapped takes a transaction history CSV (the kind any bank lets you export) and runs it through a 4-agent AI pipeline to produce a **personalized, narrated MP4 recap video** — your financial year, told as a story.
+Banker's Wrapped takes a transaction history — upload a CSV, or **connect a bank in one click via Plaid** (sandbox) — and runs it through a 4-agent AI pipeline to produce a **personalized, narrated MP4 recap video** — your financial year, told as a story.
 
 In about 2–3 minutes you get:
 - A **Financial Personality** classification (Builder, Explorer, Achiever, or Optimizer) based on your spending patterns
@@ -75,14 +75,14 @@ In about 2–3 minutes you get:
 Four typed async agents chain together:
 1. `DocumentAgent` — parses and normalises the CSV into structured transactions
 2. `AnalyticsAgent` — computes insights and assigns a Financial Personality
-3. `NarrativeAgent` — calls NVIDIA NIM (Llama 3.1 70B) to write a structured 5-scene cinematic script
+3. `NarrativeAgent` — writes a structured 5-scene cinematic script via **Genblaze → GMI Cloud chat** (with automatic NVIDIA NIM Llama 3.1 70B fallback on invalid output)
 4. `MediaAgent` — generates all imagery and audio via the Genblaze SDK, then composes the final video with FFmpeg
 
-**Media generation (Genblaze)**
-All AI media routes through the Genblaze SDK. Images are generated via Genblaze → GMI Cloud Seedream (5 scenes in parallel). Narration audio is generated via OpenAI TTS wrapped inside `GenblazeClient.generate_narration_audio()`. Retry logic (tenacity, 3 attempts, exponential backoff) is built in at the Genblaze layer.
+**AI orchestration (Genblaze)**
+**Three of the four AI steps route through the Genblaze SDK**: scene images (Genblaze → GMI Cloud Seedream, 5 in parallel), the narrative LLM (Genblaze → GMI Cloud chat, NIM fallback), and narration audio (OpenAI TTS wrapped inside `GenblazeClient` — no direct provider calls anywhere else). Retry logic (tenacity, 3 attempts, exponential backoff) is built in at the Genblaze layer, and every step's provider, model, latency, retry count — and for the LLM, tokens and `cost_usd` — land in `generation.json`.
 
 **Storage (Backblaze B2)**
-Every artifact from every session is stored to B2 — **14 files across 10 artifact types** per session: input CSV, script, analytics snapshot, image prompts, generation provenance manifest, 5 scene images, thumbnail, narration MP3, final MP4, and session metadata. The provenance manifest (`generation.json`) records model, provider, latency, and retry count for each step.
+**B2 is the source of truth, not just an output bucket.** Every artifact from every session is stored to B2 — **14 files across 10 artifact types** plus a flat session index: input CSV, script, analytics snapshot, image prompts, generation provenance manifest, 5 scene images, thumbnail, narration MP3, final MP4, and a **self-contained session manifest** that lets any share link survive a full backend redeploy (SQLite is just a read cache). `generation.json` records model, provider, latency, and retry count for each step **plus a SHA-256 for all 12 content artifacts**, and a committed 45-day lifecycle rule keeps storage bounded.
 
 **Video composition (FFmpeg)**
 A **memory-bounded segment + concat** compositor: each scene is rendered to its own short MP4 (one image in RAM at a time, with a dip-to-black fade), then the segments are joined with the concat demuxer using stream-copy (`-c:v copy` — no re-decode). Peak memory stays ~300 MB instead of the multiple GB a monolithic crossfade graph needs, so it runs even in a 0.5 GB container. Output is H.264 `yuv420p`, constant 25 fps, with `-movflags +faststart` for progressive browser streaming.
@@ -91,7 +91,7 @@ A **memory-bounded segment + concat** compositor: each scene is rendered to its 
 Live SSE progress with per-step latency display, video player with B2-backed poster thumbnail, personality badge, and share/download actions.
 
 **Infrastructure**
-Backend on Railway, frontend on Vercel. 93% test coverage, CI/CD, rate limiting (5 uploads/hr/IP), structured logging via structlog.
+Backend on Railway, frontend on Vercel. 98% test coverage, CI/CD, rate limiting (5 uploads/hr/IP), structured logging via structlog.
 
 #### Challenges we ran into
 
@@ -109,7 +109,7 @@ Backend on Railway, frontend on Vercel. 93% test coverage, CI/CD, rate limiting 
 
 - A genuinely end-to-end generative media pipeline — one upload, one video out, every intermediate artifact preserved
 - 14 files (10 artifact types) stored per B2 session, including full generation provenance (model, provider, latency, retry count per step)
-- 93% test coverage with a hard CI gate at 80%
+- 98% test coverage with a hard CI gate at 80%
 - A public share page that surfaces the full B2 artifact manifest — judges can inspect every step of what the pipeline produced
 - A memory-bounded video compositor that renders a full narrated recap in ~300 MB of RAM — it runs in a 0.5 GB container, not just on a beefy laptop
 
@@ -131,7 +131,7 @@ Backend on Railway, frontend on Vercel. 93% test coverage, CI/CD, rate limiting 
 
 #### Built with
 
-Python, FastAPI, Next.js, Genblaze SDK, GMI Cloud Seedream, NVIDIA NIM (Llama 3.1 70B), OpenAI TTS, FFmpeg, Backblaze B2, Railway, Vercel, SQLite, structlog, tenacity, pytest
+Python, FastAPI, Next.js, Genblaze SDK, GMI Cloud (Seedream + chat), NVIDIA NIM (Llama 3.1 70B), OpenAI TTS, Plaid (sandbox), FFmpeg, Backblaze B2, Railway, Vercel, SQLite, structlog, tenacity, pytest, k6
 
 ---
 
@@ -148,9 +148,10 @@ Python, FastAPI, Next.js, Genblaze SDK, GMI Cloud Seedream, NVIDIA NIM (Llama 3.
 
 | Role | Provider | Model |
 |------|----------|-------|
-| Script generation (LLM) | NVIDIA NIM | `meta/llama-3.1-70b-instruct` |
+| Script generation (LLM) | Genblaze → GMI Cloud (fallback: NVIDIA NIM) | `meta-llama/Llama-3.3-70B-Instruct` (fallback `meta/llama-3.1-70b-instruct`) |
 | Image generation | Genblaze → GMI Cloud | `seedream-4-0-250828` |
 | Narration audio (TTS) | Genblaze → OpenAI | `tts-1` |
+| Bank ingestion (optional) | Plaid Sandbox | Transactions API |
 | Video composition | FFmpeg | H.264 / AAC |
 
 #### B2 and Genblaze Usage
@@ -161,7 +162,7 @@ Python, FastAPI, Next.js, Genblaze SDK, GMI Cloud Seedream, NVIDIA NIM (Llama 3.
 
 Artifacts are served via presigned URLs on both the results page and a public share page (`/recap/{session_id}`), which lists the full B2 key manifest. Users can also download a ZIP of all artifacts via `GET /api/v1/recap/{session_id}/download`.
 
-**Genblaze** is the sole media generation layer. Image generation routes through `genblaze-gmicloud` → GMI Cloud Seedream (5 scenes generated in parallel). Narration audio routes through `GenblazeClient.generate_narration_audio()` which wraps OpenAI TTS — no direct provider calls exist outside that wrapper. Both paths include tenacity-based retry (3 attempts, exponential backoff 2–30 s), and retry counts per step are recorded in `generation.json` on B2.
+**Genblaze** orchestrates **3 of the 4 AI steps**. Image generation routes through `genblaze-gmicloud` → GMI Cloud Seedream (5 scenes in parallel). The narrative LLM routes through Genblaze → GMI Cloud chat (`generate_script_text()`), with automatic fallback to NVIDIA NIM on invalid structured output. Narration audio routes through `GenblazeClient.generate_narration_audio()` which wraps OpenAI TTS — no direct provider calls exist outside that wrapper. All paths include tenacity-based retry (3 attempts, exponential backoff 2–30 s); per-step provider, model, latency, retry counts — and LLM tokens + `cost_usd` — are recorded in `generation.json` on B2, alongside a SHA-256 for every content artifact.
 
 ---
 
@@ -169,11 +170,12 @@ Artifacts are served via presigned URLs on both the results page and a public sh
 
 Suggested beats:
 1. **(0:00–0:20)** Problem: banking apps are boring, nobody engages with their data
-2. **(0:20–0:40)** Upload a CSV — show the drag-and-drop UI
-3. **(0:40–1:30)** Watch the live SSE progress — call out each step and the per-step latency
-4. **(1:30–2:00)** Play the generated recap video in-browser — personality badge, all 5 scenes
-5. **(2:00–2:30)** Show the share page — B2 artifact list, ZIP download, public link
-6. **(2:30–3:00)** Architecture one-liner + close: "One CSV. Five scenes. Your financial story."
+2. **(0:20–0:40)** Ingest: click **"Connect a bank (sandbox)"** (Plaid Link) — mention CSV upload works too
+3. **(0:40–1:20)** Watch the live SSE progress — call out each step and the per-step latency
+4. **(1:20–1:50)** Play the generated recap video in-browser — personality badge, all 5 scenes
+5. **(1:50–2:20)** Share page + **B2 console**: artifact layout, `generation.json` provenance (models, latency, retries, SHA-256 per artifact), lifecycle rule
+6. **(2:20–2:40)** Durability punchline: redeploy the backend — the share link still works (B2 is the source of truth)
+7. **(2:40–3:00)** Close: "One connection. Five scenes. Your financial story." + Genblaze/B2 architecture one-liner
 
 ---
 

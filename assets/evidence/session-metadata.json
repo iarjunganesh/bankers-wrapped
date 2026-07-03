@@ -1,0 +1,18 @@
+{
+  "session_id": "730650b2-deea-423d-adf6-3dd4ac364d8d",
+  "user_id": "abb59f55-b0e0-4e6d-b3f2-0c47151014b7",
+  "created_at": "2026-06-29T22:12:46.544692Z",
+  "pipeline_version": "1.0.0",
+  "genblaze_version": "0.2.4",
+  "models_used": {
+    "llm": "nvidia-nim/meta/llama-3.1-70b-instruct",
+    "image": "gmi-cloud/seedream-4-0-250828",
+    "audio": "openai/tts-1",
+    "compositor": "ffmpeg"
+  },
+  "input_filename": "transactions_q4_2025.csv",
+  "input_hash": "f1d3b89f989a61c6bd2fa36c3109ad9af60c70697164852bec0287a7a246b1f3",
+  "output_url": "https://s3.eu-central-003.backblazeb2.com/bankers-wrapped-assets/abb59f55-b0e0-4e6d-b3f2-0c47151014b7/730650b2-deea-423d-adf6-3dd4ac364d8d/output/recap_730650b2-deea-423d-adf6-3dd4ac364d8d.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=00334ff4a7135600000000002%2F20260629%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260629T221246Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=74420bbfb9b7b5251f45c4ba6d5b19e1b7f4e787f8ff20500c52995fb09686ca",
+  "processing_time_ms": 122348,
+  "synthetic_data": false
+}

@@ -243,6 +243,45 @@ class TestB2SourceOfTruth:
         assert response.status_code == 200
         assert response.headers["content-type"] == "application/zip"
 
+    def test_index_write_failure_is_nonfatal(self, api_client):
+        """A failed session-index write must not abort the generation."""
+        from backend.main import app
+
+        fake_b2 = MagicMock()
+        fake_b2.upload_json.side_effect = Exception("B2 hiccup")
+        fake_b2.presigned_url.return_value = "https://f000.backblazeb2.com/a?t=1"
+        app.dependency_overrides[get_b2] = lambda: fake_b2
+
+        with (
+            patch("backend.api.v1.recap.NarrativeAgent") as MockNarrative,
+            patch("backend.api.v1.recap.MediaAgent") as MockMedia,
+        ):
+            _setup_narrative_mock(MockNarrative)
+            _setup_media_mock(MockMedia)
+            response = api_client.post(
+                "/api/v1/recap/generate",
+                files={"file": ("jan.csv", SYNTHETIC_CSV, "text/csv")},
+            )
+
+        assert response.status_code == 202
+        sid = response.json()["session_id"]
+        # Pipeline completed despite the index failure
+        assert api_client.get(f"/api/v1/recap/{sid}").status_code == 200
+
+    def test_get_recap_404_when_manifest_not_complete(self, api_client):
+        from backend.main import app
+
+        sid = str(uuid.uuid4())
+        fake_b2 = MagicMock()
+        fake_b2.download_json.side_effect = lambda key: (
+            {"session_id": sid, "user_id": "u"}
+            if key.startswith("index/")
+            else {"status": "processing"}
+        )
+        app.dependency_overrides[get_b2] = lambda: fake_b2
+
+        assert api_client.get(f"/api/v1/recap/{sid}").status_code == 404
+
     def test_session_index_written_at_pipeline_start(self, api_client):
         from backend.main import app
 

@@ -113,3 +113,29 @@ class _FakeBytesIO:
 
     def read(self) -> bytes:
         return self._data
+
+
+# ── WS-2 helpers: download_json / exists ─────────────────────────────────────
+
+class TestB2ClientWs2Helpers:
+    def test_download_json_parses_object(self, b2, mock_boto3):
+        payload = {"session_id": "abc", "user_id": "u1"}
+        body = type("Body", (), {"read": lambda self: json.dumps(payload).encode()})()
+        b2._client.get_object.return_value = {"Body": body}
+
+        assert b2.download_json("index/abc.json") == payload
+
+    def test_exists_true_when_head_succeeds(self, b2, mock_boto3):
+        b2._client.head_object.return_value = {}
+        assert b2.exists("some/key") is True
+
+    def test_exists_false_on_client_error(self, b2, mock_boto3):
+        from botocore.exceptions import ClientError
+
+        b2._client.head_object.side_effect = ClientError(
+            {"Error": {"Code": "404", "Message": "Not Found"}}, "HeadObject"
+        )
+        assert b2.exists("missing/key") is False
+
+    def test_session_index_key_is_flat(self):
+        assert B2Client.session_index_key("sess-1") == "index/sess-1.json"

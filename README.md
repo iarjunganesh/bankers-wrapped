@@ -4,27 +4,34 @@
   <img src="frontend/public/logo.svg" width="420" alt="Banker's Wrapped — Your financial year, told as a story."/>
 </p>
 
+<p align="center">
+  <strong>Turn every transaction into a cinematic money story people remember.</strong>
+</p>
+
 > **Backblaze Generative Media Hackathon 2026 — Built with Genblaze on B2**
 
 [![CI](https://github.com/iarjunganesh/bankers-wrapped/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/iarjunganesh/bankers-wrapped/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/iarjunganesh/bankers-wrapped/graph/badge.svg?token=GSBUXVREL7)](https://codecov.io/gh/iarjunganesh/bankers-wrapped)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Release](https://img.shields.io/badge/release-1.8.0-2ea44f)](CHANGELOG.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Watch Video](https://img.shields.io/badge/%E2%96%B6_Watch-3--min_demo-FF0000?logo=youtube&logoColor=white)](#)
+
+[![Backblaze B2](https://img.shields.io/badge/Backblaze_B2-Cloud_Storage-E21C2A?logo=backblaze&logoColor=white)](https://www.backblaze.com/cloud-storage)
+[![Genblaze](https://img.shields.io/badge/Genblaze-SDK-7C3AED)](https://github.com/backblaze-labs/genblaze)
+[![GMI Cloud](https://img.shields.io/badge/GMI_Cloud-Seedream-0066CC)](https://cloud.gmi.ai/)
+[![NVIDIA NIM](https://img.shields.io/badge/NVIDIA_NIM-LLM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-TTS--1-412991?logo=openai&logoColor=white)](https://platform.openai.com/)
+[![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/)
+[![Semantic Kernel](https://img.shields.io/badge/Semantic_Kernel-1.x-0078D4?logo=microsoft&logoColor=white)](https://learn.microsoft.com/en-us/semantic-kernel/)
+[![Plaid](https://img.shields.io/badge/Plaid-Sandbox-111111?logo=plaid&logoColor=white)](https://plaid.com/)
+
+[![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.2.9-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-26.4.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Vercel](https://img.shields.io/badge/Vercel-Frontend-000000?logo=vercel&logoColor=white)](https://bankers-wrapped.vercel.app)
 
 [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Semantic Kernel](https://img.shields.io/badge/Semantic_Kernel-1.x-0078D4?logo=microsoft&logoColor=white)](https://learn.microsoft.com/en-us/semantic-kernel/)
-[![Node.js](https://img.shields.io/badge/Node.js-26.4.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-16.2.9-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-
-[![Railway](https://img.shields.io/badge/Backend-Railway-0B0D0E?logo=railway&logoColor=white)](https://bankers-wrapped-api-production.up.railway.app)
-[![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000?logo=vercel&logoColor=white)](https://bankers-wrapped.vercel.app)
-
-[![Genblaze](https://img.shields.io/badge/Media-Genblaze%20SDK-7C3AED)](https://github.com/backblaze-labs/genblaze)
-[![NVIDIA NIM](https://img.shields.io/badge/LLM-NVIDIA%20NIM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/)
-[![GMI Cloud](https://img.shields.io/badge/Images-GMI%20Cloud%20Seedream-0066CC)](https://cloud.gmi.ai/)
-[![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/)
-[![Backblaze B2](https://img.shields.io/badge/Storage-Backblaze%20B2-FF0000?logo=backblaze&logoColor=white)](https://www.backblaze.com/cloud-storage)
+[![Railway](https://img.shields.io/badge/Railway-Backend-0B0D0E?logo=railway&logoColor=white)](https://bankers-wrapped-api-production.up.railway.app)
 
 ---
 
@@ -69,11 +76,11 @@ Banker's Wrapped solves this with an agentic pipeline that reads your transactio
 
 ## How It Works
 
-1. **Upload** a CSV transaction export
+1. **Upload** a CSV transaction export — or **connect a bank via Plaid Sandbox** (zero setup, no real credentials; the connector normalises Plaid transactions into the same schema)
 2. **Document Agent** parses and normalizes transactions into typed records
 3. **Analytics Agent** calculates income, expenses, savings rate, and top spending categories
 4. **Financial Personality** is assigned: Builder · Optimizer · Explorer · Achiever
-5. **Narrative Agent** (NVIDIA NIM / Llama 3.1 70B) generates a structured **5-scene cinematic video script** (Opening → Achievement → Insight → Advice → Close)
+5. **Narrative Agent** generates a structured **5-scene cinematic video script** (Opening → Achievement → Insight → Advice → Close) — routed through **Genblaze chat** (ADR-007) using a provider-prefixed model backend (default: **NVIDIA NIM via SDK**)
 6. **Scene images** generated via **Genblaze → GMI Cloud** (Seedream 4.0, 1344×768) — all 5 in parallel (with automatic 3× retry + exponential backoff)
 7. **Voice narration** synthesised via **Genblaze → OpenAI TTS** (tts-1, alloy voice) — concatenated scene text
 8. **FFmpeg** composes the final MP4: each scene rendered to a segment, then concat-joined with narration — **dip-to-black** transitions between scenes, browser-safe H.264 `yuv420p` + `faststart` / AAC (memory-bounded so it runs on any host)
@@ -104,7 +111,7 @@ graph LR
     subgraph pipe["🔍 Agent Pipeline · Semantic Kernel"]
         A1["① Document<br/>Transactions"]:::sk
         A2["② Analytics<br/>Insights + Personality"]:::sk
-        A3["③ Narrative<br/>NVIDIA NIM / Llama 3.1 70B"]:::nim
+        A3["③ Narrative<br/>Genblaze Chat (NVIDIA NIM)"]:::nim
         A4["④ Media Agent<br/>retry ×3 · asset manifest"]:::sk
         GI["🖼️ GMI Cloud Seedream<br/>× 5 parallel"]:::gmi
         AU["🔊 OpenAI TTS<br/>narration.mp3"]:::tts
@@ -144,6 +151,7 @@ Every recap produces **14 files** (10 artifact types) — B2 is the complete sou
 
 ```text
 bankers-wrapped-assets/
+├── index/{session_id}.json           ← flat session→user index (ADR-008: B2 is the source of truth)
 └── {user_id}/{session_id}/
     ├── input/
     │   └── transactions.csv
@@ -186,10 +194,10 @@ The personality label opens Scene 1 and drives the entire visual and narrative t
 
 ## Genblaze Integration
 
-Genblaze is **not optional** — it is the media generation layer. Every AI media call routes through the Genblaze Pipeline SDK. Zero direct provider API calls.
+Genblaze is **not optional** — it is the AI orchestration layer. **Three of the four AI steps route through Genblaze**: scene images (GMI Cloud Seedream), narration audio (OpenAI TTS wrapped in `GenblazeClient`), and narrative script generation (Genblaze chat with provider-prefixed model backend, NVIDIA NIM by default). Zero direct provider API calls outside `genblaze_client.py`.
 
 ```python
-# Scene images — Genblaze → GMI Cloud Seedream  (all 4 in parallel via asyncio.gather)
+# Scene images — Genblaze → GMI Cloud Seedream  (all 5 in parallel via asyncio.gather)
 pr = (
     Pipeline("bankers-wrapped-image")
     .step(GMICloudImageProvider(),
@@ -266,7 +274,7 @@ Every run produces **four machine-readable provenance files** in B2:
 | **Storage** | [![Backblaze B2](https://img.shields.io/badge/Backblaze-B2-FF0000?logo=backblaze&logoColor=white)](https://www.backblaze.com/cloud-storage) | Structured artifact store + presigned delivery |
 | **Backend** | [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/) [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/) | Async agentic pipeline |
 | **Agent Framework** | [![Semantic Kernel](https://img.shields.io/badge/Semantic_Kernel-0078D4?logo=microsoft&logoColor=white)](https://learn.microsoft.com/en-us/semantic-kernel/) | Typed plugin contracts, native async |
-| **LLM** | [![NVIDIA NIM](https://img.shields.io/badge/NVIDIA_NIM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/) | Narrative script generation |
+| **LLM** | [![Genblaze](https://img.shields.io/badge/Genblaze-SDK_chat-7C3AED)](https://github.com/backblaze-labs/genblaze) [![NVIDIA NIM](https://img.shields.io/badge/NVIDIA_NIM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/) | Narrative script — Genblaze SDK chat with provider-prefixed backend model (default: NVIDIA NIM) |
 | **Images** | [![GMI Cloud](https://img.shields.io/badge/GMI_Cloud-Seedream-0066CC)](https://cloud.gmi.ai/) | Scene visuals 1344×768, seedream-4-0-250828 (via Genblaze) — 5 parallel, retry ×3 |
 | **Video Compose** | [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/) | Scene images + narration → H.264/AAC MP4 (segment + concat, dip-to-black) |
 | **Frontend** | [![Next.js](https://img.shields.io/badge/Next.js-16.2.9-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/) [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/) [![Node.js](https://img.shields.io/badge/Node.js-26.4.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) | Upload portal + video player |
@@ -317,35 +325,45 @@ python scripts\demo_run.py
 ```text
 bankers-wrapped/
 ├── backend/
-│   ├── agents/          # 4 Semantic Kernel agents
+│   ├── agents/          # 4 typed async agents (Document, Analytics, Narrative, Media)
 │   ├── api/
 │   │   ├── limiter.py   # slowapi rate limiter (5 req/hr/IP)
 │   │   ├── middleware/  # Request logging
 │   │   └── v1/
-│   │       ├── recap.py    # POST /generate · GET /{session_id} · GET /{session_id}/download
+│   │       ├── recap.py    # POST /generate · GET /{session_id} (B2 fallback) · /download ZIP
 │   │       ├── progress.py # GET /{session_id}/progress (SSE)
-│   │       └── health.py
-│   ├── media/           # GenblazeClient (images + TTS) · FFmpegComposer
-│   ├── storage/         # B2Client · SessionStore (SQLite)
+│   │       ├── plaid.py    # POST /plaid/link-token · /plaid/exchange (feature-flagged)
+│   │       └── health.py   # status + version + plaid_enabled
+│   ├── ingest/          # PlaidConnector — sandbox "connect a bank" path (ADR-010)
+│   ├── media/           # GenblazeClient (images + chat + TTS) · FFmpegComposer
+│   ├── storage/         # B2Client (source of truth) · SessionStore (SQLite cache)
 │   ├── models/          # Pydantic models (Transaction, Insights, Script, Session)
 │   └── config.py        # Pydantic Settings
 ├── frontend/
 │   └── app/
-│       ├── page.tsx                    # Upload portal + live SSE progress
+│       ├── page.tsx                    # Upload portal + Plaid Link + live SSE progress
 │       └── recap/[session_id]/page.tsx # Public share page
 ├── tests/
 │   ├── unit/            # Per-agent unit tests (all providers mocked)
-│   └── integration/     # API end-to-end tests
+│   ├── integration/     # API end-to-end tests (incl. B2-fallback + SSE stream)
+│   └── load/            # k6 smoke test (manual — p95 + rate-limiter behavior)
+├── infra/               # b2-lifecycle.json — bucket retention as code (ADR-009)
+├── scripts/             # demo_run · apply_b2_lifecycle · recompose · start/stop_demo
+├── notebooks/           # DEMO_RUNBOOK.ipynb — interactive pipeline walkthrough
 ├── data/synthetic/      # Demo CSVs — committed, no PII
 ├── prompts/             # LLM system prompts (narrative_agent.txt)
-├── docs/adr/            # 6 Architecture Decision Records
+├── docs/
+│   ├── adr/             # 11 Architecture Decision Records (9 accepted)
+│   ├── COSTS.md         # Component budget — everything stays live through judging
+│   ├── SUBMISSION.md    # Judging alignment + deliverables checklist
+│   └── DEVPOST.md       # Devpost form content + demo video script
 ├── Dockerfile           # python:3.14-slim + FFmpeg + uv
 ├── railway.json         # Railway backend deployment
 ├── render.yaml          # Render backend deployment (alternative)
 ├── CLAUDE.md            # Claude Code project context
 └── .github/
-    ├── workflows/ci.yml # Lint → type-check → test (≥80% coverage) → Codecov
-    └── prompts/         # Phase 1–2 development prompt history
+    ├── workflows/ci.yml # Lint → type-check → test (≥80% coverage gate) → Codecov
+    └── prompts/         # Development prompt history (1–16)
 ```
 
 ---
@@ -442,11 +460,23 @@ Hackathon judging criteria and submission checklist: [`docs/SUBMISSION.md`](docs
 
 ---
 
+## Screenshots
+
+Judge-facing screenshots and raw evidence are organized in [`assets/README.md`](assets/README.md).
+
+| Product Flow | B2 Provenance |
+| --- | --- |
+| ![Upload Portal](assets/screenshots/01-app-upload-portal.png) | ![B2 Bucket](assets/screenshots/04-b2-bucket-overview.png) |
+| ![Live SSE Progress](assets/screenshots/02-live-sse-progress.png) | ![Session Folder](assets/screenshots/06-session-folder-overview.png) |
+| ![Generated Video Result](assets/screenshots/03-generated-video-result.png) | ![Generation JSON View](assets/screenshots/09-session-generation-json-view.png) |
+
+---
+
 ## Future Roadmap
 
-**Next release — [v1.7.0 plan](docs/ROADMAP-v1.7.0.md)** (push every judging criterion toward >9.5): Genblaze as sole AI layer (route the LLM through Genblaze), B2 as source of truth (durable sessions), B2 lifecycle + integrity hashing, an optional Plaid-sandbox "connect a bank" path, and submission/hardening polish.
+**v1.8.0 shipped**: all v1.7.0 roadmap workstreams are now implemented, including optional Plaid Sandbox ingestion alongside CSV input. See [CHANGELOG 1.8.0](CHANGELOG.md) and [v1.7.0 plan](docs/ROADMAP-v1.7.0.md) for traceability.
 
-Beyond v1.7.0:
+Beyond v1.8.0:
 
 - PDF statement parsing (Azure Document Intelligence)
 - Goal Tracking Agent — savings milestones, debt payoff detection

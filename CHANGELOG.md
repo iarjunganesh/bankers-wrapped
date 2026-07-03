@@ -7,6 +7,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+---
+
+## [1.8.0] — 2026-07-03
+
+All five v1.7.0-roadmap workstreams shipped (the `v1.7.0` tag marks the roadmap itself; this release is the implementation). Coverage 98% (gate 80%), 135 tests.
+
 ### Added
 
 - **WS-2 — B2 as source of truth** ([ADR-008](docs/adr/008-b2-source-of-truth.md)): sessions now survive Railway redeploys.
@@ -17,11 +23,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 - **WS-3 — B2 lifecycle + artifact integrity** ([ADR-009](docs/adr/009-b2-lifecycle-integrity.md)):
   - `generation.json` now carries an `artifacts` list — **SHA-256 + size for each of the 12 content artifacts** uploaded per session, computed from the exact bytes stored.
   - Bucket retention rule committed as `infra/b2-lifecycle.json` (45-day expiry — outlives the Aug 5–11 judging window for all hackathon sessions) and applied idempotently by `scripts/apply_b2_lifecycle.py`.
-- **WS-1 — Genblaze LLM routing** ([ADR-007](docs/adr/007-genblaze-sole-ai-layer.md)): the narrative script LLM can now route through **Genblaze → GMI Cloud chat**, making 3 of 4 AI steps Genblaze-orchestrated.
-  - `GenblazeClient.generate_script_text()` — same non-blocking (`asyncio.to_thread`) + tenacity-retry pattern as image gen; returns text + provenance (model, latency, retries, tokens, `cost_usd`).
-  - `NarrativeAgent` provider branch: `NARRATIVE_PROVIDER=genblaze` uses GMI chat (`GMI_CHAT_MODEL`, default Llama-3.3-70B); invalid JSON retried once, then **automatic fallback to the direct NVIDIA NIM path** — the pipeline never 500s on a provider swap.
-  - `generation.json` gains an `llm` block and `models_used.llm` reflects the provider that actually produced the script.
-  - **Default stays `nvidia-nim`** until the GMI credit top-up; flipping is a single env var. Optional Genblaze video scene cut for cost (docs/COSTS.md).
+- **WS-1 — Genblaze LLM routing** ([ADR-007](docs/adr/007-genblaze-sole-ai-layer.md)): narrative script generation now runs through **Genblaze SDK chat** with provider-prefixed backend models, making 3 of 4 AI steps Genblaze-orchestrated.
+  - `GenblazeClient.generate_script_text()` — same non-blocking (`asyncio.to_thread`) + tenacity-retry pattern as image gen; returns text + provenance (provider, model, latency, retries, tokens, `cost_usd`).
+  - `NarrativeAgent` is SDK-only for script generation (no direct provider path in-agent). `NARRATIVE_PROVIDER` selects backend model mode via SDK (`genblaze` model id vs `nvidia-nim/<model>`), with schema retry on invalid JSON.
+  - `generation.json` carries `llm` provenance and `models_used.llm` reflects the backend model used.
+  - Default narrative provider mode is now `genblaze`, with `GMI_CHAT_MODEL` defaulting to `nvidia-nim/meta/llama-3.1-70b-instruct` for NVIDIA NIM via SDK.
 - **WS-4 — Plaid sandbox connector** ([ADR-010](docs/adr/010-plaid-sandbox-ingestion.md)): optional "Connect a bank (sandbox)" ingestion path.
   - `backend/ingest/plaid_connector.py`: Plaid REST via httpx (async; no `plaid-python` dep) — link token, public-token exchange, paginated `/transactions/get`, category mapping to our taxonomy, sign-convention flip (Plaid outflow-positive → ours income-positive).
   - Plaid transactions are serialised back to our CSV schema and fed to the **unchanged** pipeline — identical B2 artifact trail, `DocumentAgent` revalidates everything.
@@ -36,13 +42,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 ### Fixed
 
 - Removed aspirational PostgreSQL claims (no `DATABASE_URL` code path exists): B2 is the source of truth, SQLite is a cache, Postgres stays a documented scale path only.
+- B2 lifecycle rule shape: the S3-compatible API requires the `Days` rule paired with an `ExpiredObjectDeleteMarker` `_marker` rule (same prefix).
+- `/health` now reports the real app version (was hardcoded `1.0.0`) and `plaid_enabled`.
+
+### Changed
+
+- Coverage 93% → **98%** (135 tests): SSE progress stream, B2 helper, Plaid HTTP/pagination/CSV-quoting, ffprobe, provider-init, and B2-fallback edge cases now covered.
 
 ---
 
-## [1.7.0] — Planned (roadmap only; no code yet)
+## [1.7.0] — 2026-06-30 (roadmap tag — planning only)
 
 Full plan: [`docs/ROADMAP-v1.7.0.md`](docs/ROADMAP-v1.7.0.md). Goal: lift every judging criterion
 toward >9.5. Decision records ADR-007–010; build specs prompts 12–16.
+**All five workstreams below were implemented and shipped in [1.8.0].**
 
 ### Planned
 

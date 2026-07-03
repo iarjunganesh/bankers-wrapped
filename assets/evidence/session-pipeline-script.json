@@ -1,0 +1,31 @@
+{
+  "title": "Your October Financial Journey",
+  "personality": "Financial Builder",
+  "scenes": [
+    {
+      "id": 1,
+      "narration": "You're a Financial Builder, consistently prioritizing savings and debt reduction to build a strong financial foundation. Your discipline and foresight are truly paying off. Keep up the fantastic work!",
+      "visual_prompt": "A minimalist illustration of a person building with blocks, with a subtle cityscape in the background, symbolizing a strong financial foundation."
+    },
+    {
+      "id": 2,
+      "narration": "This month, you achieved some amazing milestones! You reduced your debt by $750 and invested $1,750 towards your future. These accomplishments will have a lasting impact on your financial well-being.",
+      "visual_prompt": "An abstract representation of a debt decreasing and investments growing, with a subtle arrow pointing upwards, indicating progress and growth."
+    },
+    {
+      "id": 3,
+      "narration": "Let's take a look at your top spending categories. Housing took the top spot at 30%, followed closely by savings at 27%. It's great to see you prioritizing your living situation and your financial future.",
+      "visual_prompt": "A clean, animated pie chart showing the top spending categories, with housing and savings prominently displayed."
+    },
+    {
+      "id": 4,
+      "narration": "As a Financial Builder, you're likely looking for ways to optimize your finances. Consider allocating a small portion of your income towards retirement accounts, such as a 401(k) or IRA. This will help you build a safety net for the future.",
+      "visual_prompt": "A stylized illustration of a person planting a tree, with a subtle clock in the background, symbolizing long-term planning and growth."
+    },
+    {
+      "id": 5,
+      "narration": "Keep pushing forward, Financial Builder! Your hard work and dedication will continue to pay off in the long run. Stay focused, and you'll be achieving your financial goals in no time.",
+      "visual_prompt": "A motivational, abstract representation of a person reaching for the stars, with a subtle cityscape in the background, symbolizing limitless possibilities and a bright financial future."
+    }
+  ]
+}
