@@ -8,7 +8,7 @@ Upload a CSV → 4-agent pipeline → personalized narrated MP4 recap video stor
 
 **Current phase**: v1.7.0 batch nearly complete — shipped: WS-2 (B2 as source of truth, ADR-008), WS-3 (lifecycle + SHA-256 integrity, ADR-009 — rule applied to live bucket), WS-5 code items (ADR-011, k6 smoke test, specific-advice prompt, Postgres-claim honesty sweep), WS-4 (Plaid sandbox connector, ADR-010 — httpx REST, no plaid-python; Plaid txns → CSV → unchanged pipeline; feature-flagged off without keys).
 
-**Next**: WS-1 Genblaze LLM routing (ADR-007 — code + mocked tests now, default stays `nvidia-nim`; live flip after GMI top-up). Ship as **v1.8.0** when the batch lands (v1.7.0 tag = roadmap only, already public). Remaining manual: demo video (≤3 min) + Devpost form + GMI credit top-up + screenshots into docs/media/ (docs/COSTS.md).
+**All five v1.7.0 workstreams are now code-complete** (WS-1 shipped too: ADR-007 — `NarrativeAgent` routes via Genblaze → GMI chat when `NARRATIVE_PROVIDER=genblaze`, auto-fallback to NIM; default stays `nvidia-nim` until the GMI top-up). Ship as **v1.8.0** (v1.7.0 tag = roadmap only, already public). Remaining manual: GMI top-up → flip `NARRATIVE_PROVIDER=genblaze` on Railway → live validation runs; demo video (≤3 min); Devpost form; screenshots into docs/media/ (docs/COSTS.md).
 
 ## Key Commands
 

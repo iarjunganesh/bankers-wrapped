@@ -165,7 +165,9 @@ async def _run_pipeline(
         analytics_output = await analytics_agent(doc_output)
 
         store.append_event(session_id, "scripting", "Writing narrative script")
-        narrative_agent = NarrativeAgent(settings)
+        # genblaze passed for ADR-007 LLM routing (active when
+        # NARRATIVE_PROVIDER=genblaze; otherwise the direct NIM path is used)
+        narrative_agent = NarrativeAgent(settings, genblaze=genblaze)
         narrative_output = await narrative_agent(analytics_output)
 
         store.append_event(session_id, "generating_images", "Generating scene images + narration")

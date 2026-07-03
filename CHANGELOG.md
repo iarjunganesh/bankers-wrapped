@@ -17,6 +17,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 - **WS-3 — B2 lifecycle + artifact integrity** ([ADR-009](docs/adr/009-b2-lifecycle-integrity.md)):
   - `generation.json` now carries an `artifacts` list — **SHA-256 + size for each of the 12 content artifacts** uploaded per session, computed from the exact bytes stored.
   - Bucket retention rule committed as `infra/b2-lifecycle.json` (45-day expiry — outlives the Aug 5–11 judging window for all hackathon sessions) and applied idempotently by `scripts/apply_b2_lifecycle.py`.
+- **WS-1 — Genblaze LLM routing** ([ADR-007](docs/adr/007-genblaze-sole-ai-layer.md)): the narrative script LLM can now route through **Genblaze → GMI Cloud chat**, making 3 of 4 AI steps Genblaze-orchestrated.
+  - `GenblazeClient.generate_script_text()` — same non-blocking (`asyncio.to_thread`) + tenacity-retry pattern as image gen; returns text + provenance (model, latency, retries, tokens, `cost_usd`).
+  - `NarrativeAgent` provider branch: `NARRATIVE_PROVIDER=genblaze` uses GMI chat (`GMI_CHAT_MODEL`, default Llama-3.3-70B); invalid JSON retried once, then **automatic fallback to the direct NVIDIA NIM path** — the pipeline never 500s on a provider swap.
+  - `generation.json` gains an `llm` block and `models_used.llm` reflects the provider that actually produced the script.
+  - **Default stays `nvidia-nim`** until the GMI credit top-up; flipping is a single env var. Optional Genblaze video scene cut for cost (docs/COSTS.md).
 - **WS-4 — Plaid sandbox connector** ([ADR-010](docs/adr/010-plaid-sandbox-ingestion.md)): optional "Connect a bank (sandbox)" ingestion path.
   - `backend/ingest/plaid_connector.py`: Plaid REST via httpx (async; no `plaid-python` dep) — link token, public-token exchange, paginated `/transactions/get`, category mapping to our taxonomy, sign-convention flip (Plaid outflow-positive → ours income-positive).
   - Plaid transactions are serialised back to our CSV schema and fed to the **unchanged** pipeline — identical B2 artifact trail, `DocumentAgent` revalidates everything.

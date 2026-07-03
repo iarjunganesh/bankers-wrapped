@@ -115,3 +115,40 @@ class TestGenerateSceneImage:
         assert isinstance(result, ImageResult)
         assert result.image_bytes == fake_png
         assert result.manifest_hash == "sha256:abc123"
+
+
+# ── WS-1: Genblaze chat routing (ADR-007) ────────────────────────────────────
+
+from unittest.mock import AsyncMock  # noqa: E402
+
+from backend.media.genblaze_client import ScriptResult  # noqa: E402
+
+
+class TestGenerateScriptText:
+    async def test_generate_script_text_offloads_to_thread(self, client):
+        """The blocking genblaze chat call must run via asyncio.to_thread."""
+        fake_resp = MagicMock(
+            text='{"title": "T", "scenes": []}',
+            model="meta-llama/Llama-3.3-70B-Instruct",
+            tokens_in=900,
+            tokens_out=450,
+            cost_usd=0.0012,
+        )
+        with patch(
+            "backend.media.genblaze_client.asyncio.to_thread",
+            new=AsyncMock(return_value=fake_resp),
+        ) as to_thread:
+            result = await client.generate_script_text(
+                system="system prompt",
+                user="user message",
+                model="meta-llama/Llama-3.3-70B-Instruct",
+            )
+
+        to_thread.assert_called_once()
+        assert isinstance(result, ScriptResult)
+        assert result.text == '{"title": "T", "scenes": []}'
+        assert result.model == "meta-llama/Llama-3.3-70B-Instruct"
+        assert result.tokens_out == 450
+        assert result.cost_usd == 0.0012
+        assert result.latency_ms >= 0
+        assert result.retry_count == 0

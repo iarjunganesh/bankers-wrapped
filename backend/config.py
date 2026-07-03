@@ -43,6 +43,14 @@ class Settings(BaseSettings):
     nvidia_nim_base_url: str = "https://integrate.api.nvidia.com/v1"
     nvidia_nim_model: str = "meta/llama-3.1-70b-instruct"
 
+    # Narrative LLM routing (ADR-007 / WS-1).
+    # "genblaze" routes the script LLM through Genblaze → GMI Cloud so 3 of 4
+    # AI steps use Genblaze. Default stays "nvidia-nim" until the GMI credit
+    # top-up is live — flip via NARRATIVE_PROVIDER=genblaze (falls back to the
+    # NIM path automatically on invalid JSON or provider failure).
+    narrative_provider: str = "nvidia-nim"  # "genblaze" | "nvidia-nim"
+    gmi_chat_model: str = "meta-llama/Llama-3.3-70B-Instruct"
+
     # Plaid — optional "connect a bank (sandbox)" ingestion path (ADR-010).
     # Leave blank to disable; the CSV upload path is unaffected.
     plaid_client_id: str = ""

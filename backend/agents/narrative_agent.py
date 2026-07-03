@@ -1,12 +1,17 @@
 """
 Narrative Agent.
 
-Transforms FinancialInsights into a structured NarrativeScript (4 scenes)
-using GPT-4o. The script is the input to the Media Agent.
+Transforms FinancialInsights into a structured NarrativeScript (5 scenes).
+
+Provider selection (ADR-007 / WS-1): when NARRATIVE_PROVIDER=genblaze and a
+GenblazeClient is supplied, the script LLM call routes through Genblaze →
+GMI Cloud chat; invalid JSON is retried once, then the agent falls back to
+the direct NVIDIA NIM / OpenAI path. Provenance (provider, model, latency,
+retries) is carried on the output for generation.json.
 """
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import structlog
@@ -15,6 +20,7 @@ from openai import AsyncOpenAI
 from backend.agents.analytics_agent import AnalyticsAgentOutput
 from backend.agents.base import BaseAgent
 from backend.config import Settings
+from backend.media.genblaze_client import GenblazeClient
 from backend.models.narrative import NarrativeScript, Scene
 
 PROMPTS_DIR = Path(__file__).parent.parent.parent / "prompts"
@@ -24,14 +30,18 @@ log = structlog.get_logger()
 @dataclass
 class NarrativeAgentOutput:
     script: NarrativeScript
+    # LLM provenance for generation.json: label, model, provider, latency_ms,
+    # retry_count (+ tokens/cost when the genblaze path produced the script).
+    llm: dict = field(default_factory=dict)  # type: ignore[type-arg]
 
 
 class NarrativeAgent(BaseAgent):
     """Generates a structured 4-scene video script from financial insights."""
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, genblaze: GenblazeClient | None = None) -> None:
         super().__init__("NarrativeAgent")
         self.settings = settings
+        self.genblaze = genblaze
 
         if settings.nvidia_nim_api_key:
             # NVIDIA NIM is OpenAI-API-compatible — just swap the base_url and key
@@ -40,11 +50,20 @@ class NarrativeAgent(BaseAgent):
                 base_url=settings.nvidia_nim_base_url,
             )
             self._model = settings.nvidia_nim_model
-            self.log.info("narrative_agent.provider", provider="nvidia-nim", model=self._model)
+            self._fallback_provider = "nvidia-nim"
         else:
             self.client = AsyncOpenAI(api_key=settings.openai_api_key)
             self._model = settings.openai_model
-            self.log.info("narrative_agent.provider", provider="openai", model=self._model)
+            self._fallback_provider = "openai"
+
+        self._use_genblaze = (
+            settings.narrative_provider == "genblaze" and genblaze is not None
+        )
+        self.log.info(
+            "narrative_agent.provider",
+            provider="genblaze" if self._use_genblaze else self._fallback_provider,
+            model=settings.gmi_chat_model if self._use_genblaze else self._model,
+        )
 
         self._system_prompt = self._load_prompt("narrative_agent.txt")
 
@@ -56,9 +75,82 @@ class NarrativeAgent(BaseAgent):
 
     async def run(self, input_data: AnalyticsAgentOutput) -> NarrativeAgentOutput:
         insights = input_data.insights
-
         user_message = self._build_user_message(insights)
+        personality = insights.personality.value
 
+        script: NarrativeScript | None = None
+        llm_info: dict = {}  # type: ignore[type-arg]
+
+        if self._use_genblaze:
+            script, llm_info = await self._try_genblaze(user_message, personality)
+
+        if script is None:
+            # Direct OpenAI-compatible path (NVIDIA NIM or OpenAI) — the
+            # default provider, and the fallback when genblaze output fails.
+            raw = await self._generate_direct(user_message)
+            script = self._parse_script(raw, personality)
+            llm_info = {
+                "label": f"{self._fallback_provider}/{self._model}",
+                "provider": self._fallback_provider,
+                "model": self._model,
+            }
+
+        self.log.info(
+            "narrative_agent.complete",
+            scenes=len(script.scenes),
+            title=script.title,
+            provider=llm_info.get("provider"),
+        )
+        return NarrativeAgentOutput(script=script, llm=llm_info)
+
+    async def _try_genblaze(
+        self, user_message: str, personality: str
+    ) -> tuple[NarrativeScript | None, dict]:  # type: ignore[type-arg]
+        """
+        Genblaze → GMI chat path (ADR-007). Invalid/unschematic JSON is retried
+        once; any remaining failure returns (None, {}) so run() falls back to
+        the direct NIM/OpenAI path — the pipeline never 500s on provider swap.
+        """
+        assert self.genblaze is not None
+        total_latency = 0
+        total_retries = 0
+        for attempt in range(2):
+            try:
+                result = await self.genblaze.generate_script_text(
+                    system=self._system_prompt,
+                    user=user_message,
+                    model=self.settings.gmi_chat_model,
+                )
+            except Exception as exc:
+                self.log.warning(
+                    "narrative_agent.genblaze_call_failed",
+                    attempt=attempt,
+                    error=str(exc),
+                )
+                return None, {}
+            total_latency += result.latency_ms
+            total_retries += result.retry_count
+            try:
+                script = self._parse_script(result.text, personality)
+            except ValueError:
+                self.log.warning(
+                    "narrative_agent.genblaze_invalid_json", attempt=attempt
+                )
+                continue  # one schema retry, then fall through to fallback
+            return script, {
+                "label": f"gmi-cloud/{result.model}",
+                "provider": "gmi-cloud",
+                "model": result.model,
+                "latency_ms": total_latency,
+                "retry_count": total_retries + attempt,
+                "tokens_in": result.tokens_in,
+                "tokens_out": result.tokens_out,
+                "cost_usd": result.cost_usd,
+            }
+        self.log.warning("narrative_agent.genblaze_exhausted_falling_back")
+        return None, {}
+
+    async def _generate_direct(self, user_message: str) -> str:
         response = await self.client.chat.completions.create(
             model=self._model,
             response_format={"type": "json_object"},
@@ -68,13 +160,7 @@ class NarrativeAgent(BaseAgent):
             ],
             temperature=0.7,
         )
-
-        raw = response.choices[0].message.content or "{}" if response.choices else "{}"
-        script = self._parse_script(raw, insights.personality.value)
-
-        self.log.info("narrative_agent.complete", scenes=len(script.scenes), title=script.title)
-
-        return NarrativeAgentOutput(script=script)
+        return response.choices[0].message.content or "{}" if response.choices else "{}"
 
     def _build_user_message(self, insights: object) -> str:  # type: ignore[type-arg]
         from backend.models.insights import FinancialInsights

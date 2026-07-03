@@ -278,6 +278,9 @@ class MediaAgent(BaseAgent):
                     "latency_ms": compose_latency_ms,
                     "success": True,
                 },
+                # ADR-007: provenance for the script LLM step (provider, model,
+                # latency, retries; tokens/cost when routed through Genblaze)
+                "llm": getattr(input_data.script_output, "llm", {}) or {},
                 "total_latency_ms": elapsed_ms,
                 # ADR-009: SHA-256 per stored artifact (all content uploads that
                 # precede this manifest — generation.json and session_metadata.json
@@ -292,7 +295,11 @@ class MediaAgent(BaseAgent):
             # ADR-008: this manifest is the durable source of truth. It carries
             # the full insights snapshot and every B2 key (including its own) so
             # GET /recap/{id} can be hydrated from B2 alone after a redeploy.
-            llm_label = (
+            # models_used.llm reflects the provider that ACTUALLY produced the
+            # script (ADR-007): gmi-cloud/... when routed via Genblaze, else the
+            # direct NIM/OpenAI path.
+            llm_info = getattr(input_data.script_output, "llm", {}) or {}
+            llm_label = llm_info.get("label") or (
                 f"nvidia-nim/{self.settings.nvidia_nim_model}"
                 if self.settings.nvidia_nim_api_key
                 else self.settings.openai_model

@@ -105,3 +105,107 @@ class TestNarrativeAgent:
         output = await agent(make_analytics_output())
         full = output.script.full_narration
         assert "Financial Builder" in full
+
+
+# ── WS-1: Genblaze LLM routing (ADR-007) ─────────────────────────────────────
+
+from unittest.mock import AsyncMock, MagicMock  # noqa: E402
+
+from backend.config import Settings  # noqa: E402
+from backend.media.genblaze_client import ScriptResult  # noqa: E402
+
+
+def _ws1_settings(provider: str = "genblaze") -> Settings:
+    """Hermetic settings — every field the agent reads is explicit."""
+    return Settings(
+        narrative_provider=provider,
+        gmi_chat_model="meta-llama/Llama-3.3-70B-Instruct",
+        nvidia_nim_api_key="nvapi-test",
+        openai_api_key="sk-test",
+        gmi_api_key="mock-gmi",
+    )
+
+
+def _script_result(text: str) -> ScriptResult:
+    return ScriptResult(
+        text=text,
+        model="meta-llama/Llama-3.3-70B-Instruct",
+        latency_ms=1200,
+        retry_count=0,
+        tokens_in=900,
+        tokens_out=450,
+        cost_usd=0.0012,
+    )
+
+
+def _direct_path_mock(agent: NarrativeAgent) -> AsyncMock:
+    """Mock the OpenAI-compatible fallback path on an already-built agent."""
+    response = MagicMock()
+    response.choices[0].message.content = MOCK_GPT_RESPONSE
+    create = AsyncMock(return_value=response)
+    agent.client = MagicMock()
+    agent.client.chat.completions.create = create
+    return create
+
+
+class TestGenblazeRouting:
+    async def test_narrative_agent_uses_genblaze_when_configured(self, mocker):
+        mocker.patch("backend.agents.narrative_agent.AsyncOpenAI")
+        genblaze = MagicMock()
+        genblaze.generate_script_text = AsyncMock(
+            return_value=_script_result(MOCK_GPT_RESPONSE)
+        )
+        agent = NarrativeAgent(_ws1_settings(), genblaze=genblaze)
+        direct = _direct_path_mock(agent)
+
+        output = await agent(make_analytics_output())
+
+        genblaze.generate_script_text.assert_called_once()
+        direct.assert_not_called()
+        assert output.llm["provider"] == "gmi-cloud"
+        assert output.llm["label"] == "gmi-cloud/meta-llama/Llama-3.3-70B-Instruct"
+        assert output.llm["cost_usd"] == 0.0012
+        assert len(output.script.scenes) == 4
+
+    async def test_narrative_agent_falls_back_to_nim_on_invalid_json(self, mocker):
+        mocker.patch("backend.agents.narrative_agent.AsyncOpenAI")
+        genblaze = MagicMock()
+        genblaze.generate_script_text = AsyncMock(
+            return_value=_script_result("NOT VALID JSON {{{")
+        )
+        agent = NarrativeAgent(_ws1_settings(), genblaze=genblaze)
+        direct = _direct_path_mock(agent)
+
+        output = await agent(make_analytics_output())
+
+        # invalid JSON is retried once, then the direct NIM path takes over
+        assert genblaze.generate_script_text.call_count == 2
+        direct.assert_called_once()
+        assert output.llm["provider"] == "nvidia-nim"
+        assert output.llm["label"] == "nvidia-nim/meta/llama-3.1-70b-instruct"
+        assert len(output.script.scenes) == 4
+
+    async def test_narrative_agent_falls_back_when_genblaze_raises(self, mocker):
+        mocker.patch("backend.agents.narrative_agent.AsyncOpenAI")
+        genblaze = MagicMock()
+        genblaze.generate_script_text = AsyncMock(side_effect=RuntimeError("GMI down"))
+        agent = NarrativeAgent(_ws1_settings(), genblaze=genblaze)
+        direct = _direct_path_mock(agent)
+
+        output = await agent(make_analytics_output())
+
+        direct.assert_called_once()
+        assert output.llm["provider"] == "nvidia-nim"
+
+    async def test_default_provider_never_touches_genblaze(self, mocker):
+        mocker.patch("backend.agents.narrative_agent.AsyncOpenAI")
+        genblaze = MagicMock()
+        genblaze.generate_script_text = AsyncMock()
+        agent = NarrativeAgent(_ws1_settings(provider="nvidia-nim"), genblaze=genblaze)
+        direct = _direct_path_mock(agent)
+
+        output = await agent(make_analytics_output())
+
+        genblaze.generate_script_text.assert_not_called()
+        direct.assert_called_once()
+        assert output.llm["provider"] == "nvidia-nim"

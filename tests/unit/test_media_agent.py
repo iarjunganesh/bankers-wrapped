@@ -428,6 +428,61 @@ class TestMediaAgentAssetManifest:
         scene_entry = next(a for a in artifacts if a["key"] == "u/s/scene.png")
         assert scene_entry["sha256"] == hashlib.sha256(FAKE_PNG).hexdigest()
 
+    async def test_generation_json_records_llm_provenance(self):
+        """ADR-007: generation.json llm block + models_used reflect the actual provider."""
+        settings = _make_settings()
+        llm_info = {
+            "label": "gmi-cloud/meta-llama/Llama-3.3-70B-Instruct",
+            "provider": "gmi-cloud",
+            "model": "meta-llama/Llama-3.3-70B-Instruct",
+            "latency_ms": 1234,
+            "retry_count": 0,
+            "cost_usd": 0.0012,
+        }
+        agent_input = _make_input()
+        agent_input.script_output.llm = llm_info
+        uploaded_json: dict[str, dict] = {}
+
+        mock_genblaze = MagicMock()
+        mock_genblaze.generate_scene_image = AsyncMock(
+            return_value=ImageResult(image_bytes=FAKE_PNG, manifest_hash="sha256:img")
+        )
+        mock_genblaze.generate_narration_audio = AsyncMock(
+            return_value=AudioResult(audio_bytes=FAKE_MP3, model="tts-1", voice="alloy")
+        )
+        mock_b2 = MagicMock()
+        mock_b2.upload_bytes.return_value = "b2://bucket/key"
+        mock_b2.upload_json.side_effect = (
+            lambda k, d: uploaded_json.__setitem__(k, d) or "b2://bucket/meta"
+        )
+        mock_b2.presigned_url.return_value = "https://presigned.url/recap.mp4"
+
+        with patch("backend.agents.media_agent.FFmpegComposer") as MockComposer, \
+             patch("backend.agents.media_agent.B2Client.input_key", return_value="u/s/input/f.csv"), \
+             patch("backend.agents.media_agent.B2Client.pipeline_key", return_value="u/s/pipeline/script.json"), \
+             patch("backend.agents.media_agent.B2Client.scene_key", return_value="u/s/scene.png"), \
+             patch("backend.agents.media_agent.B2Client.narration_key", return_value="u/s/pipeline/narration.mp3"), \
+             patch("backend.agents.media_agent.B2Client.output_key", return_value="u/s/output/recap.mp4"), \
+             patch("backend.agents.media_agent.B2Client.metadata_key", return_value="u/s/metadata/meta.json"), \
+             patch("backend.agents.media_agent.B2Client.analytics_key", return_value="u/s/pipeline/analytics.json"), \
+             patch("backend.agents.media_agent.B2Client.prompts_key", return_value="u/s/pipeline/prompts.json"), \
+             patch("backend.agents.media_agent.B2Client.generation_key", return_value="u/s/pipeline/generation.json"), \
+             patch("backend.agents.media_agent.B2Client.thumbnail_key", return_value="u/s/pipeline/thumbnail.png"):
+            async def _compose_and_write(**kwargs: object) -> Path:
+                p = kwargs["output_path"]
+                assert isinstance(p, Path)
+                p.write_bytes(FAKE_VIDEO)
+                return p
+
+            MockComposer.return_value.compose = AsyncMock(side_effect=_compose_and_write)
+            agent = MediaAgent(settings=settings, genblaze=mock_genblaze, b2=mock_b2)
+            output = await agent(agent_input)
+
+        assert uploaded_json["u/s/pipeline/generation.json"]["llm"] == llm_info
+        assert output.metadata.models_used["llm"] == llm_info["label"]
+        manifest = uploaded_json["u/s/metadata/meta.json"]
+        assert manifest["models_used"]["llm"] == llm_info["label"]
+
     async def test_session_manifest_is_self_contained(self):
         """ADR-008: the B2 manifest alone must be able to serve GET /recap/{id}."""
         settings = _make_settings()

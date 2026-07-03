@@ -52,6 +52,17 @@ class AudioResult:
     retry_count: int = field(default=0)
 
 
+@dataclass
+class ScriptResult:
+    text: str
+    model: str
+    latency_ms: int = field(default=0)
+    retry_count: int = field(default=0)
+    tokens_in: int | None = field(default=None)
+    tokens_out: int | None = field(default=None)
+    cost_usd: float | None = field(default=None)
+
+
 class GenblazeClient:
     """
     Thin wrapper around the Genblaze Pipeline API.
@@ -166,6 +177,73 @@ class GenblazeClient:
                 raise
 
         return await _attempt()
+
+    async def generate_script_text(
+        self,
+        system: str,
+        user: str,
+        *,
+        model: str,
+        timeout: int = 120,
+        temperature: float = 0.7,
+    ) -> ScriptResult:
+        """
+        Generate the narrative script via Genblaze → GMI Cloud chat (ADR-007).
+
+        Same non-blocking + retry pattern as image generation: the blocking
+        SDK call (with its tenacity retry loop) runs in a worker thread.
+        Returns text + provenance (model, latency, retries, tokens, cost)
+        for the generation.json `llm` block.
+        """
+        attempt_count = 0
+
+        @retry(
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=1, min=2, max=30),
+            retry=retry_if_exception_type(Exception),
+            reraise=True,
+        )
+        def _sync_chat():  # type: ignore[no-untyped-def]
+            """Blocking genblaze chat call (runs off the loop)."""
+            nonlocal attempt_count
+            try:
+                from genblaze_gmicloud import chat
+
+                return chat(
+                    model,
+                    prompt=user,
+                    system=system,
+                    temperature=temperature,
+                    response_format={"type": "json_object"},
+                    timeout=float(timeout),
+                    api_key=self.gmi_api_key or None,
+                )
+            except Exception:
+                attempt_count += 1
+                raise
+
+        t0 = int(time.time() * 1000)
+        resp = await asyncio.to_thread(_sync_chat)
+        latency = int(time.time() * 1000) - t0
+        log.info(
+            "genblaze.chat.generate",
+            provider="gmi-cloud",
+            model=resp.model,
+            latency_ms=latency,
+            tokens_in=resp.tokens_in,
+            tokens_out=resp.tokens_out,
+            cost_usd=resp.cost_usd,
+            attempt=attempt_count,
+        )
+        return ScriptResult(
+            text=resp.text,
+            model=resp.model,
+            latency_ms=latency,
+            retry_count=attempt_count,
+            tokens_in=resp.tokens_in,
+            tokens_out=resp.tokens_out,
+            cost_usd=resp.cost_usd,
+        )
 
     async def generate_narration_audio(
         self,
