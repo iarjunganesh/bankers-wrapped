@@ -100,7 +100,7 @@ wheels = [
 
 [[package]]
 name = "bankers-wrapped"
-version = "1.6.0"
+version = "1.8.1"
 source = { editable = "." }
 dependencies = [
     { name = "boto3" },

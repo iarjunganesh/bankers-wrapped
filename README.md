@@ -12,7 +12,7 @@
 
 [![CI](https://github.com/iarjunganesh/bankers-wrapped/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/iarjunganesh/bankers-wrapped/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/iarjunganesh/bankers-wrapped/graph/badge.svg?token=GSBUXVREL7)](https://codecov.io/gh/iarjunganesh/bankers-wrapped)
-[![Release](https://img.shields.io/badge/release-1.8.0-2ea44f)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-1.8.1-2ea44f)](https://github.com/iarjunganesh/bankers-wrapped/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Watch Video](https://img.shields.io/badge/%E2%96%B6_Watch-3--min_demo-FF0000?logo=youtube&logoColor=white)](#)
 
 [![Backblaze B2](https://img.shields.io/badge/Backblaze_B2-Cloud_Storage-E21C2A?logo=backblaze&logoColor=white)](https://www.backblaze.com/cloud-storage)
@@ -80,7 +80,7 @@ Banker's Wrapped solves this with an agentic pipeline that reads your transactio
 2. **Document Agent** parses and normalizes transactions into typed records
 3. **Analytics Agent** calculates income, expenses, savings rate, and top spending categories
 4. **Financial Personality** is assigned: Builder · Optimizer · Explorer · Achiever
-5. **Narrative Agent** generates a structured **5-scene cinematic video script** (Opening → Achievement → Insight → Advice → Close) — routed through **Genblaze chat** (ADR-007) using a provider-prefixed model backend (default: **NVIDIA NIM via SDK**)
+5. **Narrative Agent** generates a structured **5-scene cinematic video script** (Opening → Achievement → Insight → Advice → Close) — routed through **Genblaze chat** (ADR-007) on **GMI Cloud** (`openai/gpt-5.4-mini`), with automatic **NVIDIA NIM fallback** on provider failure or invalid JSON
 6. **Scene images** generated via **Genblaze → GMI Cloud** (Seedream 4.0, 1344×768) — all 5 in parallel (with automatic 3× retry + exponential backoff)
 7. **Voice narration** synthesised via **Genblaze → OpenAI TTS** (tts-1, alloy voice) — concatenated scene text
 8. **FFmpeg** composes the final MP4: each scene rendered to a segment, then concat-joined with narration — **dip-to-black** transitions between scenes, browser-safe H.264 `yuv420p` + `faststart` / AAC (memory-bounded so it runs on any host)
@@ -111,7 +111,7 @@ graph LR
     subgraph pipe["🔍 Agent Pipeline · Semantic Kernel"]
         A1["① Document<br/>Transactions"]:::sk
         A2["② Analytics<br/>Insights + Personality"]:::sk
-        A3["③ Narrative<br/>Genblaze Chat (NVIDIA NIM)"]:::nim
+        A3["③ Narrative<br/>Genblaze Chat · GMI Cloud<br/>NIM fallback"]:::gmi
         A4["④ Media Agent<br/>retry ×3 · asset manifest"]:::sk
         GI["🖼️ GMI Cloud Seedream<br/>× 5 parallel"]:::gmi
         AU["🔊 OpenAI TTS<br/>narration.mp3"]:::tts
@@ -136,7 +136,7 @@ Measured on a live run against `transactions_jan_2026.csv` (22 transactions, 5 s
 | --- | --- | --- |
 | CSV parse + normalise | DocumentAgent | < 1 s |
 | Spending analytics + personality | AnalyticsAgent | < 1 s |
-| Narrative script (5 scenes) | NarrativeAgent · NVIDIA NIM Llama 3.1 70B | ~30 s |
+| Narrative script (5 scenes) | NarrativeAgent · Genblaze chat → GMI `openai/gpt-5.4-mini` (NIM fallback) | ~30 s |
 | Scene images × 5 | MediaAgent · Genblaze → GMI Cloud Seedream (parallel, retry ×3) | ~45–180 s |
 | Voice narration | GenblazeClient → OpenAI TTS (tts-1, alloy, retry ×3) | ~17 s |
 | MP4 composition | FFmpeg (H.264/AAC, segment + concat, dip-to-black) | ~6 s |
@@ -194,7 +194,7 @@ The personality label opens Scene 1 and drives the entire visual and narrative t
 
 ## Genblaze Integration
 
-Genblaze is **not optional** — it is the AI orchestration layer. **Three of the four AI steps route through Genblaze**: scene images (GMI Cloud Seedream), narration audio (OpenAI TTS wrapped in `GenblazeClient`), and narrative script generation (Genblaze chat with provider-prefixed model backend, NVIDIA NIM by default). Zero direct provider API calls outside `genblaze_client.py`.
+Genblaze is **not optional** — it is the AI orchestration layer. **Three of the four AI steps route through Genblaze**: scene images (GMI Cloud Seedream), narration audio (OpenAI TTS wrapped in `GenblazeClient`), and narrative script generation (Genblaze chat on GMI Cloud — `openai/gpt-5.4-mini` — with automatic NVIDIA NIM fallback via the same SDK wrapper). Zero direct provider API calls outside `genblaze_client.py`.
 
 ```python
 # Scene images — Genblaze → GMI Cloud Seedream  (all 5 in parallel via asyncio.gather)
@@ -235,7 +235,7 @@ Every run produces **four machine-readable provenance files** in B2:
   "created_at": "2026-01-15T14:22:08Z",
   "pipeline_version": "1.0.0",
   "models_used": {
-    "llm":        "nvidia-nim/meta/llama-3.1-70b-instruct",
+    "llm":        "gmi-cloud/openai/gpt-5.4-mini",
     "image":      "gmi-cloud/seedream-4-0-250828",
     "audio":      "openai/tts-1",
     "compositor": "ffmpeg"
@@ -274,7 +274,7 @@ Every run produces **four machine-readable provenance files** in B2:
 | **Storage** | [![Backblaze B2](https://img.shields.io/badge/Backblaze-B2-FF0000?logo=backblaze&logoColor=white)](https://www.backblaze.com/cloud-storage) | Structured artifact store + presigned delivery |
 | **Backend** | [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/) [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/) | Async agentic pipeline |
 | **Agent Framework** | [![Semantic Kernel](https://img.shields.io/badge/Semantic_Kernel-0078D4?logo=microsoft&logoColor=white)](https://learn.microsoft.com/en-us/semantic-kernel/) | Typed plugin contracts, native async |
-| **LLM** | [![Genblaze](https://img.shields.io/badge/Genblaze-SDK_chat-7C3AED)](https://github.com/backblaze-labs/genblaze) [![NVIDIA NIM](https://img.shields.io/badge/NVIDIA_NIM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/) | Narrative script — Genblaze SDK chat with provider-prefixed backend model (default: NVIDIA NIM) |
+| **LLM** | [![Genblaze](https://img.shields.io/badge/Genblaze-SDK_chat-7C3AED)](https://github.com/backblaze-labs/genblaze) [![NVIDIA NIM](https://img.shields.io/badge/NVIDIA_NIM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/) | Narrative script — Genblaze SDK chat on GMI Cloud (`openai/gpt-5.4-mini`), automatic NVIDIA NIM fallback |
 | **Images** | [![GMI Cloud](https://img.shields.io/badge/GMI_Cloud-Seedream-0066CC)](https://cloud.gmi.ai/) | Scene visuals 1344×768, seedream-4-0-250828 (via Genblaze) — 5 parallel, retry ×3 |
 | **Video Compose** | [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/) | Scene images + narration → H.264/AAC MP4 (segment + concat, dip-to-black) |
 | **Frontend** | [![Next.js](https://img.shields.io/badge/Next.js-16.2.9-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/) [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/) [![Node.js](https://img.shields.io/badge/Node.js-26.4.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) | Upload portal + video player |

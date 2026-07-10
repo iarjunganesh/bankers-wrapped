@@ -80,6 +80,8 @@ class GenblazeClient:
         b2_key_id: str,
         b2_app_key: str,
         openai_api_key: str = "",
+        nvidia_nim_api_key: str = "",
+        nvidia_nim_base_url: str = "",
     ) -> None:
         self.gmi_api_key = gmi_api_key
         self.b2_bucket = b2_bucket
@@ -87,6 +89,8 @@ class GenblazeClient:
         self.b2_key_id = b2_key_id
         self.b2_app_key = b2_app_key
         self.openai_api_key = openai_api_key
+        self.nvidia_nim_api_key = nvidia_nim_api_key
+        self.nvidia_nim_base_url = nvidia_nim_base_url
 
         if gmi_api_key:
             os.environ.setdefault("GMI_API_KEY", gmi_api_key)
@@ -103,22 +107,27 @@ class GenblazeClient:
         )
         return ObjectStorageSink(backend, key_strategy=KeyStrategy.HIERARCHICAL)
 
-    @staticmethod
-    def _provider_from_model(model: str) -> str:
-        """
-        Infer provider label from a provider-prefixed model id.
+    # Our routing prefix — stripped before the call; it is not a backend model id.
+    _NIM_PREFIX = "nvidia-nim/"
+    _DEFAULT_NIM_BASE_URL = "https://integrate.api.nvidia.com/v1"
 
-        Examples:
-          - nvidia-nim/meta/llama-3.1-70b-instruct -> nvidia-nim
-          - openai/gpt-4o-mini -> openai
-          - meta-llama/Llama-3.3-70B-Instruct -> gmi-cloud (default)
-        """
-        if "/" not in model:
-            return "gmi-cloud"
-        prefix = model.split("/", 1)[0]
-        if prefix in {"nvidia-nim", "openai", "gmi-cloud"}:
-            return prefix
-        return "gmi-cloud"
+    # $/token from GET api.gmi-serving.com/v1/models (verified 2026-07-11);
+    # the SDK returns cost_usd=None ("fleet shifts; let callers compute").
+    _CHAT_PRICES_PER_TOKEN = {
+        "openai/gpt-5.4-mini": (0.75e-06, 4.5e-06),
+    }
+
+    @classmethod
+    def _chat_cost_usd(
+        cls, model: str, tokens_in: int | None, tokens_out: int | None, provider: str
+    ) -> float | None:
+        """Compute chat cost when the SDK doesn't report it. NIM dev tier is free."""
+        if provider == "nvidia-nim":
+            return 0.0
+        price = cls._CHAT_PRICES_PER_TOKEN.get(model)
+        if price is None or tokens_in is None or tokens_out is None:
+            return None
+        return round(tokens_in * price[0] + tokens_out * price[1], 6)
 
     async def generate_scene_image(
         self,
@@ -208,11 +217,28 @@ class GenblazeClient:
         """
         Generate the narrative script via Genblaze chat (ADR-007).
 
+        Routing: the SDK chat wrapper always posts to one OpenAI-compatible
+        endpoint (GMI Cloud by default). Model ids we prefix with
+        `nvidia-nim/` are redirected to NVIDIA NIM's endpoint via the
+        wrapper's `base_url` override, with the prefix stripped — GMI's
+        catalog knows nothing about our prefix convention.
+
         Same non-blocking + retry pattern as image generation: the blocking
         SDK call (with its tenacity retry loop) runs in a worker thread.
         Returns text + provenance (model, latency, retries, tokens, cost)
         for the generation.json `llm` block.
         """
+        if model.startswith(self._NIM_PREFIX):
+            backend_model = model[len(self._NIM_PREFIX) :]
+            provider = "nvidia-nim"
+            base_url: str | None = self.nvidia_nim_base_url or self._DEFAULT_NIM_BASE_URL
+            api_key = self.nvidia_nim_api_key or None
+        else:
+            backend_model = model
+            provider = "gmi-cloud"
+            base_url = None  # SDK default: GMI Cloud serving endpoint
+            api_key = self.gmi_api_key or None
+
         attempt_count = 0
 
         @retry(
@@ -228,13 +254,14 @@ class GenblazeClient:
                 from genblaze_gmicloud import chat
 
                 return chat(
-                    model,
+                    backend_model,
                     prompt=user,
                     system=system,
                     temperature=temperature,
                     response_format={"type": "json_object"},
                     timeout=float(timeout),
-                    api_key=self.gmi_api_key or None,
+                    api_key=api_key,
+                    base_url=base_url,
                 )
             except Exception:
                 attempt_count += 1
@@ -243,7 +270,9 @@ class GenblazeClient:
         t0 = int(time.time() * 1000)
         resp = await asyncio.to_thread(_sync_chat)
         latency = int(time.time() * 1000) - t0
-        provider = self._provider_from_model(resp.model)
+        cost_usd = resp.cost_usd
+        if cost_usd is None:
+            cost_usd = self._chat_cost_usd(backend_model, resp.tokens_in, resp.tokens_out, provider)
         log.info(
             "genblaze.chat.generate",
             provider=provider,
@@ -251,7 +280,7 @@ class GenblazeClient:
             latency_ms=latency,
             tokens_in=resp.tokens_in,
             tokens_out=resp.tokens_out,
-            cost_usd=resp.cost_usd,
+            cost_usd=cost_usd,
             attempt=attempt_count,
         )
         return ScriptResult(
@@ -262,7 +291,7 @@ class GenblazeClient:
             retry_count=attempt_count,
             tokens_in=resp.tokens_in,
             tokens_out=resp.tokens_out,
-            cost_usd=resp.cost_usd,
+            cost_usd=cost_usd,
         )
 
     async def generate_narration_audio(

@@ -9,6 +9,38 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ---
 
+## [1.8.1] — 2026-07-11
+
+The first live post-flip run exposed that WS-1's chat path could never reach NVIDIA NIM: the
+Genblaze chat wrapper always posts to GMI's endpoint, so `nvidia-nim/...`-prefixed ids (and the
+documented "NIM fallback") 404'd — only mocked tests exercised the route. Found before any
+credits were burned (the 404 bills nothing).
+
+### Fixed
+
+- **Real NVIDIA NIM routing** (`GenblazeClient.generate_script_text`): `nvidia-nim/`-prefixed
+  model ids are stripped and redirected to NIM's OpenAI-compatible endpoint via the SDK chat
+  wrapper's `base_url` override (new `nvidia_nim_api_key` / `nvidia_nim_base_url` client params).
+  Provider provenance is derived from the route actually taken, not the model-id prefix.
+- **Automatic NIM fallback now exists** (`NarrativeAgent._try_genblaze`): after the primary
+  model exhausts its attempts (provider failure or invalid JSON), one final SDK-routed attempt
+  runs against NVIDIA NIM — previously claimed in docs but not implemented.
+- **`GMI_CHAT_MODEL` default was invalid**: GMI's catalog serves no `meta-llama/*` models
+  (verified via `GET /v1/models`). Production model is now `openai/gpt-5.4-mini`
+  ($0.75/$4.50 per M tokens ≈ $0.005/run); both routes live-validated with 1-token probes.
+- `llm.cost_usd` in `generation.json` is now computed from GMI's published per-token pricing
+  when the SDK reports none (the SDK intentionally returns `cost_usd=None`); NIM runs record $0.
+
+### Changed
+
+- 5 new tests (NIM-fallback success/exhaustion in NarrativeAgent; chat routing +
+  cost computation in GenblazeClient); coverage 97.8%.
+- Docs sweep: README (pipeline diagram, timing table, tech stack, `models_used` example,
+  release badge → `releases/latest`), DEVPOST providers table, COSTS per-run table,
+  CLAUDE.md, `.env.example` — all reflect GMI `openai/gpt-5.4-mini` primary + NIM fallback.
+
+---
+
 ## [1.8.0] — 2026-07-03
 
 All five v1.7.0-roadmap workstreams shipped (the `v1.7.0` tag marks the roadmap itself; this release is the implementation). Coverage 98% (gate 80%), 135 tests.

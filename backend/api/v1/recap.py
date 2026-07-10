@@ -115,6 +115,8 @@ def get_genblaze(settings: Settings = Depends(get_settings)) -> GenblazeClient:
         b2_key_id=settings.b2_key_id,
         b2_app_key=settings.b2_application_key,
         openai_api_key=settings.openai_api_key,
+        nvidia_nim_api_key=settings.nvidia_nim_api_key,
+        nvidia_nim_base_url=settings.nvidia_nim_base_url,
     )
 
 

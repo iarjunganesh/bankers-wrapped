@@ -8,7 +8,7 @@ class Settings(BaseSettings):
 
     # App
     app_name: str = "Banker's Wrapped"
-    app_version: str = "1.8.0"
+    app_version: str = "1.8.1"
     debug: bool = False
 
     # CORS — defaults to wildcard for hackathon; override via CORS_ALLOW_ORIGINS env var in production

@@ -16,6 +16,8 @@ def client() -> GenblazeClient:
         b2_key_id="test-key-id",
         b2_app_key="test-app-key",
         openai_api_key="sk-test-openai-key",
+        nvidia_nim_api_key="nvapi-test-key",
+        nvidia_nim_base_url="https://integrate.api.nvidia.com/v1",
     )
 
 
@@ -129,7 +131,7 @@ class TestGenerateScriptText:
         """The blocking genblaze chat call must run via asyncio.to_thread."""
         fake_resp = MagicMock(
             text='{"title": "T", "scenes": []}',
-            model="meta-llama/Llama-3.3-70B-Instruct",
+            model="openai/gpt-5.4-mini",
             tokens_in=900,
             tokens_out=450,
             cost_usd=0.0012,
@@ -141,14 +143,58 @@ class TestGenerateScriptText:
             result = await client.generate_script_text(
                 system="system prompt",
                 user="user message",
-                model="meta-llama/Llama-3.3-70B-Instruct",
+                model="openai/gpt-5.4-mini",
             )
 
         to_thread.assert_called_once()
         assert isinstance(result, ScriptResult)
         assert result.text == '{"title": "T", "scenes": []}'
-        assert result.model == "meta-llama/Llama-3.3-70B-Instruct"
+        assert result.model == "openai/gpt-5.4-mini"
         assert result.tokens_out == 450
         assert result.cost_usd == 0.0012
         assert result.latency_ms >= 0
         assert result.retry_count == 0
+
+    async def test_gmi_model_uses_default_endpoint_and_computed_cost(self, client):
+        """Un-prefixed model ids go to GMI's default endpoint with the GMI key;
+        cost is computed from the price table when the SDK reports None."""
+        fake_resp = MagicMock(
+            text='{"title": "T", "scenes": []}',
+            model="openai/gpt-5.4-mini",
+            tokens_in=1000,
+            tokens_out=1000,
+            cost_usd=None,
+        )
+        with patch("genblaze_gmicloud.chat", return_value=fake_resp) as chat_mock:
+            result = await client.generate_script_text(
+                system="s", user="u", model="openai/gpt-5.4-mini"
+            )
+
+        args, kwargs = chat_mock.call_args
+        assert args[0] == "openai/gpt-5.4-mini"
+        assert kwargs["base_url"] is None
+        assert kwargs["api_key"] == "mock-gmi-key"
+        assert result.provider == "gmi-cloud"
+        assert result.cost_usd == pytest.approx(0.00525)
+
+    async def test_nim_prefixed_model_routes_to_nim_endpoint(self, client):
+        """`nvidia-nim/` ids are stripped and redirected to NIM's endpoint via
+        base_url — GMI's catalog knows nothing about our prefix convention."""
+        fake_resp = MagicMock(
+            text='{"title": "T", "scenes": []}',
+            model="meta/llama-3.1-70b-instruct",
+            tokens_in=900,
+            tokens_out=450,
+            cost_usd=None,
+        )
+        with patch("genblaze_gmicloud.chat", return_value=fake_resp) as chat_mock:
+            result = await client.generate_script_text(
+                system="s", user="u", model="nvidia-nim/meta/llama-3.1-70b-instruct"
+            )
+
+        args, kwargs = chat_mock.call_args
+        assert args[0] == "meta/llama-3.1-70b-instruct"  # prefix stripped
+        assert kwargs["base_url"] == "https://integrate.api.nvidia.com/v1"
+        assert kwargs["api_key"] == "nvapi-test-key"
+        assert result.provider == "nvidia-nim"
+        assert result.cost_usd == 0.0  # NIM dev tier is free

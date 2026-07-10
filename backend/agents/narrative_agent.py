@@ -7,7 +7,9 @@ Provider selection (ADR-007 / WS-1): script generation is SDK-only. The agent
 always routes through Genblaze chat with a configured backend model.
 NARRATIVE_PROVIDER selects which backend model id is used (e.g. NVIDIA NIM via
 `nvidia-nim/...`), but no direct provider SDKs are invoked from this agent.
-Invalid JSON is retried once before failing the run.
+Invalid JSON is retried once; if the primary model is exhausted (call failure
+or invalid JSON), one final attempt routes through NVIDIA NIM via the same SDK
+before failing the run.
 """
 
 import json
@@ -53,6 +55,13 @@ class NarrativeAgent(BaseAgent):
         self._system_prompt = self._load_prompt("narrative_agent.txt")
 
     @staticmethod
+    def _nim_model(settings: Settings) -> str:
+        """NVIDIA NIM model id in SDK form (`nvidia-nim/` prefixed)."""
+        if settings.nvidia_nim_model.startswith("nvidia-nim/"):
+            return settings.nvidia_nim_model
+        return f"nvidia-nim/{settings.nvidia_nim_model}"
+
+    @staticmethod
     def _select_sdk_model(settings: Settings) -> str:
         """
         Resolve the SDK chat model from the narrative provider mode.
@@ -61,9 +70,7 @@ class NarrativeAgent(BaseAgent):
         - narrative_provider=nvidia-nim -> force nvidia-nim/<model>
         """
         if settings.narrative_provider == "nvidia-nim":
-            if settings.nvidia_nim_model.startswith("nvidia-nim/"):
-                return settings.nvidia_nim_model
-            return f"nvidia-nim/{settings.nvidia_nim_model}"
+            return NarrativeAgent._nim_model(settings)
         return settings.gmi_chat_model
 
     def _load_prompt(self, filename: str) -> str:
@@ -94,17 +101,25 @@ class NarrativeAgent(BaseAgent):
     ) -> tuple[NarrativeScript | None, dict]:  # type: ignore[type-arg]
         """
         Genblaze SDK chat path (ADR-007). Invalid/unschematic JSON is retried
-        once; any remaining failure returns (None, {}) so the caller can fail
-        the run explicitly without invoking a non-SDK fallback path.
+        once; if the primary model is exhausted (call failure or invalid JSON),
+        one final attempt routes through NVIDIA NIM via the same SDK. Any
+        remaining failure returns (None, {}) so the caller can fail the run
+        explicitly without invoking a non-SDK path.
         """
+        nim_model = self._nim_model(self.settings)
+        models = [self._sdk_model, self._sdk_model]
+        if self._sdk_model != nim_model:
+            models.append(nim_model)
         total_latency = 0
         total_retries = 0
-        for attempt in range(2):
+        for attempt, model in enumerate(models):
+            if model != self._sdk_model:
+                self.log.warning("narrative_agent.fallback_to_nim", model=model)
             try:
                 result = await self.genblaze.generate_script_text(
                     system=self._system_prompt,
                     user=user_message,
-                    model=self._sdk_model,
+                    model=model,
                 )
             except Exception as exc:
                 self.log.warning(

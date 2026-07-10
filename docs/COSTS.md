@@ -17,7 +17,7 @@ Last verified: 2026-07-02.
 | **Railway** | Backend (FastAPI + FFmpeg) | Hobby **$5/mo**, includes $5 usage credit | Subscribed | ~$2–4 usage/mo (well inside the $5 credit) | ✅ Keep. **Do not cancel before Aug 12** — the cycle renews ~Aug 2 and must cover judging week (≈ $5 more) |
 | **Vercel** | Frontend (Next.js) | Hobby — **free** | — | Tiny fraction of the 100 GB bandwidth / 1M requests | ✅ **No paid plan needed.** Hackathon use is non-commercial, which is exactly what Hobby allows |
 | **Backblaze B2** | All session artifacts (14 files + session index) | First **10 GB free**; egress free up to 3× stored; 2,500 free class B/C calls/day | Free tier | ~25–40 MB per session → even 100+ sessions ≈ 3–4 GB | ✅ Free at our scale. WS-3 lifecycle rule keeps it bounded (protect the pinned demo session) |
-| **NVIDIA NIM** | Narrative LLM (Llama 3.1 70B) | **Free** via build.nvidia.com Developer Program; ~40 requests/min rate limit, no billing | Free | 1 request per pipeline run | ✅ Free. Caveat: no SLA — WS-1's Genblaze routing with NIM as fallback reduces this single point of failure |
+| **NVIDIA NIM** | Narrative LLM **fallback** (Llama 3.1 70B) | **Free** via build.nvidia.com Developer Program; ~40 requests/min rate limit, no billing | Free | Only when GMI chat fails or returns invalid JSON | ✅ Free. Primary LLM is GMI `openai/gpt-5.4-mini` (~$0.005/run, in the GMI budget) |
 | **OpenAI** | TTS narration (`tts-1`) | $15 / 1M characters | **$9.52** | ~$0.015/run (≈ 1,000 chars) → 40 runs ≈ $0.60 | ✅ Covered ~600×. No top-up needed |
 | **GMI Cloud** | Scene images (Seedream 4.0 via Genblaze) | **$0.05 / image** (`seedream-4-0-250828`) | **$0.11** (promo spent) | **$0.25/run** (5 images) — see spend plan below | ⚠️ **The binding constraint.** Buy the $10 top-up; follow the spend plan |
 | GitHub Actions / Codecov | CI + coverage | Free for public repos | — | — | ✅ Free |
@@ -33,7 +33,7 @@ Total project cash cost end-to-end: ~$30 (2× Railway + $10 OpenAI + $10 GMI).
 | Step | Provider | Cost |
 | --- | --- | --- |
 | CSV parse + analytics | local | $0 |
-| Narrative script | NVIDIA NIM | $0 (free tier) |
+| Narrative script | GMI `openai/gpt-5.4-mini` via Genblaze (NIM fallback: $0) | ~$0.005 |
 | 5 scene images | GMI Seedream @ $0.05 | **$0.25** |
 | Narration (~1,000 chars) | OpenAI tts-1 | ~$0.015 |
 | Compose + store + serve | FFmpeg / B2 / Railway | ~$0 |

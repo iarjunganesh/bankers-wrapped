@@ -75,7 +75,7 @@ In about 2–3 minutes you get:
 Four typed async agents chain together:
 1. `DocumentAgent` — parses and normalises the CSV into structured transactions
 2. `AnalyticsAgent` — computes insights and assigns a Financial Personality
-3. `NarrativeAgent` — writes a structured 5-scene cinematic script via **Genblaze → GMI Cloud chat** (with automatic NVIDIA NIM Llama 3.1 70B fallback on invalid output)
+3. `NarrativeAgent` — writes a structured 5-scene cinematic script via **Genblaze → GMI Cloud chat** (with automatic NVIDIA NIM Llama 3.1 70B fallback on provider failure or invalid output)
 4. `MediaAgent` — generates all imagery and audio via the Genblaze SDK, then composes the final video with FFmpeg
 
 **AI orchestration (Genblaze)**
@@ -149,7 +149,7 @@ Python, FastAPI, Next.js, Genblaze SDK, GMI Cloud (Seedream + chat), NVIDIA NIM 
 
 | Role | Provider | Model |
 |------|----------|-------|
-| Script generation (LLM) | Genblaze → GMI Cloud (fallback: NVIDIA NIM) | `meta-llama/Llama-3.3-70B-Instruct` (fallback `meta/llama-3.1-70b-instruct`) |
+| Script generation (LLM) | Genblaze → GMI Cloud (fallback: NVIDIA NIM) | `openai/gpt-5.4-mini` (fallback `meta/llama-3.1-70b-instruct`) |
 | Image generation | Genblaze → GMI Cloud | `seedream-4-0-250828` |
 | Narration audio (TTS) | Genblaze → OpenAI | `tts-1` |
 | Bank ingestion (optional) | Plaid Sandbox | Transactions API |
@@ -163,7 +163,7 @@ Python, FastAPI, Next.js, Genblaze SDK, GMI Cloud (Seedream + chat), NVIDIA NIM 
 
 Artifacts are served via presigned URLs on both the results page and a public share page (`/recap/{session_id}`), which lists the full B2 key manifest. Users can also download a ZIP of all artifacts via `GET /api/v1/recap/{session_id}/download`.
 
-**Genblaze** orchestrates **3 of the 4 AI steps**. Image generation routes through `genblaze-gmicloud` → GMI Cloud Seedream (5 scenes in parallel). The narrative LLM routes through Genblaze → GMI Cloud chat (`generate_script_text()`), with automatic fallback to NVIDIA NIM on invalid structured output. Narration audio routes through `GenblazeClient.generate_narration_audio()` which wraps OpenAI TTS — no direct provider calls exist outside that wrapper. All paths include tenacity-based retry (3 attempts, exponential backoff 2–30 s); per-step provider, model, latency, retry counts — and LLM tokens + `cost_usd` — are recorded in `generation.json` on B2, alongside a SHA-256 for every content artifact.
+**Genblaze** orchestrates **3 of the 4 AI steps**. Image generation routes through `genblaze-gmicloud` → GMI Cloud Seedream (5 scenes in parallel). The narrative LLM routes through Genblaze → GMI Cloud chat (`generate_script_text()`), with automatic fallback to NVIDIA NIM — via the same SDK wrapper — on provider failure or invalid structured output. Narration audio routes through `GenblazeClient.generate_narration_audio()` which wraps OpenAI TTS — no direct provider calls exist outside that wrapper. All paths include tenacity-based retry (3 attempts, exponential backoff 2–30 s); per-step provider, model, latency, retry counts — and LLM tokens + `cost_usd` — are recorded in `generation.json` on B2, alongside a SHA-256 for every content artifact.
 
 ---
 

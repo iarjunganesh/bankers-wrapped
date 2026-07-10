@@ -8,7 +8,7 @@ Upload a CSV → 4-agent pipeline → personalized narrated MP4 recap video stor
 
 **Current phase**: v1.7.0 batch nearly complete — shipped: WS-2 (B2 as source of truth, ADR-008), WS-3 (lifecycle + SHA-256 integrity, ADR-009 — rule applied to live bucket), WS-5 code items (ADR-011, k6 smoke test, specific-advice prompt, Postgres-claim honesty sweep), WS-4 (Plaid sandbox connector, ADR-010 — httpx REST, no plaid-python; Plaid txns → CSV → unchanged pipeline; feature-flagged off without keys).
 
-**All five v1.7.0 workstreams are now code-complete** (WS-1 shipped too: ADR-007 — `NarrativeAgent` routes via Genblaze → GMI chat when `NARRATIVE_PROVIDER=genblaze`, auto-fallback to NIM; default stays `nvidia-nim` until the GMI top-up). Ship as **v1.8.0** (v1.7.0 tag = roadmap only, already public). Remaining manual: GMI top-up → flip `NARRATIVE_PROVIDER=genblaze` on Railway → live validation runs; demo video (≤3 min); Devpost form; screenshots into docs/media/ (docs/COSTS.md).
+**All five v1.7.0 workstreams shipped as v1.8.0** (v1.7.0 tag = roadmap only). WS-1 (ADR-007): `NarrativeAgent` is SDK-only — Genblaze chat with the model from `GMI_CHAT_MODEL` when `NARRATIVE_PROVIDER=genblaze`; **automatic NIM fallback on provider failure or invalid JSON** (one final SDK attempt via NIM's endpoint). ⚠️ `GMI_CHAT_MODEL` must be an id GMI actually serves (`GET api.gmi-serving.com/v1/models`) — **GMI hosts no meta-llama models**; prod uses `openai/gpt-5.4-mini` (~$0.005/run). Feature-code freeze in effect (2026-07-10 audit): remaining work is Railway config, one paid validation run, pinned-session/screenshot refresh (`assets/`), demo video (≤3 min), Devpost form.
 
 ## Key Commands
 
@@ -28,7 +28,7 @@ make demo-stop    # stop all services
 
 1. `DocumentAgent` — CSV parse + normalise → `List[Transaction]`
 2. `AnalyticsAgent` — insights + Financial Personality → `FinancialInsights`
-3. `NarrativeAgent` — structured script → `NarrativeScript` (**5 scenes**); Genblaze → GMI chat when `NARRATIVE_PROVIDER=genblaze` (ADR-007), else direct NVIDIA NIM (Llama 3.1 70B); auto-fallback to NIM on invalid JSON
+3. `NarrativeAgent` — structured script → `NarrativeScript` (**5 scenes**); always Genblaze SDK chat (ADR-007). `NARRATIVE_PROVIDER=genblaze` → `GMI_CHAT_MODEL` on GMI Cloud; `nvidia-nim` → NIM via the same SDK wrapper (`base_url` override, `nvidia-nim/` prefix stripped before the call). Auto-fallback to NIM on provider failure or invalid JSON
 4. `MediaAgent` — Genblaze → GMI Cloud Seedream (images, parallel) + OpenAI TTS (narration) + FFmpeg (segment + concat) → `recap.mp4` → B2
 
 **3 of 4 AI steps route through the Genblaze SDK** (`genblaze-core`, `genblaze-gmicloud`): images, chat (flag), TTS.  
@@ -76,7 +76,7 @@ index/{session_id}.json                              ← flat session→user ind
 
 ```json
 {
-  "llm":        "nvidia-nim/meta/llama-3.1-70b-instruct",
+  "llm":        "gmi-cloud/openai/gpt-5.4-mini",
   "image":      "gmi-cloud/seedream-4-0-250828",
   "audio":      "openai/tts-1",
   "compositor": "ffmpeg"

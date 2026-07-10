@@ -69,7 +69,7 @@ def make_analytics_output() -> AnalyticsAgentOutput:
 def _settings(provider: str = "genblaze") -> Settings:
     return Settings(
         narrative_provider=provider,
-        gmi_chat_model="meta-llama/Llama-3.3-70B-Instruct",
+        gmi_chat_model="openai/gpt-5.4-mini",
         nvidia_nim_model="meta/llama-3.1-70b-instruct",
         gmi_api_key="mock-gmi",
         nvidia_nim_api_key="nvapi-test",
@@ -79,7 +79,7 @@ def _settings(provider: str = "genblaze") -> Settings:
 
 def _script_result(
     text: str,
-    model: str = "meta-llama/Llama-3.3-70B-Instruct",
+    model: str = "openai/gpt-5.4-mini",
     provider: str = "gmi-cloud",
 ) -> ScriptResult:
     return ScriptResult(
@@ -109,7 +109,7 @@ class TestNarrativeAgentSdkOnly:
         genblaze.generate_script_text.assert_called_once()
         assert len(output.script.scenes) == 4
         assert output.llm["provider"] == "gmi-cloud"
-        assert output.llm["label"] == "gmi-cloud/meta-llama/Llama-3.3-70B-Instruct"
+        assert output.llm["label"] == "gmi-cloud/openai/gpt-5.4-mini"
 
     async def test_retries_invalid_json_then_fails(self):
         genblaze = MagicMock()
@@ -119,7 +119,8 @@ class TestNarrativeAgentSdkOnly:
         with pytest.raises(RuntimeError, match="failed via Genblaze SDK"):
             await agent(make_analytics_output())
 
-        assert genblaze.generate_script_text.call_count == 2
+        # 2 primary attempts + 1 NIM fallback attempt
+        assert genblaze.generate_script_text.call_count == 3
 
     async def test_retries_provider_error_then_fails(self):
         genblaze = MagicMock()
@@ -129,6 +130,59 @@ class TestNarrativeAgentSdkOnly:
         with pytest.raises(RuntimeError, match="failed via Genblaze SDK"):
             await agent(make_analytics_output())
 
+        # 2 primary attempts + 1 NIM fallback attempt
+        assert genblaze.generate_script_text.call_count == 3
+
+    async def test_falls_back_to_nim_on_provider_error(self):
+        nim_result = _script_result(
+            MOCK_SCRIPT_RESPONSE,
+            model="nvidia-nim/meta/llama-3.1-70b-instruct",
+            provider="nvidia-nim",
+        )
+        genblaze = MagicMock()
+        genblaze.generate_script_text = AsyncMock(
+            side_effect=[RuntimeError("GMI 404"), RuntimeError("GMI 404"), nim_result]
+        )
+        agent = NarrativeAgent(_settings(), genblaze=genblaze)
+
+        output = await agent(make_analytics_output())
+
+        assert genblaze.generate_script_text.call_count == 3
+        fallback_kwargs = genblaze.generate_script_text.call_args_list[2].kwargs
+        assert fallback_kwargs["model"] == "nvidia-nim/meta/llama-3.1-70b-instruct"
+        assert output.llm["provider"] == "nvidia-nim"
+        assert len(output.script.scenes) == 4
+
+    async def test_falls_back_to_nim_on_invalid_json(self):
+        nim_result = _script_result(
+            MOCK_SCRIPT_RESPONSE,
+            model="nvidia-nim/meta/llama-3.1-70b-instruct",
+            provider="nvidia-nim",
+        )
+        genblaze = MagicMock()
+        genblaze.generate_script_text = AsyncMock(
+            side_effect=[
+                _script_result("NOT VALID JSON {{{"),
+                _script_result("NOT VALID JSON {{{"),
+                nim_result,
+            ]
+        )
+        agent = NarrativeAgent(_settings(), genblaze=genblaze)
+
+        output = await agent(make_analytics_output())
+
+        assert genblaze.generate_script_text.call_count == 3
+        assert output.llm["provider"] == "nvidia-nim"
+
+    async def test_nvidia_mode_does_not_double_fallback(self):
+        genblaze = MagicMock()
+        genblaze.generate_script_text = AsyncMock(side_effect=RuntimeError("NIM down"))
+        agent = NarrativeAgent(_settings(provider="nvidia-nim"), genblaze=genblaze)
+
+        with pytest.raises(RuntimeError, match="failed via Genblaze SDK"):
+            await agent(make_analytics_output())
+
+        # primary already IS the NIM model — no extra fallback attempt
         assert genblaze.generate_script_text.call_count == 2
 
     async def test_nvidia_mode_routes_through_sdk_with_nim_model(self):
