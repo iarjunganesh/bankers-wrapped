@@ -138,11 +138,12 @@ Python, FastAPI, Next.js, Genblaze SDK, GMI Cloud (Seedream + chat), NVIDIA NIM 
 ### Additional Info (Judges Only)
 
 #### App URL
-<!-- Fill in: your Railway/Vercel deployment URL -->
+
+`https://bankers-wrapped.vercel.app` (frontend) · `https://bankers-wrapped-api-production.up.railway.app` (API)
 
 #### GitHub Repo URL
-<!-- Fill in: public or private repo URL -->
-<!-- If private: grant GitHub user `b2genblaze` contributor access -->
+
+`https://github.com/iarjunganesh/bankers-wrapped` (public — no judge access grant needed)
 
 #### Providers and Models
 
