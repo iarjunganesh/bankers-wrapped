@@ -1,14 +1,14 @@
 export default function ArchitecturePage() {
   const nodes = [
-    { label: "CSV Upload",            sub: "Transaction history",           color: "#6b7280" },
+    { label: "CSV Upload / Plaid",    sub: "Transaction history",           color: "#6b7280" },
     { label: "Document Agent",        sub: "Parse & normalise rows",        color: "#F59E0B" },
     { label: "Analytics Agent",       sub: "Insights + Financial Personality", color: "#F59E0B" },
-    { label: "Narrative Agent",       sub: "NVIDIA NIM · Llama 3.1 70B",   color: "#8B5CF6" },
+    { label: "Narrative Agent",       sub: "Genblaze chat · GMI Cloud (NIM fallback)", color: "#8B5CF6" },
     { label: "Genblaze",              sub: "Media orchestration layer",     color: "#14B8A6" },
     { label: "Parallel Image Gen ×5", sub: "GMI Cloud · Seedream",         color: "#14B8A6" },
     { label: "Narration Audio",       sub: "OpenAI TTS · via GenblazeClient", color: "#14B8A6" },
-    { label: "FFmpeg Composer",       sub: "xfade · H.264 · AAC",          color: "#3B82F6" },
-    { label: "Backblaze B2",          sub: "10 artifacts per session",      color: "#3B82F6" },
+    { label: "FFmpeg Composer",       sub: "segment + concat · H.264 · AAC", color: "#3B82F6" },
+    { label: "Backblaze B2",          sub: "14 files · 10 artifact types per session", color: "#3B82F6" },
     { label: "Shareable Recap URL",   sub: "/recap/{session_id}",          color: "#6366f1" },
   ];
 
