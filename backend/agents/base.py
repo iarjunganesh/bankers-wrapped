@@ -1,10 +1,10 @@
 """
 Base agent contract for Banker's Wrapped.
 
-Each agent is a Semantic Kernel-compatible plugin: a typed input → typed output
-transformation with a single async `run()` entry point. The `@kernel_function`
-decorator marks methods for SK orchestration. Agents are stateless — all state
-is passed explicitly as inputs and returned as outputs.
+Each agent is a lightweight typed plugin: a typed input → typed output
+transformation with a single async `run()` entry point. Orchestration is a plain
+linear async pipeline — no external agent framework (ADR-002). Agents are stateless —
+all state is passed explicitly as inputs and returned as outputs.
 """
 
 from abc import ABC, abstractmethod

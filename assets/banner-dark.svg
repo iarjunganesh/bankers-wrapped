@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 410" role="img" aria-label="Banker's Wrapped — Your financial year, told as a story. Backblaze Generative Media Hackathon 2026.">
+  <defs>
+    <style>text{font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;}</style>
+    <linearGradient id="arc" x1="16" y1="0" x2="104" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#F59E0B"/><stop offset="0.25" stop-color="#14B8A6"/><stop offset="0.5" stop-color="#8B5CF6"/><stop offset="0.75" stop-color="#3B82F6"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
+    <linearGradient id="wm"><stop offset="0" stop-color="#F59E0B"/><stop offset="0.25" stop-color="#14B8A6"/><stop offset="0.5" stop-color="#8B5CF6"/><stop offset="0.75" stop-color="#3B82F6"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
+    <linearGradient id="div"><stop offset="0" stop-color="#F59E0B" stop-opacity="0"/><stop offset="0.12" stop-color="#F59E0B"/><stop offset="0.38" stop-color="#14B8A6"/><stop offset="0.62" stop-color="#8B5CF6"/><stop offset="0.88" stop-color="#3B82F6"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.34" r="0.55"><stop offset="0" stop-color="#6366f1" stop-opacity="0.20"/><stop offset="0.5" stop-color="#8B5CF6" stop-opacity="0.07"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect x="0" y="0" width="1000" height="410" fill="#0a0a0f"/>
+  <rect x="0" y="0" width="1000" height="410" fill="url(#glow)"/>
+  <g transform="translate(440,18)"><g transform="translate(10,20) scale(0.833)">
+    <rect width="120" height="120" rx="26" fill="#141426" stroke="#3a3a52" stroke-width="1"/>
+    <rect x="8" y="32" width="16" height="72" rx="4" fill="#F59E0B"/><rect x="30" y="68" width="16" height="36" rx="4" fill="#14B8A6"/><rect x="52" y="50" width="16" height="54" rx="4" fill="#8B5CF6"/><rect x="74" y="68" width="16" height="36" rx="4" fill="#3B82F6"/><rect x="96" y="32" width="16" height="72" rx="4" fill="#6366f1"/>
+    <path d="M 16,32 C 27,32 27,68 38,68 C 49,68 49,50 60,50 C 71,50 71,68 82,68 C 93,68 93,32 104,32" stroke="url(#arc)" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  </g></g>
+  <text x="500" y="182" text-anchor="middle" font-size="21" font-weight="600" letter-spacing="8" fill="#9a9ab5">BANKER&#8217;S</text>
+  <text x="500" y="262" text-anchor="middle" font-size="68" font-weight="800" letter-spacing="-1" fill="url(#wm)">WRAPPED</text>
+  <text x="500" y="304" text-anchor="middle" font-size="23" fill="#9aa0b8">Your financial year, told as a story.</text>
+  <rect x="380" y="336" width="240" height="3" rx="1.5" fill="url(#div)"/>
+  <text x="500" y="378" text-anchor="middle" font-size="15" font-weight="600" letter-spacing="5" fill="#6f6f8c">BACKBLAZE&#160;&#160;GENERATIVE&#160;&#160;MEDIA&#160;&#160;HACKATHON&#160;&#160;2026</text>
+</svg>

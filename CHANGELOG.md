@@ -7,6 +7,56 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+_Targeting **2.0.0** (submission):_
+
+- Demo video (≤ 3 min) recorded and uploaded public to YouTube; wire the URL into the
+  "▶ Watch" badge and the Submission Links table (README, `submission/SUBMISSION.md`).
+- Devpost submission form completed; add the Devpost project URL alongside the video link.
+
+---
+
+## [1.9.0] — 2026-07-12
+
+Maintenance + release-hardening pass ahead of submission. No runtime behavior change.
+
+### Changed
+
+- **Dependencies refreshed** (`uv lock --upgrade`): uvicorn 0.51, fastapi 0.139, openai 2.45,
+  boto3 1.43.46, mypy 2.2, plus patch-level transitives. No major bumps; the Genblaze
+  subpackages (`genblaze-core` 0.3.4, `genblaze-s3` 0.3.4, `genblaze-gmicloud` 0.3.2) were
+  already the newest published — the v0.4.0 release wave.
+- **Coverage 97.8% → 99.6%** (134 → 148 tests): analytics achievements + ACHIEVER path,
+  invalid-category fallback, narrative prompt/NIM/0-scene branches, and recap
+  413 / pipeline-failure / malformed-insights / empty-artifacts / progress-callback paths.
+- Coverage claim synced 98% → 99% across README, CLAUDE.md, and submission docs;
+  regenerated `vo_08-production` + `vo_full-reference` demo voiceover clips to match.
+
+### Fixed
+
+- `config.openai_model` default was a stale `gpt-4o` — it is a fallback `models_used.llm`
+  label only, now set to the real chat model and documented as such.
+- Clarified that `config.gmi_chat_model` defaults to NIM's free dev tier on purpose
+  (prod overrides via `GMI_CHAT_MODEL`); added an ADR-011 cross-reference in ADR-003.
+- **Accuracy:** corrected Semantic Kernel references (README badge/diagram/tech-stack,
+  ADR-002, `base.py` docstring, scaffold changelog line) — it was never a dependency or
+  used; agents are a hand-rolled typed async `BaseAgent` pipeline, now documented as such.
+
+### Docs & assets
+
+- **README restructured** for judges — reordered (What Is This? → Problem → How It Works →
+  Architecture → Genblaze → Personality → Tech Stack → Live & Interactive Demo → Screenshots →
+  Quick Start → Synthetic Data → Project Structure → Production & Quality); merged Live Demo +
+  notebook, and consolidated CI/CD + load testing + the 11-ADR table into one "Production & Quality".
+- **Architecture depth extracted** to [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (pipeline timing,
+  B2 storage layout, lifecycle & integrity, provenance manifests); the README keeps the diagram + a
+  summary + a link.
+- **Theme-aware SVG README banners** — the opening hero and closing sign-off reproduced as vector
+  `<picture>` banners (`assets/banner-{light,dark}.svg`, `assets/signoff-{light,dark}.svg`), ~3 KB each,
+  replacing ~380 KB PNGs in the README and following GitHub's light/dark toggle.
+- **Demo video title/closing cards** — `assets/demo-cards/` (1920×1080 PNGs, dark + light, with editable
+  HTML sources) for the ≤3-min video bookends; `submission/DEMO_SCRIPT.md` given a real-duration cut
+  sheet + OBS runbook.
+
 ---
 
 ## [1.8.1] — 2026-07-11
@@ -285,7 +335,7 @@ The `v1.7.0` tag reserved the version for five planned workstreams — decision 
 
 ### Added
 
-- Initial project scaffold — FastAPI backend with 4-agent Semantic Kernel pipeline
+- Initial project scaffold — FastAPI backend with a 4-agent typed async pipeline
 - `DocumentAgent` — CSV parse + normalise → `List[Transaction]`
 - `AnalyticsAgent` — financial metrics + Financial Personality classification
 - `NarrativeAgent` — GPT-4o structured JSON script (4 scenes)

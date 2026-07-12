@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  /* Theme tokens — dark is default; [data-theme="light"] swaps them.
+     Both PNGs render from THIS one file: ?theme=dark / ?theme=light. */
+  :root, :root[data-theme="dark"] {
+    --bg:#0a0a0f;
+    --glow: radial-gradient(1000px 650px at 50% 36%, rgba(99,102,241,0.20), rgba(139,92,246,0.07) 45%, transparent 70%),
+            radial-gradient(900px 500px at 50% 108%, rgba(20,184,166,0.10), transparent 60%);
+    --vignette: inset 0 0 400px 120px rgba(0,0,0,0.55);
+    --logo-shadow: 0 16px 50px rgba(99,102,241,0.30);
+    --kicker:#6f6f8c;
+    --grad: linear-gradient(90deg,#F59E0B,#14B8A6,#8B5CF6,#3B82F6,#6366f1);
+    --divider: linear-gradient(90deg,transparent,#F59E0B,#14B8A6,#8B5CF6,#3B82F6,#6366f1,transparent);
+    --sub:#8b8ba3;
+    --event:#55556e;
+    --toggle-bg:rgba(255,255,255,0.06); --toggle-fg:#9a9ab5; --toggle-bd:rgba(255,255,255,0.14);
+  }
+  :root[data-theme="light"] {
+    --bg:#eef0f7;
+    --glow: radial-gradient(1050px 680px at 50% 36%, rgba(99,102,241,0.12), rgba(139,92,246,0.05) 46%, transparent 70%),
+            radial-gradient(900px 520px at 50% 110%, rgba(20,184,166,0.08), transparent 60%);
+    --vignette: inset 0 0 380px 130px rgba(35,42,80,0.06);
+    --logo-shadow: 0 18px 46px rgba(35,42,80,0.22);
+    --kicker:#6b7189;
+    --grad: linear-gradient(90deg,#b45309,#0f766e,#6d28d9,#1d4ed8,#4f46e5);
+    --divider: linear-gradient(90deg,transparent,#b45309,#0f766e,#6d28d9,#1d4ed8,#4f46e5,transparent);
+    --sub:#5c617b;
+    --event:#858ba3;
+    --toggle-bg:rgba(35,42,80,0.05); --toggle-fg:#5c617b; --toggle-bd:rgba(35,42,80,0.16);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1920px; height:1080px; overflow:hidden; }
+  .stage {
+    position:relative; width:1920px; height:1080px; background:var(--bg);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Inter','Segoe UI',system-ui,sans-serif; -webkit-font-smoothing:antialiased;
+  }
+  .glow { position:absolute; inset:0; background:var(--glow); }
+  .vignette { position:absolute; inset:0; box-shadow:var(--vignette); }
+  .content { position:relative; text-align:center; }
+  .logo { filter: drop-shadow(var(--logo-shadow)); }
+  .logo svg { width:156px; height:156px; display:block; margin:0 auto; }
+  .kicker { margin-top:46px; font-size:34px; font-weight:600; letter-spacing:20px; text-indent:20px; color:var(--kicker); }
+  .wordmark {
+    margin-top:8px; font-size:152px; font-weight:800; letter-spacing:-3px; line-height:1;
+    background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .subtitle { margin-top:36px; font-size:36px; font-weight:400; color:var(--sub); letter-spacing:0.4px; }
+  .divider { width:440px; height:2px; margin:56px auto 0; border-radius:2px; opacity:0.8; background:var(--divider); }
+  .event { margin-top:34px; font-size:23px; font-weight:600; letter-spacing:7px; color:var(--event); }
+
+  .toggle {
+    position:fixed; top:22px; right:26px; z-index:10; cursor:pointer;
+    width:52px; height:52px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--toggle-bg); color:var(--toggle-fg); border:1px solid var(--toggle-bd);
+    -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+  }
+  .toggle .icon { width:24px; height:24px; }
+  .icon-sun { display:none; }
+  :root[data-theme="light"] .icon-sun  { display:block; }
+  :root[data-theme="light"] .icon-moon { display:none; }
+  body.rendering .toggle { display:none; }   /* hidden when a ?theme= is forced (i.e. during PNG export) */
+</style>
+</head>
+<body>
+  <button id="t" type="button" class="toggle" aria-label="Toggle theme">
+    <svg class="icon icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"/>
+    </svg>
+    <svg class="icon icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <circle cx="12" cy="12" r="4.3"/>
+      <path d="M12 1.5V4M12 20v2.5M4.2 4.2 6 6M18 18l1.8 1.8M1.5 12H4M20 12h2.5M4.2 19.8 6 18M18 6l1.8-1.8"/>
+    </svg>
+  </button>
+  <div class="stage">
+    <div class="glow"></div>
+    <div class="vignette"></div>
+    <div class="content">
+      <div class="logo">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#1b1b2e"/><stop offset="100%" stop-color="#0d0d1a"/>
+            </linearGradient>
+            <linearGradient id="arc" x1="16" y1="0" x2="104" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#F59E0B"/><stop offset="25%" stop-color="#14B8A6"/>
+              <stop offset="50%" stop-color="#8B5CF6"/><stop offset="75%" stop-color="#3B82F6"/>
+              <stop offset="100%" stop-color="#6366f1"/>
+            </linearGradient>
+          </defs>
+          <rect width="120" height="120" rx="26" fill="url(#bg)" stroke="#26263c" stroke-width="1"/>
+          <rect x="8"  y="32" width="16" height="72" rx="4" fill="#F59E0B"/>
+          <rect x="30" y="68" width="16" height="36" rx="4" fill="#14B8A6"/>
+          <rect x="52" y="50" width="16" height="54" rx="4" fill="#8B5CF6"/>
+          <rect x="74" y="68" width="16" height="36" rx="4" fill="#3B82F6"/>
+          <rect x="96" y="32" width="16" height="72" rx="4" fill="#6366f1"/>
+          <path d="M 16,32 C 27,32 27,68 38,68 C 49,68 49,50 60,50 C 71,50 71,68 82,68 C 93,68 93,32 104,32"
+                stroke="url(#arc)" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+        </svg>
+      </div>
+      <div class="kicker">BANKER&rsquo;S</div>
+      <h1 class="wordmark">WRAPPED</h1>
+      <p class="subtitle">Your financial year, told as a story.</p>
+      <div class="divider"></div>
+      <p class="event">BACKBLAZE&nbsp; GENERATIVE&nbsp; MEDIA&nbsp; HACKATHON&nbsp; 2026</p>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var forced = new URLSearchParams(location.search).get('theme');
+      if (forced === 'light' || forced === 'dark') {
+        root.setAttribute('data-theme', forced);
+        document.body.classList.add('rendering');   // clean export — no toggle button
+      } else {
+        root.setAttribute('data-theme', 'dark');     // interactive preview defaults to dark
+        document.getElementById('t').addEventListener('click', function () {
+          root.setAttribute('data-theme', root.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

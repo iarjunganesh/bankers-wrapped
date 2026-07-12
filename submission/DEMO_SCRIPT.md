@@ -33,17 +33,19 @@ Same approach that worked for the argus demo — **record silent screen b-roll, 
 
 Clean browser profile, 100% zoom, bookmarks bar hidden, notifications off, **already logged into Backblaze** (no login screen on camera).
 
-1. **App (fresh):** `https://bankers-wrapped.vercel.app` — ready to click "Connect a bank"
-2. **CSV share page (good numbers):** `https://bankers-wrapped.vercel.app/recap/d5b45acf-3094-42b6-9147-4f0d236f4d95`
-3. **B2 console — pre-open `generation.json`:** bucket `bankers-wrapped-assets` → `d5e87bd9-…/d5b45acf-…/pipeline/generation.json` (so the `llm` block + SHA-256 list is one click away)
-4. **GitHub README:** `https://github.com/iarjunganesh/bankers-wrapped` (CI badge, coverage, 11 ADRs)
-5. *(optional)* **Codecov:** `https://codecov.io/gh/iarjunganesh/bankers-wrapped`
+1. **App (fresh):** `https://bankers-wrapped.vercel.app` — ready to click "Connect a bank" · **→ beats 2–5** (reveal, Plaid, live SSE, recap plays)
+2. **CSV share page (good numbers):** `https://bankers-wrapped.vercel.app/recap/d5b45acf-3094-42b6-9147-4f0d236f4d95` · **→ beat 6** (14-file artifact list — use this run for on-screen numbers, *not* the Plaid run)
+3. **B2 console — pre-open `generation.json`:** bucket `bankers-wrapped-assets` → `d5e87bd9-…/d5b45acf-…/pipeline/generation.json` (so the `llm` block + SHA-256 list is one click away) · **→ beat 6**
+4. **GitHub README:** `https://github.com/iarjunganesh/bankers-wrapped` (CI badge, coverage, 11 ADRs) · **→ beat 8**
+5. *(optional)* **Codecov:** `https://codecov.io/gh/iarjunganesh/bankers-wrapped` · **→ beat 8**
 
 Keep `data/synthetic/transactions_jan_2026.csv` handy if you also want to show the CSV drag-drop.
 
 ---
 
 ## Script
+
+> **How to read the timings.** The `[m:ss–m:ss]` ranges below are *approximate target positions* in the final cut — **not clip lengths**. Your real material is the **1:36 narration spine** (nine `vo_NN` clips) padded with silent screen action. The **authoritative timing is the Cut sheet** near the end (measured clip durations; lands ~2:24). If a beat's range looks longer than its VO clip, the gap is **silent b-roll** (navigation, the recap playing, pauses) — not more talking.
 
 **[0:00–0:12] · Hook — the problem**
 *On screen:* a raw bank-statement transaction table (boring, endless rows). Slow scroll.
@@ -61,9 +63,9 @@ Keep `data/synthetic/transactions_jan_2026.csv` handy if you also want to show t
 *On screen:* the 7-step SSE progress tracker running, per-step latency ticking, "Writing narrative script — 6s" visible.
 > "Behind it: four AI agents. One parses and analyzes your money and assigns a financial personality. The next writes a five-scene script — that's Genblaze, routed to GMI Cloud, with an automatic NVIDIA fallback. Then Genblaze generates every scene image and the voiceover. Three of the four AI steps run through Genblaze — nothing calls a provider directly."
 
-**[1:10–1:40] · The payoff — the recap (Utility)**
-*On screen:* the finished MP4 plays. **Let the product's own narration audio play** for ~5 seconds — personality badge, scene transitions, the numbers on screen.
-> *(let the recap's voice breathe, then, lower:)* "A financial personality, five cinematic scenes, a real voice — a recap you'd actually send a friend."
+**[~1:10] · The payoff — the recap (Utility)**
+*On screen:* the finished MP4 plays. **The recap is on screen ~10–13 s total — not 30.** Let the product's **own narration audio play alone for ~5 s** (personality badge, scene transitions, the numbers), *then* bring `vo_05` in over the top and duck the recap audio under it.
+> *(let the recap's voice breathe ~5 s, then `vo_05`, lower:)* "A financial personality, five cinematic scenes, a real voice — a recap you'd actually send a friend."
 
 **[1:40–2:05] · B2 as the source of truth (Storage)**
 *On screen:* click **Share** → the public `/recap/{id}` page → expand the 14-file artifact list → cut to the **Backblaze B2 console** → open `generation.json`, highlight the `llm` block (`gmi-cloud`, tokens, cost) and the **SHA-256 per artifact**.
@@ -83,23 +85,38 @@ Keep `data/synthetic/transactions_jan_2026.csv` handy if you also want to show t
 
 ---
 
-## Recording map — beat → voiceover → screen
+## Cut sheet — real clip durations (authoritative timing)
 
-| Beat | VO clip (length) | Tab | Capture |
-| --- | --- | --- | --- |
-| 0:00 Hook | `vo_01-hook` (12s) | title / statement | boring statement table, or a title card |
-| 0:12 Reveal | `vo_02-reveal` (8s) | App | landing page — logo + tagline |
-| 0:25 Ingestion | `vo_03-ingestion` (10s) | App | Connect a bank → Plaid → First Platypus → accounts (fast cuts) |
-| 0:45 Pipeline | `vo_04-pipeline` (22s) | App | 7-step SSE progress, per-step latency, "script — 6s" |
-| 1:10 Payoff | `vo_05-payoff` (6s) | App | recap MP4 plays — let its own audio breathe ~5s **first** |
-| 1:40 B2 | `vo_06-b2` (16s) | Share → B2 | share page 14-file list → B2 console → `generation.json` (`llm` + SHA-256) |
-| 2:05 Durability | `vo_07-durability` (7s) | Share | reload the share link — still plays |
-| 2:20 Production | `vo_08-production` (8s) | GitHub | CI green · 99% coverage · ADR list |
-| 2:35 Close | `vo_09-close` (7s) | close card | brand + Genblaze/B2 |
+Measured clip lengths (ffprobe) + realistic silent b-roll padding. Lays the **1:36 narration spine** against the screen action and lands **~2:24** — comfortably under the strict **3:00** cap.
 
-Narration totals ≈ **1:37**; the recap playing + navigation pad it to ~2:45. If you run long, trim the pipeline beat (jump-cut the wait) and the B2 browse.
+| # | Beat | Tab | VO clip (measured) | + silent b-roll | Ends at |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Hook — statement table | title / statement | `vo_01-hook` (12.2s) | +2s | 0:14 |
+| 2 | Reveal — landing page | App | `vo_02-reveal` (7.8s) | +2s | 0:24 |
+| 3 | Ingestion — Plaid clicks | App | `vo_03-ingestion` (10.3s) | +6s | 0:40 |
+| 4 | Pipeline — SSE (jump-cut the wait) | App | `vo_04-pipeline` (22.0s) | +8s | 1:10 |
+| 5 | **Payoff — recap plays** | App | 5s recap-audio + `vo_05-payoff` (6.0s) | — | 1:23 |
+| 6 | B2 — share list → console → `generation.json` | Share → B2 | `vo_06-b2` (16.2s) | +10s | 1:49 |
+| 7 | Durability — reload share link | Share | `vo_07-durability` (6.9s) | +4s | 2:00 |
+| 8 | Production — CI/coverage/ADRs | GitHub | `vo_08-production` (8.1s) | +6s | 2:14 |
+| 9 | Close — brand card | close card | `vo_09-close` (6.9s) | +3s | ~2:24 |
+
+**Narration spine ≈ 1:36** (`vo_full-reference.mp3` = the whole track). The padding above is **silent screen action** (navigation, the recap playing, pauses) — *not more narration* — and it's what carries the cut to ~2:24. If you run long, trim the pipeline beat (jump-cut the generation wait) and the B2 browse. **Never hold a static frame > ~15 s** under continuous narration, and **never cross 3:00**.
+
+### Assembly (Clipchamp on Win11, or CapCut)
+
+1. **Build the audio spine first** — drop all nine `vo_NN` clips on the audio track in order, leaving small gaps for the silent action (Plaid clicks, recap playing, B2 browse). This *defines the length* — watch it stay under ~2:45.
+2. **Record screen b-roll in OBS, mic OFF** — one pass following the tab order below, jump-cutting the ~3-min generation wait.
+3. **Lay footage over the spine**, trimming each section to its clip + gap.
+4. **Payoff only:** don't mute the recap clip — let its audio play ~5 s, then duck it under `vo_05`.
+5. **Export 1080p → upload public to YouTube.**
 
 ## Opening / closing cards
+
+> **Pre-built and ready:** [`assets/demo-cards/`](../assets/demo-cards/) has these as **1920×1080 PNGs** (dark + light variants).
+> **Add them in the editor as the first and last clips — do NOT record them in OBS** (opening a card as a
+> browser tab shows the browser chrome around it). Pick the variant matching the theme you film the app in.
+> Cards live in the editor; the App / B2 / GitHub tabs are the OBS-captured footage.
 
 **Opening (0:00)** — either the boring statement table (stronger hook) or a title card:
 > **Banker's Wrapped** — Your financial year, told as a story · Backblaze Generative Media Hackathon 2026

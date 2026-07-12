@@ -1,14 +1,14 @@
 # Banker's Wrapped
 
 <p align="center">
-  <img src="frontend/public/logo.svg" width="420" alt="Banker's Wrapped — Your financial year, told as a story."/>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/banner-light.svg">
+    <!-- ⬇ banner size — change this one width -->
+    <img width="620" src="assets/banner-light.svg"
+         alt="Banker's Wrapped — Your financial year, told as a story. · Backblaze Generative Media Hackathon 2026"/>
+  </picture>
 </p>
-
-<p align="center">
-  <strong>Turn every transaction into a cinematic money story people remember.</strong>
-</p>
-
-> **Backblaze Generative Media Hackathon 2026 — Built with Genblaze on B2**
 
 [![CI](https://github.com/iarjunganesh/bankers-wrapped/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/iarjunganesh/bankers-wrapped/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/iarjunganesh/bankers-wrapped/graph/badge.svg?token=GSBUXVREL7)](https://codecov.io/gh/iarjunganesh/bankers-wrapped)
@@ -21,7 +21,7 @@
 [![NVIDIA NIM](https://img.shields.io/badge/NVIDIA_NIM-LLM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-TTS--1-412991?logo=openai&logoColor=white)](https://platform.openai.com/)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/)
-[![Semantic Kernel](https://img.shields.io/badge/Semantic_Kernel-1.x-0078D4?logo=microsoft&logoColor=white)](https://learn.microsoft.com/en-us/semantic-kernel/)
+[![Pydantic](https://img.shields.io/badge/Pydantic-typed_models-E92063?logo=pydantic&logoColor=white)](https://pydantic.dev/)
 [![Plaid](https://img.shields.io/badge/Plaid-Sandbox-111111?logo=plaid&logoColor=white)](https://plaid.com/)
 
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/)
@@ -32,29 +32,6 @@
 [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.139-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Railway](https://img.shields.io/badge/Railway-Backend-0B0D0E?logo=railway&logoColor=white)](https://bankers-wrapped-api-production.up.railway.app/docs)
-
----
-
-## Interactive Demo Notebook
-
-[![Open in Jupyter](https://img.shields.io/badge/Demo-Jupyter%20Notebook-F37626?logo=jupyter&logoColor=white)](notebooks/DEMO_RUNBOOK.ipynb)
-
-**[`notebooks/DEMO_RUNBOOK.ipynb`](notebooks/DEMO_RUNBOOK.ipynb)** — a self-contained interactive walkthrough of the full pipeline. No frontend, no local backend required. Just set your API keys and run against the live Railway deployment.
-
-| Scenario | API cost | Time | What you'll see |
-| --- | --- | --- | --- |
-| **A — Financial Builder** (Jan 2026) | LLM + 5 images + TTS | ~2–3 min | Full end-to-end run · amber personality · 5-scene video |
-| **B — Financial Explorer** (Q4 2025) | LLM + 5 images + TTS | ~2–3 min | Second personality type · teal theme · 39-transaction dataset |
-| **C — Pre-generated session** | **None** | < 5 s | Fetch a completed session from B2 · inspect all 14 artifacts |
-| Comparison chart | — | instant | Income vs expenses side-by-side across both datasets |
-| Timing chart | — | instant | Where the ~2 min goes — image generation dominates |
-| B2 inspection | — | instant | Full 14-file (10-type) B2 layout printed per session |
-
-```bash
-# Run against the live production API — no local setup needed
-pip install httpx matplotlib jupyter
-jupyter notebook notebooks/DEMO_RUNBOOK.ipynb
-```
 
 ---
 
@@ -103,12 +80,12 @@ graph LR
 
     U(["👤 User"]):::user
     API["⚡ FastAPI<br/>rate-limit 5/hr"]:::api
-    PL["🤖 Agent Pipeline<br/>Semantic Kernel"]:::sk
+    PL["🤖 Agent Pipeline<br/>typed async"]:::sk
     B2[("☁️ Backblaze B2<br/>14 files")]:::b2
 
     U ==> API ==> PL ==> B2
 
-    subgraph pipe["🔍 Agent Pipeline · Semantic Kernel"]
+    subgraph pipe["🔍 Agent Pipeline · typed async agents"]
         A1["① Document<br/>Transactions"]:::sk
         A2["② Analytics<br/>Insights + Personality"]:::sk
         A3["③ Narrative<br/>Genblaze Chat · GMI Cloud<br/>NIM fallback"]:::gmi
@@ -128,67 +105,9 @@ graph LR
     PL -.-> A1
 ```
 
-### Pipeline Timing
+**In short:** ~2–4 minutes end to end, with image generation dominating (5 scenes generated in parallel); **14 files across 10 artifact types** persisted to Backblaze B2 as the source of truth; every artifact carries a **SHA-256** and every step logs model, latency, and retries.
 
-Measured on a live run against `transactions_jan_2026.csv` (22 transactions, 5 scenes):
-
-| Step | Agent / Service | Time |
-| --- | --- | --- |
-| CSV parse + normalise | DocumentAgent | < 1 s |
-| Spending analytics + personality | AnalyticsAgent | < 1 s |
-| Narrative script (5 scenes) | NarrativeAgent · Genblaze chat → GMI `openai/gpt-5.4-mini` (NIM fallback) | ~6 s |
-| Scene images × 5 | MediaAgent · Genblaze → GMI Cloud Seedream (parallel, retry ×3) | ~45–180 s |
-| Voice narration | GenblazeClient → OpenAI TTS (tts-1, alloy, retry ×3) | ~17 s |
-| MP4 composition | FFmpeg (H.264/AAC, segment + concat, dip-to-black) | ~6 s |
-| B2 uploads (14 files) | Backblaze B2 | ~3 s |
-| **Total wall-clock** | | **~2–4 min** |
-
-Image generation dominates. Since v1.6.0 the blocking image-gen call is offloaded to a worker thread, so `asyncio.gather` truly dispatches all 5 scenes concurrently (previously the event loop serialized them). Wall time now depends on GMI Cloud's server-side concurrency per API key. Per-step latency and retry counts are recorded in `generation.json`.
-
-### B2 Storage Layout
-
-Every recap produces **14 files** (10 artifact types) — B2 is the complete source of truth for the entire media pipeline:
-
-```text
-bankers-wrapped-assets/
-├── index/{session_id}.json           ← flat session→user index (ADR-008: B2 is the source of truth)
-└── {user_id}/{session_id}/
-    ├── input/
-    │   └── transactions.csv
-    ├── pipeline/
-    │   ├── script.json           ← narrative script (5 scenes)
-    │   ├── analytics.json        ← financial insights snapshot
-    │   ├── prompts.json          ← image prompts + SHA-256 hashes per scene
-    │   ├── generation.json       ← model, provider, latency, retry count per step
-    │   ├── thumbnail.jpg         ← scene 0 (a JPEG) reused as recap preview image
-    │   ├── narration.mp3         ← OpenAI TTS (alloy voice)
-    │   └── scenes/
-    │       ├── scene_00.jpg … scene_04.jpg   ← GMI Cloud Seedream
-    ├── output/
-    │   └── recap_{session_id}.mp4   ← H.264 yuv420p + faststart / AAC, dip-to-black transitions
-    └── metadata/
-        └── session_metadata.json    ← top-level provenance record
-```
-
-### B2 Data Lifecycle & Integrity
-
-- **Retention (ADR-009):** a bucket lifecycle rule (committed as [`infra/b2-lifecycle.json`](infra/b2-lifecycle.json), applied idempotently via `uv run python scripts/apply_b2_lifecycle.py`) expires session artifacts **45 days after upload** — long enough that every hackathon-period session outlives the judging window, short enough that storage stays near zero afterwards.
-- **Integrity:** `generation.json` records a **SHA-256 per stored artifact** (key, size, hash — 12 content artifacts per session). To verify any download: `sha256sum scene_00.jpg` and compare against the `artifacts` entry for that key. The two manifests themselves (`generation.json`, `session_metadata.json`) are the verification root and are not self-listed.
-
----
-
-## Financial Personality
-
-The emotional centrepiece of every recap. One of four labels is assigned based on spending and saving patterns:
-
-| Personality | Trigger | Scene 1 Hook |
-| --- | --- | --- |
-| **Financial Builder** | Savings rate ≥ 15% or active debt reduction | *"You're laying the foundation — brick by brick."* |
-| **Financial Explorer** | Top spend in travel or entertainment | *"You invest in experiences that last a lifetime."* |
-| **Financial Achiever** | Active investing or steady 8–14% savings | *"Your discipline is paying off — literally."* |
-| **Financial Optimizer** | Lean discretionary spend, efficient budget | *"Every dollar has a purpose in your world."* |
-
-The personality label opens Scene 1 and drives the entire visual and narrative tone.
+> **Deep dive** → **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)** — per-step pipeline timing, the full B2 storage layout, lifecycle & integrity (45-day retention + per-artifact SHA-256), and the four machine-readable provenance manifests.
 
 ---
 
@@ -222,47 +141,18 @@ Every run produces a **SHA-256 provenance manifest** stored in B2 metadata — f
 
 ---
 
-## Provenance Metadata
+## Financial Personality
 
-Every run produces **four machine-readable provenance files** in B2:
+The emotional centrepiece of every recap. One of four labels is assigned based on spending and saving patterns:
 
-**`session_metadata.json`** — top-level record:
+| Personality | Trigger | Scene 1 Hook |
+| --- | --- | --- |
+| **Financial Builder** | Savings rate ≥ 15% or active debt reduction | *"You're laying the foundation — brick by brick."* |
+| **Financial Explorer** | Top spend in travel or entertainment | *"You invest in experiences that last a lifetime."* |
+| **Financial Achiever** | Active investing or steady 8–14% savings | *"Your discipline is paying off — literally."* |
+| **Financial Optimizer** | Lean discretionary spend, efficient budget | *"Every dollar has a purpose in your world."* |
 
-```json
-{
-  "session_id": "uuid",
-  "user_id":    "uuid",
-  "created_at": "2026-01-15T14:22:08Z",
-  "pipeline_version": "1.0.0",
-  "models_used": {
-    "llm":        "gmi-cloud/openai/gpt-5.4-mini",
-    "image":      "gmi-cloud/seedream-4-0-250828",
-    "audio":      "openai/tts-1",
-    "compositor": "ffmpeg"
-  },
-  "input_hash":         "sha256:a3f…",
-  "output_url":         "https://f000.backblazeb2.com/…",
-  "processing_time_ms": 47230,
-  "synthetic_data":     false
-}
-```
-
-**`generation.json`** — per-step model telemetry (latency, retries, manifest hashes):
-
-```json
-{
-  "images": [
-    { "scene_idx": 0, "model": "seedream-4-0-250828", "provider": "gmi-cloud",
-      "latency_ms": 32400, "retry_count": 0, "manifest_hash": "sha256:…", "success": true }
-  ],
-  "audio":      { "model": "tts-1", "provider": "openai", "latency_ms": 6900, "retry_count": 0 },
-  "compositor": { "tool": "ffmpeg", "scenes": 5, "latency_ms": 2100, "success": true }
-}
-```
-
-**`prompts.json`** — all image prompts with SHA-256 hashes for full reproducibility.
-
-**`analytics.json`** — financial insights snapshot (income, expenses, savings rate, personality).
+The personality label opens Scene 1 and drives the entire visual and narrative tone.
 
 ---
 
@@ -273,7 +163,7 @@ Every run produces **four machine-readable provenance files** in B2:
 | **Media Generation** | [![Genblaze](https://img.shields.io/badge/Genblaze-SDK-7C3AED)](https://github.com/backblaze-labs/genblaze) | Sole orchestrator for all AI media calls |
 | **Storage** | [![Backblaze B2](https://img.shields.io/badge/Backblaze-B2-FF0000?logo=backblaze&logoColor=white)](https://www.backblaze.com/cloud-storage) | Structured artifact store + presigned delivery |
 | **Backend** | [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/) [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/) | Async agentic pipeline |
-| **Agent Framework** | [![Semantic Kernel](https://img.shields.io/badge/Semantic_Kernel-0078D4?logo=microsoft&logoColor=white)](https://learn.microsoft.com/en-us/semantic-kernel/) | Typed plugin contracts, native async |
+| **Agent Pattern** | [![asyncio](https://img.shields.io/badge/asyncio-typed_agents-3776AB?logo=python&logoColor=white)](backend/agents/base.py) | Hand-rolled typed async agent pipeline — no heavyweight framework (ADR-002) |
 | **LLM** | [![Genblaze](https://img.shields.io/badge/Genblaze-SDK_chat-7C3AED)](https://github.com/backblaze-labs/genblaze) [![NVIDIA NIM](https://img.shields.io/badge/NVIDIA_NIM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/) | Narrative script — Genblaze SDK chat on GMI Cloud (`openai/gpt-5.4-mini`), automatic NVIDIA NIM fallback |
 | **Images** | [![GMI Cloud](https://img.shields.io/badge/GMI_Cloud-Seedream-0066CC)](https://cloud.gmi.ai/) | Scene visuals 1344×768, seedream-4-0-250828 (via Genblaze) — 5 parallel, retry ×3 |
 | **Video Compose** | [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/) | Scene images + narration → H.264/AAC MP4 (segment + concat, dip-to-black) |
@@ -281,6 +171,52 @@ Every run produces **four machine-readable provenance files** in B2:
 | **Session State** | [![Backblaze B2](https://img.shields.io/badge/B2-source_of_truth-FF0000?logo=backblaze&logoColor=white)](https://www.backblaze.com/cloud-storage) [![SQLite](https://img.shields.io/badge/SQLite-cache-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/) | B2 manifest is the durable record (ADR-008); SQLite is a fast read cache |
 | **Hosting** | [![Railway](https://img.shields.io/badge/Backend-Railway-0B0D0E?logo=railway&logoColor=white)](https://railway.app) [![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000?logo=vercel&logoColor=white)](https://vercel.com) | Backend on Railway · Frontend on Vercel |
 | **Observability** | [![structlog](https://img.shields.io/badge/structlog-JSON-4A90E2)](https://www.structlog.org/) | Structured request + agent logging |
+
+---
+
+## Live & Interactive Demo
+
+| | |
+| --- | --- |
+| **App** | [https://bankers-wrapped.vercel.app](https://bankers-wrapped.vercel.app) ✅ live |
+| **API** | [https://bankers-wrapped-api-production.up.railway.app](https://bankers-wrapped-api-production.up.railway.app) |
+| **Demo Video** | `https://youtu.be/TBD` *(≤ 3 min, recorded before submission)* |
+| **Try It Now** | `make demo` — runs the full pipeline with synthetic data, no real bank account needed |
+
+Hackathon judging criteria and submission checklist: [`submission/SUBMISSION.md`](submission/SUBMISSION.md)
+
+### Run it yourself — the interactive notebook
+
+[![Open in Jupyter](https://img.shields.io/badge/Demo-Jupyter%20Notebook-F37626?logo=jupyter&logoColor=white)](notebooks/DEMO_RUNBOOK.ipynb)
+
+**[`notebooks/DEMO_RUNBOOK.ipynb`](notebooks/DEMO_RUNBOOK.ipynb)** — a self-contained interactive walkthrough of the full pipeline. No frontend, no local backend required. Just set your API keys and run against the live Railway deployment.
+
+| Scenario | API cost | Time | What you'll see |
+| --- | --- | --- | --- |
+| **A — Financial Builder** (Jan 2026) | LLM + 5 images + TTS | ~2–3 min | Full end-to-end run · amber personality · 5-scene video |
+| **B — Financial Explorer** (Q4 2025) | LLM + 5 images + TTS | ~2–3 min | Second personality type · teal theme · 39-transaction dataset |
+| **C — Pre-generated session** | **None** | < 5 s | Fetch a completed session from B2 · inspect all 14 artifacts |
+| Comparison chart | — | instant | Income vs expenses side-by-side across both datasets |
+| Timing chart | — | instant | Where the ~2 min goes — image generation dominates |
+| B2 inspection | — | instant | Full 14-file (10-type) B2 layout printed per session |
+
+```bash
+# Run against the live production API — no local setup needed
+pip install httpx matplotlib jupyter
+jupyter notebook notebooks/DEMO_RUNBOOK.ipynb
+```
+
+---
+
+## Screenshots
+
+Full judge-facing galleries and raw evidence for two complete runs (CSV upload and Plaid Sandbox) are organized in [`assets/README.md`](assets/README.md).
+
+| Product Flow | B2 Provenance |
+| --- | --- |
+| ![Upload Portal](assets/csv-run/screenshots/d5b45acf_01-app-upload-portal.png) | ![B2 Bucket + Lifecycle](assets/csv-run/screenshots/d5b45acf_05-b2-bucket-overview-lifecycle.png) |
+| ![Connect a Bank via Plaid](assets/plaid-run/screenshots/481ede61_01-plaid-connect-intro.png) | ![Session Folder](assets/csv-run/screenshots/d5b45acf_07-b2-session-folder-overview.png) |
+| ![Generated Video Result](assets/csv-run/screenshots/d5b45acf_03-generated-video-result.png) | ![Generation JSON Details](assets/csv-run/screenshots/d5b45acf_10-b2-generation-json-details.png) |
 
 ---
 
@@ -317,73 +253,6 @@ On Windows, use the PowerShell equivalents directly:
 python scripts\demo_run.py
 .\scripts\stop_demo.ps1
 ```
-
----
-
-## Project Structure
-
-```text
-bankers-wrapped/
-├── backend/
-│   ├── agents/          # 4 typed async agents (Document, Analytics, Narrative, Media)
-│   ├── api/
-│   │   ├── limiter.py   # slowapi rate limiter (5 req/hr/IP)
-│   │   ├── middleware/  # Request logging
-│   │   └── v1/
-│   │       ├── recap.py    # POST /generate · GET /{session_id} (B2 fallback) · /download ZIP
-│   │       ├── progress.py # GET /{session_id}/progress (SSE)
-│   │       ├── plaid.py    # POST /plaid/link-token · /plaid/exchange (feature-flagged)
-│   │       └── health.py   # status + version + plaid_enabled
-│   ├── ingest/          # PlaidConnector — sandbox "connect a bank" path (ADR-010)
-│   ├── media/           # GenblazeClient (images + chat + TTS) · FFmpegComposer
-│   ├── storage/         # B2Client (source of truth) · SessionStore (SQLite cache)
-│   ├── models/          # Pydantic models (Transaction, Insights, Script, Session)
-│   └── config.py        # Pydantic Settings
-├── frontend/
-│   └── app/
-│       ├── page.tsx                    # Upload portal + Plaid Link + live SSE progress
-│       └── recap/[session_id]/page.tsx # Public share page
-├── tests/
-│   ├── unit/            # Per-agent unit tests (all providers mocked)
-│   ├── integration/     # API end-to-end tests (incl. B2-fallback + SSE stream)
-│   └── load/            # k6 smoke test (manual — p95 + rate-limiter behavior)
-├── infra/               # b2-lifecycle.json — bucket retention as code (ADR-009)
-├── scripts/             # demo_run · apply_b2_lifecycle · recompose · start/stop_demo
-├── notebooks/           # DEMO_RUNBOOK.ipynb — interactive pipeline walkthrough
-├── data/synthetic/      # Demo CSVs — committed, no PII
-├── prompts/             # LLM system prompts (narrative_agent.txt)
-├── submission/          # Judge deliverables
-│   ├── DEVPOST.md       # Devpost form content
-│   ├── SUBMISSION.md    # Judging alignment + deliverables checklist
-│   ├── DEMO_SCRIPT.md   # ≤3-min video shooting script + OBS runbook
-│   └── COSTS.md         # Component budget — everything stays live through judging
-├── docs/adr/            # 11 Architecture Decision Records (all accepted)
-├── Dockerfile           # python:3.14-slim + FFmpeg + uv
-├── railway.json         # Railway backend deployment
-├── render.yaml          # Render backend deployment (alternative)
-├── CLAUDE.md            # Claude Code project context
-└── .github/workflows/ci.yml # Lint → type-check → test (≥80% coverage gate) → Codecov
-```
-
----
-
-## Architecture Decision Records
-
-Eleven decisions documented (001–011), **all accepted and implemented** — see [`docs/adr/`](docs/adr/) for full rationale.
-
-| ADR | Decision |
-| --- | --- |
-| [001](docs/adr/001-genblaze-central.md) | Genblaze as sole media generation layer — no direct provider calls |
-| [002](docs/adr/002-semantic-kernel-orchestration.md) | Semantic Kernel for agent orchestration — typed plugins, native async |
-| [003](docs/adr/003-ffmpeg-over-remotion.md) | FFmpeg for composition; Runway ML / Luma AI excluded (impl revised in v1.6.0) |
-| [004](docs/adr/004-sqlite-for-mvp.md) | SQLite for MVP, PostgreSQL as documented production upgrade |
-| [005](docs/adr/005-financial-personality-core.md) | Financial Personality promoted to required scope — the emotional hook |
-| [006](docs/adr/006-observability-scope.md) | structlog JSON logging only — OpenTelemetry is post-hackathon |
-| [007](docs/adr/007-genblaze-sole-ai-layer.md) | Route the narrative LLM through Genblaze (GMI Cloud chat, NIM fallback) — 3 of 4 AI steps via Genblaze |
-| [008](docs/adr/008-b2-source-of-truth.md) | B2 as session source of truth — SQLite is a cache; sessions survive redeploys |
-| [009](docs/adr/009-b2-lifecycle-integrity.md) | B2 lifecycle rules (45-day retention) + per-artifact SHA-256 integrity |
-| [010](docs/adr/010-plaid-sandbox-ingestion.md) | Plaid sandbox connector — optional "connect a bank" path (live in production) |
-| [011](docs/adr/011-compositor-redesign.md) | Memory-bounded segment+concat compositor + non-blocking event loop (v1.6.0 redesign) |
 
 ---
 
@@ -426,15 +295,64 @@ curl -X POST http://localhost:8000/api/v1/recap/generate \
 
 ---
 
-## CI / CD
+## Project Structure
+
+```text
+bankers-wrapped/
+├── backend/
+│   ├── agents/          # 4 typed async agents (Document, Analytics, Narrative, Media)
+│   ├── api/
+│   │   ├── limiter.py   # slowapi rate limiter (5 req/hr/IP)
+│   │   ├── middleware/  # Request logging
+│   │   └── v1/
+│   │       ├── recap.py    # POST /generate · GET /{session_id} (B2 fallback) · /download ZIP
+│   │       ├── progress.py # GET /{session_id}/progress (SSE)
+│   │       ├── plaid.py    # POST /plaid/link-token · /plaid/exchange (feature-flagged)
+│   │       └── health.py   # status + version + plaid_enabled
+│   ├── ingest/          # PlaidConnector — sandbox "connect a bank" path (ADR-010)
+│   ├── media/           # GenblazeClient (images + chat + TTS) · FFmpegComposer
+│   ├── storage/         # B2Client (source of truth) · SessionStore (SQLite cache)
+│   ├── models/          # Pydantic models (Transaction, Insights, Script, Session)
+│   └── config.py        # Pydantic Settings
+├── frontend/
+│   └── app/
+│       ├── page.tsx                    # Upload portal + Plaid Link + live SSE progress
+│       └── recap/[session_id]/page.tsx # Public share page
+├── tests/
+│   ├── unit/            # Per-agent unit tests (all providers mocked)
+│   ├── integration/     # API end-to-end tests (incl. B2-fallback + SSE stream)
+│   └── load/            # k6 smoke test (manual — p95 + rate-limiter behavior)
+├── infra/               # b2-lifecycle.json — bucket retention as code (ADR-009)
+├── scripts/             # demo_run · apply_b2_lifecycle · recompose · start/stop_demo
+├── notebooks/           # DEMO_RUNBOOK.ipynb — interactive pipeline walkthrough
+├── data/synthetic/      # Demo CSVs — committed, no PII
+├── prompts/             # LLM system prompts (narrative_agent.txt)
+├── submission/          # Judge deliverables
+│   ├── DEVPOST.md       # Devpost form content
+│   ├── SUBMISSION.md    # Judging alignment + deliverables checklist
+│   ├── DEMO_SCRIPT.md   # ≤3-min video shooting script + OBS runbook
+│   └── COSTS.md         # Component budget — everything stays live through judging
+├── docs/
+│   ├── ARCHITECTURE.md  # Deep dive — timing, B2 layout, lifecycle, provenance manifests
+│   └── adr/             # 11 Architecture Decision Records (all accepted)
+├── Dockerfile           # python:3.14-slim + FFmpeg + uv
+├── railway.json         # Railway backend deployment
+├── render.yaml          # Render backend deployment (alternative)
+├── CLAUDE.md            # Claude Code project context
+└── .github/workflows/ci.yml # Lint → type-check → test (≥80% coverage gate) → Codecov
+```
+
+---
+
+## Production & Quality
 
 ```text
 push → ruff lint → mypy type-check → pytest (≥80% coverage gate) → Codecov
 ```
 
-See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+See [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Coverage sits at **99%**; the API is rate-limited (5 uploads/hr/IP), emits structured JSON logs via structlog, wraps every media call in tenacity retries (3 attempts, exponential backoff), and exposes a `/health` endpoint.
 
-### Load Testing (manual, not in CI)
+### Load & Resilience
 
 [`tests/load/k6_smoke.js`](tests/load/k6_smoke.js) ramps 20 concurrent users against `/health` (threshold: p95 < 500 ms), exercises the B2 fallback 404 path, and verifies the rate limiter answers `/generate` abuse with graceful 429s (never 5xx):
 
@@ -444,30 +362,23 @@ k6 run tests/load/k6_smoke.js                                  # local backend
 k6 run -e BASE_URL=https://<railway-url> tests/load/k6_smoke.js  # production
 ```
 
----
+### Architecture Decision Records
 
-## Live Demo
+Eleven decisions documented (001–011), **all accepted and implemented** — see [`docs/adr/`](docs/adr/) for full rationale.
 
-| | |
+| ADR | Decision |
 | --- | --- |
-| **App** | [https://bankers-wrapped.vercel.app](https://bankers-wrapped.vercel.app) ✅ live |
-| **API** | [https://bankers-wrapped-api-production.up.railway.app](https://bankers-wrapped-api-production.up.railway.app) |
-| **Demo Video** | `https://youtu.be/TBD` *(≤ 3 min, recorded before submission)* |
-| **Try It Now** | `make demo` — runs the full pipeline with synthetic data, no real bank account needed |
-
-Hackathon judging criteria and submission checklist: [`submission/SUBMISSION.md`](submission/SUBMISSION.md)
-
----
-
-## Screenshots
-
-Full judge-facing galleries and raw evidence for two complete runs (CSV upload and Plaid Sandbox) are organized in [`assets/README.md`](assets/README.md).
-
-| Product Flow | B2 Provenance |
-| --- | --- |
-| ![Upload Portal](assets/csv-run/screenshots/d5b45acf_01-app-upload-portal.png) | ![B2 Bucket + Lifecycle](assets/csv-run/screenshots/d5b45acf_05-b2-bucket-overview-lifecycle.png) |
-| ![Connect a Bank via Plaid](assets/plaid-run/screenshots/481ede61_01-plaid-connect-intro.png) | ![Session Folder](assets/csv-run/screenshots/d5b45acf_07-b2-session-folder-overview.png) |
-| ![Generated Video Result](assets/csv-run/screenshots/d5b45acf_03-generated-video-result.png) | ![Generation JSON Details](assets/csv-run/screenshots/d5b45acf_10-b2-generation-json-details.png) |
+| [001](docs/adr/001-genblaze-central.md) | Genblaze as sole media generation layer — no direct provider calls |
+| [002](docs/adr/002-semantic-kernel-orchestration.md) | Lightweight typed async agent pipeline — Semantic Kernel considered, not adopted (no framework dependency) |
+| [003](docs/adr/003-ffmpeg-over-remotion.md) | FFmpeg for composition; Runway ML / Luma AI excluded (impl revised in v1.6.0) |
+| [004](docs/adr/004-sqlite-for-mvp.md) | SQLite for MVP, PostgreSQL as documented production upgrade |
+| [005](docs/adr/005-financial-personality-core.md) | Financial Personality promoted to required scope — the emotional hook |
+| [006](docs/adr/006-observability-scope.md) | structlog JSON logging only — OpenTelemetry is post-hackathon |
+| [007](docs/adr/007-genblaze-sole-ai-layer.md) | Route the narrative LLM through Genblaze (GMI Cloud chat, NIM fallback) — 3 of 4 AI steps via Genblaze |
+| [008](docs/adr/008-b2-source-of-truth.md) | B2 as session source of truth — SQLite is a cache; sessions survive redeploys |
+| [009](docs/adr/009-b2-lifecycle-integrity.md) | B2 lifecycle rules (45-day retention) + per-artifact SHA-256 integrity |
+| [010](docs/adr/010-plaid-sandbox-ingestion.md) | Plaid sandbox connector — optional "connect a bank" path (live in production) |
+| [011](docs/adr/011-compositor-redesign.md) | Memory-bounded segment+concat compositor + non-blocking event loop (v1.6.0 redesign) |
 
 ---
 
@@ -491,3 +402,13 @@ Full judge-facing galleries and raw evidence for two complete runs (CSV upload a
 All transaction data used in development and demonstration is **fully synthetic**. No real customer data or PII is processed, stored, or transmitted. Not affiliated with any bank or financial institution. Not financial advice.
 
 > *Built by [Arjun Ganesh](https://github.com/iarjunganesh) for the [Backblaze Generative Media Hackathon 2026](https://backblaze-generative-media.devpost.com/).*
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/signoff-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/signoff-light.svg">
+    <!-- ⬇ sign-off size — change this one width -->
+    <img width="620" src="assets/signoff-light.svg"
+         alt="Banker's Wrapped — One connection. Five scenes. Your financial story. · Powered by Genblaze on Backblaze B2"/>
+  </picture>
+</p>

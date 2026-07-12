@@ -8,7 +8,7 @@ class Settings(BaseSettings):
 
     # App
     app_name: str = "Banker's Wrapped"
-    app_version: str = "1.8.1"
+    app_version: str = "1.9.0"
     debug: bool = False
 
     # CORS — defaults to wildcard for hackathon; override via CORS_ALLOW_ORIGINS env var in production
@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     # OpenAI — TTS narration via GenblazeClient
     openai_api_key: str = ""
-    openai_model: str = "gpt-4o"
+    openai_model: str = "openai/gpt-5.4-mini"  # fallback models_used.llm label only; real script model is resolved via Genblaze provenance
     openai_tts_model: str = "tts-1"
     openai_tts_voice: str = "alloy"
 
@@ -49,6 +49,8 @@ class Settings(BaseSettings):
     #   - narrative_provider=genblaze   -> use gmi_chat_model
     #   - narrative_provider=nvidia-nim -> force nvidia-nim/<nvidia_nim_model>
     narrative_provider: str = "genblaze"  # "genblaze" | "nvidia-nim"
+    # Default points at NIM's free dev tier to preserve GMI credits locally; prod
+    # overrides via GMI_CHAT_MODEL=openai/gpt-5.4-mini (see .env.example / ADR-007).
     gmi_chat_model: str = "nvidia-nim/meta/llama-3.1-70b-instruct"
 
     # Plaid — optional "connect a bank (sandbox)" ingestion path (ADR-010).

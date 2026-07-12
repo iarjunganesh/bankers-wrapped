@@ -5,6 +5,8 @@
 > ⚠️ Per the [official rules](https://backblaze-generative-media.devpost.com/rules), the app must stay
 > **live, free, and unrestricted for judges until the Judging Period ends (Aug 11)** — keep Railway,
 > Vercel, B2, and all API keys funded through Aug 12 (see [`COSTS.md`](COSTS.md)).
+> **Originality:** built new during the Hackathon Submission Period — all B2 + Genblaze
+> integration was created within it; no pre-existing codebase was reused.
 
 ---
 

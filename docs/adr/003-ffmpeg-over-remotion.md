@@ -8,8 +8,8 @@ FFmpeg for video composition. Runway ML and Luma AI excluded from hackathon scop
 > *implementation* below changed. The monolithic `xfade filter_complex` OOM-killed on
 > memory-limited containers (it buffers every looped input's frames). It was replaced by a
 > **memory-bounded segment + concat** compositor with **dip-to-black** transitions (no
-> crossfade, no `drawtext` ending card). See CHANGELOG 1.6.0. The rationale below is retained
-> as the original decision record.
+> crossfade, no `drawtext` ending card). See CHANGELOG 1.6.0 and [ADR-011](011-compositor-redesign.md)
+> for the redesign. The rationale below is retained as the original decision record.
 
 ## Rationale
 - Runway/Luma add latency, quota risk, cost with no judging advantage
