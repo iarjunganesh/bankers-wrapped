@@ -30,7 +30,7 @@
 [![Vercel](https://img.shields.io/badge/Vercel-Frontend-000000?logo=vercel&logoColor=white)](https://bankers-wrapped.vercel.app)
 
 [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.139-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Railway](https://img.shields.io/badge/Railway-Backend-0B0D0E?logo=railway&logoColor=white)](https://bankers-wrapped-api-production.up.railway.app/docs)
 
 ---
@@ -473,7 +473,7 @@ Full judge-facing galleries and raw evidence for two complete runs (CSV upload a
 
 ## Future Roadmap
 
-**Shipped:** every planned workstream is implemented and live — one-click **Plaid** ingestion alongside CSV upload, the narrative LLM routed through **Genblaze → GMI Cloud** with automatic NVIDIA NIM fallback (**3 of 4 AI steps** now go through Genblaze), **B2 as the source of truth** with a SHA-256 per artifact and a committed lifecycle rule, a memory-bounded FFmpeg compositor, and 98% test coverage. Full history in the [CHANGELOG](CHANGELOG.md).
+**Shipped:** every planned workstream is implemented and live — one-click **Plaid** ingestion alongside CSV upload, the narrative LLM routed through **Genblaze → GMI Cloud** with automatic NVIDIA NIM fallback (**3 of 4 AI steps** now go through Genblaze), **B2 as the source of truth** with a SHA-256 per artifact and a committed lifecycle rule, a memory-bounded FFmpeg compositor, and 99% test coverage. Full history in the [CHANGELOG](CHANGELOG.md).
 
 **What's next — from demo to product:**
 

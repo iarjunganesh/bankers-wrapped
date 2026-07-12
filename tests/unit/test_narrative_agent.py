@@ -185,6 +185,47 @@ class TestNarrativeAgentSdkOnly:
         # primary already IS the NIM model — no extra fallback attempt
         assert genblaze.generate_script_text.call_count == 2
 
+    def test_nim_model_passthrough_when_already_prefixed(self):
+        # An already-prefixed NIM model id must be returned unchanged (not double-prefixed).
+        s = Settings(
+            narrative_provider="genblaze",
+            gmi_chat_model="openai/gpt-5.4-mini",
+            nvidia_nim_model="nvidia-nim/meta/llama-3.1-70b-instruct",
+            gmi_api_key="mock-gmi",
+            nvidia_nim_api_key="nvapi-test",
+            openai_api_key="sk-test",
+        )
+        assert NarrativeAgent._nim_model(s) == "nvidia-nim/meta/llama-3.1-70b-instruct"
+
+    def test_load_prompt_missing_file_returns_default(self):
+        from backend.agents.narrative_agent import DEFAULT_SYSTEM_PROMPT
+
+        genblaze = MagicMock()
+        agent = NarrativeAgent(_settings(), genblaze=genblaze)
+        assert agent._load_prompt("no_such_prompt_file.txt") == DEFAULT_SYSTEM_PROMPT
+
+    def test_full_narration_joins_scene_narrations(self):
+        from backend.models.narrative import NarrativeScript, Scene
+
+        script = NarrativeScript(
+            title="T",
+            personality="Financial Builder",
+            scenes=[
+                Scene(id=1, narration="One.", visual_prompt="a"),
+                Scene(id=2, narration="Two.", visual_prompt="b"),
+            ],
+        )
+        assert script.full_narration == "One. Two."
+
+    def test_parse_script_zero_scenes_raises(self):
+        genblaze = MagicMock()
+        agent = NarrativeAgent(_settings(), genblaze=genblaze)
+        with pytest.raises(ValueError, match="0 scenes"):
+            agent._parse_script(
+                json.dumps({"title": "T", "personality": "X", "scenes": []}),
+                "Financial Builder",
+            )
+
     async def test_nvidia_mode_routes_through_sdk_with_nim_model(self):
         genblaze = MagicMock()
         genblaze.generate_script_text = AsyncMock(

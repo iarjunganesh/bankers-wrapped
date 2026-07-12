@@ -74,8 +74,8 @@ Keep `data/synthetic/transactions_jan_2026.csv` handy if you also want to show t
 > "Redeploy the backend, and every share link still works — because the session lives on B2, not in server memory."
 
 **[2:20–2:35] · Production readiness (rapid-fire)**
-*On screen:* quick montage — green CI badge, 98% coverage, the ADR list, rate-limit / health endpoint.
-> "Ninety-eight percent test coverage, CI/CD, rate limiting, eleven architecture decision records. Not a prototype — a system you could ship."
+*On screen:* quick montage — green CI badge, 99% coverage, the ADR list, rate-limit / health endpoint.
+> "Ninety-nine percent test coverage, CI/CD, rate limiting, eleven architecture decision records. Not a prototype — a system you could ship."
 
 **[2:35–2:50] · Close**
 *On screen:* brand card, tagline, Genblaze + B2 logos.
@@ -94,7 +94,7 @@ Keep `data/synthetic/transactions_jan_2026.csv` handy if you also want to show t
 | 1:10 Payoff | `vo_05-payoff` (6s) | App | recap MP4 plays — let its own audio breathe ~5s **first** |
 | 1:40 B2 | `vo_06-b2` (16s) | Share → B2 | share page 14-file list → B2 console → `generation.json` (`llm` + SHA-256) |
 | 2:05 Durability | `vo_07-durability` (7s) | Share | reload the share link — still plays |
-| 2:20 Production | `vo_08-production` (8s) | GitHub | CI green · 98% coverage · ADR list |
+| 2:20 Production | `vo_08-production` (8s) | GitHub | CI green · 99% coverage · ADR list |
 | 2:35 Close | `vo_09-close` (7s) | close card | brand + Genblaze/B2 |
 
 Narration totals ≈ **1:37**; the recap playing + navigation pad it to ~2:45. If you run long, trim the pipeline beat (jump-cut the wait) and the B2 browse.

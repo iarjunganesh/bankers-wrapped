@@ -92,6 +92,58 @@ class TestRecapEndpoint:
         )
         assert response.status_code == 422
 
+    def test_generate_rejects_oversized_file(self, api_client):
+        # > 5 MB payload must be rejected with 413 before any pipeline work.
+        oversized = b"date,description,amount,currency\n" + b"2026-01-01,x,-1,USD\n" * 400_000
+        response = api_client.post(
+            "/api/v1/recap/generate",
+            files={"file": ("big.csv", oversized, "text/csv")},
+        )
+        assert response.status_code == 413
+
+    def test_pipeline_failure_marks_session_failed(self, api_client):
+        _override_b2(api_client)
+        with (
+            patch("backend.api.v1.recap.NarrativeAgent") as MockNarrative,
+            patch("backend.api.v1.recap.MediaAgent") as MockMedia,
+        ):
+            MockNarrative.return_value = AsyncMock(side_effect=RuntimeError("narrative boom"))
+            _setup_media_mock(MockMedia)
+            response = api_client.post(
+                "/api/v1/recap/generate",
+                files={"file": ("jan.csv", SYNTHETIC_CSV, "text/csv")},
+            )
+
+        assert response.status_code == 202
+        sid = response.json()["session_id"]
+        # The background pipeline caught the error and marked the session failed.
+        assert get_session_store().get(sid)["status"] == "failed"
+
+    def test_media_progress_callback_records_event(self, api_client):
+        # The MediaAgent progress callback must forward mid-pipeline events into
+        # the session store so the SSE stream can replay them.
+        _override_b2(api_client)
+
+        def media_factory(*args, progress_callback=None, **kwargs):
+            if progress_callback:
+                progress_callback("composing_video", "Composing final video")
+            return _media_instance()
+
+        with (
+            patch("backend.api.v1.recap.NarrativeAgent") as MockNarrative,
+            patch("backend.api.v1.recap.MediaAgent", side_effect=media_factory),
+        ):
+            _setup_narrative_mock(MockNarrative)
+            response = api_client.post(
+                "/api/v1/recap/generate",
+                files={"file": ("jan.csv", SYNTHETIC_CSV, "text/csv")},
+            )
+
+        assert response.status_code == 202
+        sid = response.json()["session_id"]
+        events = get_session_store().get_events(sid)
+        assert any(e["event"] == "composing_video" for e in events)
+
     def test_generate_returns_202_with_session_id(self, api_client):
         _override_b2(api_client)
         with (
@@ -200,6 +252,46 @@ class TestRecapEndpoint:
 
         assert response.status_code == 200
         assert response.headers["content-type"] == "application/zip"
+
+    def test_get_recap_404_when_insights_malformed(self, api_client):
+        # A "complete" manifest missing its insights block is unusable → 404.
+        from backend.main import app
+
+        sid = str(uuid.uuid4())
+        manifest = {
+            "session_id": sid,
+            "user_id": "u",
+            "status": "complete",
+            "b2_keys": {"video": "u/s/output/recap.mp4"},
+            # insights key intentionally absent
+        }
+        fake_b2 = MagicMock()
+        fake_b2.download_json.side_effect = lambda key: (
+            {"session_id": sid, "user_id": "u"} if key.startswith("index/") else manifest
+        )
+        app.dependency_overrides[get_b2] = lambda: fake_b2
+
+        assert api_client.get(f"/api/v1/recap/{sid}").status_code == 404
+
+    def test_download_zip_404_when_no_artifacts(self, api_client):
+        # A "complete" manifest with an empty b2_keys map has nothing to zip → 404.
+        from backend.main import app
+
+        sid = str(uuid.uuid4())
+        manifest = {
+            "session_id": sid,
+            "user_id": "u",
+            "status": "complete",
+            "b2_keys": {},
+            "insights": INSIGHTS_DICT,
+        }
+        fake_b2 = MagicMock()
+        fake_b2.download_json.side_effect = lambda key: (
+            {"session_id": sid, "user_id": "u"} if key.startswith("index/") else manifest
+        )
+        app.dependency_overrides[get_b2] = lambda: fake_b2
+
+        assert api_client.get(f"/api/v1/recap/{sid}/download").status_code == 404
 
 
 class TestB2SourceOfTruth:
@@ -328,12 +420,12 @@ def _setup_narrative_mock(MockNarrative):
     ))
 
 
-def _setup_media_mock(MockMedia):
+def _media_instance():
     from datetime import UTC, datetime
 
     from backend.models.session import PipelineMetadata
 
-    MockMedia.return_value = AsyncMock(return_value=MagicMock(
+    return AsyncMock(return_value=MagicMock(
         video_url="https://f000.backblazeb2.com/recap.mp4?token=test",
         thumbnail_url="https://f000.backblazeb2.com/thumbnail.png?token=test",
         b2_keys={
@@ -360,3 +452,7 @@ def _setup_media_mock(MockMedia):
             processing_time_ms=12345,
         ),
     ))
+
+
+def _setup_media_mock(MockMedia):
+    MockMedia.return_value = _media_instance()

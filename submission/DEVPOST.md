@@ -91,7 +91,7 @@ A **memory-bounded segment + concat** compositor: each scene is rendered to its 
 Live SSE progress with per-step latency display, video player with B2-backed poster thumbnail, personality badge, and share/download actions.
 
 **Infrastructure**
-Backend on Railway, frontend on Vercel. 98% test coverage, CI/CD, rate limiting (5 uploads/hr/IP), structured logging via structlog.
+Backend on Railway, frontend on Vercel. 99% test coverage, CI/CD, rate limiting (5 uploads/hr/IP), structured logging via structlog.
 
 #### Challenges we ran into
 
@@ -109,7 +109,7 @@ Backend on Railway, frontend on Vercel. 98% test coverage, CI/CD, rate limiting 
 
 - A genuinely end-to-end generative media pipeline — one upload, one video out, every intermediate artifact preserved
 - 14 files (10 artifact types) stored per B2 session, including full generation provenance (model, provider, latency, retry count per step)
-- 98% test coverage with a hard CI gate at 80%
+- 99% test coverage with a hard CI gate at 80%
 - A public share page that surfaces the full B2 artifact manifest — judges can inspect every step of what the pipeline produced
 - A memory-bounded video compositor that renders a full narrated recap in ~300 MB of RAM — it runs in a 0.5 GB container, not just on a beefy laptop
 

@@ -94,6 +94,42 @@ class TestAnalyticsAgent:
         output = await agent(make_doc_output(txns))
         assert output.insights.savings_rate == 0.0
 
+    async def test_achiever_personality_and_healthy_savings(self, agent):
+        # 12% savings rate → "healthy" achievement + ACHIEVER personality
+        # (savings_rate >= 8 but < 15, no debt, no travel/entertainment).
+        txns = [
+            Transaction(date=date(2026, 1, 1), description="Salary", amount=5000,
+                        currency="USD", category=TransactionCategory.INCOME),
+            Transaction(date=date(2026, 1, 2), description="Savings", amount=-600,
+                        currency="USD", category=TransactionCategory.SAVINGS),
+        ]
+        output = await agent(make_doc_output(txns))
+        assert output.insights.personality == FinancialPersonality.ACHIEVER
+        assert any("healthy" in a.lower() for a in output.insights.achievements)
+
+    async def test_debt_reduction_achievement(self, agent):
+        txns = [
+            Transaction(date=date(2026, 1, 1), description="Salary", amount=5000,
+                        currency="USD", category=TransactionCategory.INCOME),
+            Transaction(date=date(2026, 1, 2), description="Loan payment", amount=-500,
+                        currency="USD", category=TransactionCategory.DEBT),
+        ]
+        output = await agent(make_doc_output(txns))
+        assert any("debt" in a.lower() for a in output.insights.achievements)
+
+    async def test_investment_achievement(self, agent):
+        txns = [
+            Transaction(date=date(2026, 1, 1), description="Salary", amount=5000,
+                        currency="USD", category=TransactionCategory.INCOME),
+            Transaction(date=date(2026, 1, 2), description="Index fund", amount=-800,
+                        currency="USD", category=TransactionCategory.INVESTMENT),
+        ]
+        output = await agent(make_doc_output(txns))
+        assert any("invest" in a.lower() for a in output.insights.achievements)
+
+    def test_dominant_currency_empty_defaults_usd(self, agent):
+        assert agent._dominant_currency([]) == "USD"
+
     async def test_dominant_currency(self, agent):
         txns = [
             Transaction(date=date(2026, 1, 1), description="Salary", amount=6000,

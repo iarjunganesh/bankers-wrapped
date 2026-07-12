@@ -61,6 +61,16 @@ class TestDocumentAgent:
         output = await agent(DocumentAgentInput(csv_bytes=csv, filename="t.csv"))
         assert output.transactions[0].currency == "USD"
 
+    async def test_invalid_category_falls_back_to_inference(self, agent):
+        # A category column present but holding an unknown value must not raise —
+        # it falls back to inference from the description.
+        csv = (
+            b"date,description,amount,currency,category\n"
+            b"2026-01-01,Spotify Premium,-9.99,USD,not_a_real_category\n"
+        )
+        output = await agent(DocumentAgentInput(csv_bytes=csv, filename="t.csv"))
+        assert output.transactions[0].category == TransactionCategory.ENTERTAINMENT
+
     async def test_deterministic_hash(self, agent, synthetic_csv):
         out1 = await agent(DocumentAgentInput(csv_bytes=synthetic_csv, filename="t.csv"))
         out2 = await agent(DocumentAgentInput(csv_bytes=synthetic_csv, filename="t.csv"))
