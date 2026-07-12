@@ -66,7 +66,7 @@ All five v1.7.0-roadmap workstreams shipped (the `v1.7.0` tag marks the roadmap 
   - `POST /api/v1/plaid/link-token` + `POST /api/v1/plaid/exchange` (rate-limited 5/hr/IP, same SSE progress). Feature-flagged: without `PLAID_CLIENT_ID`/`PLAID_SECRET` the routes answer 404 and the app is unchanged; `/health` now reports `plaid_enabled`.
   - Frontend: "🏦 Connect a bank (sandbox)" button (Plaid Link via CDN, loaded on demand), shown only when the backend reports Plaid enabled.
   - Test hermeticity fix: `test_settings` now explicitly blanks Plaid keys so a developer's real `.env` can never trigger live calls in the suite.
-- **WS-5 — hardening + polish** (prompt 16):
+- **WS-5 — hardening + polish**:
   - [ADR-011](docs/adr/011-compositor-redesign.md): the v1.6.0 compositor + non-blocking-loop redesign recorded as a decision record.
   - `tests/load/k6_smoke.js`: manual k6 smoke test — /health p95 < 500 ms under 20 VUs; rate limiter must 429 (never 5xx) under /generate abuse.
   - Narrative prompt: Scene 4 advice must name the actual top spending category and cite a concrete number from the data (no generic advice).
@@ -85,9 +85,8 @@ All five v1.7.0-roadmap workstreams shipped (the `v1.7.0` tag marks the roadmap 
 
 ## [1.7.0] — 2026-06-30 (roadmap tag — planning only)
 
-Full plan: [`docs/ROADMAP-v1.7.0.md`](docs/ROADMAP-v1.7.0.md). Goal: lift every judging criterion
-toward >9.5. Decision records ADR-007–010; build specs prompts 12–16.
-**All five workstreams below were implemented and shipped in [1.8.0].**
+The `v1.7.0` tag reserved the version for five planned workstreams — decision records ADR-007–011.
+**All five were implemented and shipped in [1.8.0].**
 
 ### Planned
 
@@ -95,7 +94,7 @@ toward >9.5. Decision records ADR-007–010; build specs prompts 12–16.
 - **WS-2 — B2 as source of truth** ([ADR-008](docs/adr/008-b2-source-of-truth.md)) — self-contained session manifest on B2 + `get_recap` fallback, so share links survive Railway redeploys (fixes the ephemeral-SQLite gap). *No credits.*
 - **WS-3 — B2 lifecycle + integrity** ([ADR-009](docs/adr/009-b2-lifecycle-integrity.md)) — retention rule + SHA-256 per artifact in `generation.json`. *No credits.*
 - **WS-4 — Plaid sandbox connector** ([ADR-010](docs/adr/010-plaid-sandbox-ingestion.md)) — optional "connect a bank" ingestion path; CSV stays default. *No credits.*
-- **WS-5 — Submission polish + hardening++** (prompt 16) — 7th ADR, k6 load test, security review, CI badge, honest Postgres claim, demo assets, utility signal.
+- **WS-5 — Submission polish + hardening++** — 7th ADR, k6 load test, security review, CI badge, honest Postgres claim, demo assets, utility signal.
 
 ---
 

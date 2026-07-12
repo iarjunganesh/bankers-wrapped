@@ -1,0 +1,31 @@
+{
+  "title": "Your June 2026 Financial Journey",
+  "personality": "Financial Builder",
+  "scenes": [
+    {
+      "id": 1,
+      "narration": "Financial Builder \u2014 you\u2019re showing what steady progress looks like. In June, your choices reflected a clear focus on strengthening your foundation and moving with intention.",
+      "visual_prompt": "A clean, minimalist financial dashboard with rising pillars, a steady upward line, and subtle geometric accents in cool blue and green tones."
+    },
+    {
+      "id": 2,
+      "narration": "Your biggest achievement this month was powerful: you saved USD 6,850.00, reaching a 682.1% savings rate. You also reduced debt by 2,104, turning discipline into real momentum.",
+      "visual_prompt": "An abstract upward trajectory with stacked bars labeled by growth, a glowing savings vault icon, and a descending debt line in a polished corporate style."
+    },
+    {
+      "id": 3,
+      "narration": "Your top spending category was savings at 61%, followed by debt at 19% and travel at 9%. That mix shows a strong commitment to future stability while still making room for meaningful experiences.",
+      "visual_prompt": "A sleek donut chart with three dominant segments, surrounded by soft financial icons and a refined, professional layout on a light background."
+    },
+    {
+      "id": 4,
+      "narration": "As a Financial Builder, one concrete next step is to automate a fixed transfer into savings right after income arrives. That keeps your momentum working for you before daily spending can compete with your goals.",
+      "visual_prompt": "A minimalist flow diagram showing income moving automatically into savings and debt reduction buckets, with clean arrows and modern interface elements."
+    },
+    {
+      "id": 5,
+      "narration": "June shows that your foundation is getting stronger with every decision. Keep building this pace, and your next milestone is already within reach.",
+      "visual_prompt": "A calm, abstract skyline made of ascending financial blocks, with soft light, balanced composition, and a polished inspirational finish."
+    }
+  ]
+}

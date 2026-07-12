@@ -12,7 +12,7 @@
 
 [![CI](https://github.com/iarjunganesh/bankers-wrapped/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/iarjunganesh/bankers-wrapped/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/iarjunganesh/bankers-wrapped/graph/badge.svg?token=GSBUXVREL7)](https://codecov.io/gh/iarjunganesh/bankers-wrapped)
-[![Release](https://img.shields.io/badge/release-1.8.1-2ea44f)](https://github.com/iarjunganesh/bankers-wrapped/releases/latest)
+[![Release](https://img.shields.io/badge/release-latest-2ea44f?logo=github&logoColor=white)](https://github.com/iarjunganesh/bankers-wrapped/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Watch Video](https://img.shields.io/badge/%E2%96%B6_Watch-3--min_demo-FF0000?logo=youtube&logoColor=white)](#)
 
 [![Backblaze B2](https://img.shields.io/badge/Backblaze_B2-Cloud_Storage-E21C2A?logo=backblaze&logoColor=white)](https://www.backblaze.com/cloud-storage)
@@ -31,7 +31,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Railway](https://img.shields.io/badge/Railway-Backend-0B0D0E?logo=railway&logoColor=white)](https://bankers-wrapped-api-production.up.railway.app)
+[![Railway](https://img.shields.io/badge/Railway-Backend-0B0D0E?logo=railway&logoColor=white)](https://bankers-wrapped-api-production.up.railway.app/docs)
 
 ---
 
@@ -136,7 +136,7 @@ Measured on a live run against `transactions_jan_2026.csv` (22 transactions, 5 s
 | --- | --- | --- |
 | CSV parse + normalise | DocumentAgent | < 1 s |
 | Spending analytics + personality | AnalyticsAgent | < 1 s |
-| Narrative script (5 scenes) | NarrativeAgent · Genblaze chat → GMI `openai/gpt-5.4-mini` (NIM fallback) | ~30 s |
+| Narrative script (5 scenes) | NarrativeAgent · Genblaze chat → GMI `openai/gpt-5.4-mini` (NIM fallback) | ~6 s |
 | Scene images × 5 | MediaAgent · Genblaze → GMI Cloud Seedream (parallel, retry ×3) | ~45–180 s |
 | Voice narration | GenblazeClient → OpenAI TTS (tts-1, alloy, retry ×3) | ~17 s |
 | MP4 composition | FFmpeg (H.264/AAC, segment + concat, dip-to-black) | ~6 s |
@@ -352,25 +352,24 @@ bankers-wrapped/
 ├── notebooks/           # DEMO_RUNBOOK.ipynb — interactive pipeline walkthrough
 ├── data/synthetic/      # Demo CSVs — committed, no PII
 ├── prompts/             # LLM system prompts (narrative_agent.txt)
-├── docs/
-│   ├── adr/             # 11 Architecture Decision Records (9 accepted)
-│   ├── COSTS.md         # Component budget — everything stays live through judging
+├── submission/          # Judge deliverables
+│   ├── DEVPOST.md       # Devpost form content
 │   ├── SUBMISSION.md    # Judging alignment + deliverables checklist
-│   └── DEVPOST.md       # Devpost form content + demo video script
+│   ├── DEMO_SCRIPT.md   # ≤3-min video shooting script + OBS runbook
+│   └── COSTS.md         # Component budget — everything stays live through judging
+├── docs/adr/            # 11 Architecture Decision Records (all accepted)
 ├── Dockerfile           # python:3.14-slim + FFmpeg + uv
 ├── railway.json         # Railway backend deployment
 ├── render.yaml          # Render backend deployment (alternative)
 ├── CLAUDE.md            # Claude Code project context
-└── .github/
-    ├── workflows/ci.yml # Lint → type-check → test (≥80% coverage gate) → Codecov
-    └── prompts/         # Development prompt history (1–16)
+└── .github/workflows/ci.yml # Lint → type-check → test (≥80% coverage gate) → Codecov
 ```
 
 ---
 
 ## Architecture Decision Records
 
-Eleven decisions documented (001–006, 008, 009, 011 accepted; 007 and 010 proposed) — see [`docs/adr/`](docs/adr/) for full rationale.
+Eleven decisions documented (001–011), **all accepted and implemented** — see [`docs/adr/`](docs/adr/) for full rationale.
 
 | ADR | Decision |
 | --- | --- |
@@ -380,10 +379,10 @@ Eleven decisions documented (001–006, 008, 009, 011 accepted; 007 and 010 prop
 | [004](docs/adr/004-sqlite-for-mvp.md) | SQLite for MVP, PostgreSQL as documented production upgrade |
 | [005](docs/adr/005-financial-personality-core.md) | Financial Personality promoted to required scope — the emotional hook |
 | [006](docs/adr/006-observability-scope.md) | structlog JSON logging only — OpenTelemetry is post-hackathon |
-| [007](docs/adr/007-genblaze-sole-ai-layer.md) | *(proposed)* Route the narrative LLM through Genblaze — sole AI layer |
+| [007](docs/adr/007-genblaze-sole-ai-layer.md) | Route the narrative LLM through Genblaze (GMI Cloud chat, NIM fallback) — 3 of 4 AI steps via Genblaze |
 | [008](docs/adr/008-b2-source-of-truth.md) | B2 as session source of truth — SQLite is a cache; sessions survive redeploys |
 | [009](docs/adr/009-b2-lifecycle-integrity.md) | B2 lifecycle rules (45-day retention) + per-artifact SHA-256 integrity |
-| [010](docs/adr/010-plaid-sandbox-ingestion.md) | *(proposed)* Plaid sandbox connector — optional "connect a bank" path |
+| [010](docs/adr/010-plaid-sandbox-ingestion.md) | Plaid sandbox connector — optional "connect a bank" path (live in production) |
 | [011](docs/adr/011-compositor-redesign.md) | Memory-bounded segment+concat compositor + non-blocking event loop (v1.6.0 redesign) |
 
 ---
@@ -456,33 +455,34 @@ k6 run -e BASE_URL=https://<railway-url> tests/load/k6_smoke.js  # production
 | **Demo Video** | `https://youtu.be/TBD` *(≤ 3 min, recorded before submission)* |
 | **Try It Now** | `make demo` — runs the full pipeline with synthetic data, no real bank account needed |
 
-Hackathon judging criteria and submission checklist: [`docs/SUBMISSION.md`](docs/SUBMISSION.md)
+Hackathon judging criteria and submission checklist: [`submission/SUBMISSION.md`](submission/SUBMISSION.md)
 
 ---
 
 ## Screenshots
 
-Judge-facing screenshots and raw evidence are organized in [`assets/README.md`](assets/README.md).
+Full judge-facing galleries and raw evidence for two complete runs (CSV upload and Plaid Sandbox) are organized in [`assets/README.md`](assets/README.md).
 
 | Product Flow | B2 Provenance |
 | --- | --- |
-| ![Upload Portal](assets/screenshots/01-app-upload-portal.png) | ![B2 Bucket](assets/screenshots/04-b2-bucket-overview.png) |
-| ![Live SSE Progress](assets/screenshots/02-live-sse-progress.png) | ![Session Folder](assets/screenshots/06-session-folder-overview.png) |
-| ![Generated Video Result](assets/screenshots/03-generated-video-result.png) | ![Generation JSON View](assets/screenshots/09-session-generation-json-view.png) |
+| ![Upload Portal](assets/csv-run/screenshots/d5b45acf_01-app-upload-portal.png) | ![B2 Bucket + Lifecycle](assets/csv-run/screenshots/d5b45acf_05-b2-bucket-overview-lifecycle.png) |
+| ![Connect a Bank via Plaid](assets/plaid-run/screenshots/481ede61_01-plaid-connect-intro.png) | ![Session Folder](assets/csv-run/screenshots/d5b45acf_07-b2-session-folder-overview.png) |
+| ![Generated Video Result](assets/csv-run/screenshots/d5b45acf_03-generated-video-result.png) | ![Generation JSON Details](assets/csv-run/screenshots/d5b45acf_10-b2-generation-json-details.png) |
 
 ---
 
 ## Future Roadmap
 
-**v1.8.0 shipped**: all v1.7.0 roadmap workstreams are now implemented, including optional Plaid Sandbox ingestion alongside CSV input. See [CHANGELOG 1.8.0](CHANGELOG.md) and [v1.7.0 plan](docs/ROADMAP-v1.7.0.md) for traceability.
+**Shipped:** every planned workstream is implemented and live — one-click **Plaid** ingestion alongside CSV upload, the narrative LLM routed through **Genblaze → GMI Cloud** with automatic NVIDIA NIM fallback (**3 of 4 AI steps** now go through Genblaze), **B2 as the source of truth** with a SHA-256 per artifact and a committed lifecycle rule, a memory-bounded FFmpeg compositor, and 98% test coverage. Full history in the [CHANGELOG](CHANGELOG.md).
 
-Beyond v1.8.0:
+**What's next — from demo to product:**
 
-- PDF statement parsing (Azure Document Intelligence)
-- Goal Tracking Agent — savings milestones, debt payoff detection
-- Animated video clips — Genblaze → Runway ML (post-hackathon)
-- AI Banker Avatar — HeyGen personalized presenter
-- Multi-region B2 deployment for production scale
+- **Multi-period recaps** — monthly and quarterly stories, not just annual, with trend detection across periods
+- **White-label widget** — an embeddable drop-in banks and fintechs ship inside their own apps (the core go-to-market)
+- **Richer personalities + peer benchmarking** — more archetypes and "how you compare" framing
+- **Broader ingestion** — PDF statement parsing (Azure Document Intelligence) and live Plaid **production** access beyond sandbox
+- **Goal Tracking Agent** — savings-milestone and debt-payoff detection woven into the narrative
+- **Deeper generative media** — animated scene clips (Genblaze → Runway) and an optional AI banker avatar (HeyGen)
 
 ---
 

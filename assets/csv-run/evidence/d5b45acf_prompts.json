@@ -1,0 +1,52 @@
+{
+  "session_id": "d5b45acf-3094-42b6-9147-4f0d236f4d95",
+  "generated_at": "2026-07-11T08:40:41.359358+00:00",
+  "scenes": [
+    {
+      "scene_idx": 0,
+      "prompt": "A clean, professional abstract financial visualization with layered geometric foundations, upward lines, and subtle gold and blue accents suggesting stability and progress.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "e94092fb23d6fe76"
+    },
+    {
+      "scene_idx": 1,
+      "prompt": "A minimalist cinematic chart showing a descending debt line and an ascending investment line, with polished abstract icons and a calm, premium financial dashboard style.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "cd574ecc2fe9df24"
+    },
+    {
+      "scene_idx": 2,
+      "prompt": "A sleek abstract donut chart and balanced bar graph in a modern financial interface, emphasizing housing, savings, and travel with clean spacing and refined color coding.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "1cecd00d9caa1e1d"
+    },
+    {
+      "scene_idx": 3,
+      "prompt": "A minimalist workflow visualization with connected financial nodes, automated arrows, and a structured grid suggesting recurring transfers and disciplined money systems.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "fb70e9a32e4ca21e"
+    },
+    {
+      "scene_idx": 4,
+      "prompt": "A polished abstract skyline made of financial bars and glowing lines rising into the distance, with a calm professional tone and a forward-looking cinematic finish.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "a4ad95214634945a"
+    }
+  ],
+  "narration_text_hash": "72296d2aea53e931"
+}

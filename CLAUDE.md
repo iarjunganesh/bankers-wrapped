@@ -2,7 +2,7 @@
 
 ## Project
 
-AI-powered financial storytelling platform entered in the **Backblaze Generative Media Hackathon 2026**. Target: Grand Prize (top 1–3 of 300+ participants).
+AI-powered financial storytelling platform built for the **Backblaze Generative Media Hackathon 2026**.
 
 Upload a CSV → 4-agent pipeline → personalized narrated MP4 recap video stored on Backblaze B2.
 

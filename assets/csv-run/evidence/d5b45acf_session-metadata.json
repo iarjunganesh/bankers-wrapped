@@ -1,0 +1,66 @@
+{
+  "session_id": "d5b45acf-3094-42b6-9147-4f0d236f4d95",
+  "user_id": "d5e87bd9-5df9-4f0b-be78-f266252dd3ed",
+  "status": "complete",
+  "created_at": "2026-07-11T08:41:29.257078Z",
+  "pipeline_version": "1.0.0",
+  "genblaze_version": "0.2.4",
+  "models_used": {
+    "llm": "gmi-cloud/gpt-5.4-mini-2026-03-17",
+    "image": "gmi-cloud/seedream-4-0-250828",
+    "audio": "openai/tts-1",
+    "compositor": "ffmpeg"
+  },
+  "input_filename": "transactions_jan_2026.csv",
+  "input_hash": "ee1bbbb391164b763eb36445a6214426b831c31942e969d8e00f3a1cb9621f9b",
+  "output_url": "https://s3.eu-central-003.backblazeb2.com/bankers-wrapped-assets/d5e87bd9-5df9-4f0b-be78-f266252dd3ed/d5b45acf-3094-42b6-9147-4f0d236f4d95/output/recap_d5b45acf-3094-42b6-9147-4f0d236f4d95.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=00334ff4a7135600000000002%2F20260711%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260711T084129Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=5ce472bf6765bb614e793ddc44f841ce0dbe668e9d9f88b512ba860d6df3df13",
+  "processing_time_ms": 93336,
+  "synthetic_data": false,
+  "insights": {
+    "period_label": "January 2026",
+    "total_income": 13850.0,
+    "total_expenses": 4352.38,
+    "savings_amount": 1200.0,
+    "savings_rate": 8.7,
+    "top_categories": [
+      {
+        "category": "housing",
+        "amount": 1200.0,
+        "percentage": 27.6
+      },
+      {
+        "category": "savings",
+        "amount": 1200.0,
+        "percentage": 27.6
+      },
+      {
+        "category": "travel",
+        "amount": 534.0,
+        "percentage": 12.3
+      }
+    ],
+    "achievements": [
+      "Reduced debt by 250",
+      "Invested 500 toward your future"
+    ],
+    "personality": "Financial Builder",
+    "personality_reason": "You consistently prioritise savings and debt reduction \u2014 building a strong financial foundation.",
+    "currency": "USD"
+  },
+  "b2_keys": {
+    "csv": "d5e87bd9-5df9-4f0b-be78-f266252dd3ed/d5b45acf-3094-42b6-9147-4f0d236f4d95/input/transactions_jan_2026.csv",
+    "script": "d5e87bd9-5df9-4f0b-be78-f266252dd3ed/d5b45acf-3094-42b6-9147-4f0d236f4d95/pipeline/script.json",
+    "analytics": "d5e87bd9-5df9-4f0b-be78-f266252dd3ed/d5b45acf-3094-42b6-9147-4f0d236f4d95/pipeline/analytics.json",
+    "scene_0": "d5e87bd9-5df9-4f0b-be78-f266252dd3ed/d5b45acf-3094-42b6-9147-4f0d236f4d95/pipeline/scenes/scene_00.jpg",
+    "scene_1": "d5e87bd9-5df9-4f0b-be78-f266252dd3ed/d5b45acf-3094-42b6-9147-4f0d236f4d95/pipeline/scenes/scene_01.jpg",
+    "scene_2": "d5e87bd9-5df9-4f0b-be78-f266252dd3ed/d5b45acf-3094-42b6-9147-4f0d236f4d95/pipeline/scenes/scene_02.jpg",
+    "scene_3": "d5e87bd9-5df9-4f0b-be78-f266252dd3ed/d5b45acf-3094-42b6-9147-4f0d236f4d95/pipeline/scenes/scene_03.jpg",
+    "scene_4": "d5e87bd9-5df9-4f0b-be78-f266252dd3ed/d5b45acf-3094-42b6-9147-4f0d236f4d95/pipeline/scenes/scene_04.jpg",
+    "thumbnail": "d5e87bd9-5df9-4f0b-be78-f266252dd3ed/d5b45acf-3094-42b6-9147-4f0d236f4d95/pipeline/thumbnail.jpg",
+    "prompts": "d5e87bd9-5df9-4f0b-be78-f266252dd3ed/d5b45acf-3094-42b6-9147-4f0d236f4d95/pipeline/prompts.json",
+    "narration": "d5e87bd9-5df9-4f0b-be78-f266252dd3ed/d5b45acf-3094-42b6-9147-4f0d236f4d95/pipeline/narration.mp3",
+    "video": "d5e87bd9-5df9-4f0b-be78-f266252dd3ed/d5b45acf-3094-42b6-9147-4f0d236f4d95/output/recap_d5b45acf-3094-42b6-9147-4f0d236f4d95.mp4",
+    "generation": "d5e87bd9-5df9-4f0b-be78-f266252dd3ed/d5b45acf-3094-42b6-9147-4f0d236f4d95/pipeline/generation.json",
+    "metadata": "d5e87bd9-5df9-4f0b-be78-f266252dd3ed/d5b45acf-3094-42b6-9147-4f0d236f4d95/metadata/session_metadata.json"
+  }
+}

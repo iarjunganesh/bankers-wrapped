@@ -1,0 +1,52 @@
+{
+  "session_id": "481ede61-191f-4c45-b281-2c3fd0d67a57",
+  "generated_at": "2026-07-11T09:14:24.135700+00:00",
+  "scenes": [
+    {
+      "scene_idx": 0,
+      "prompt": "A clean, minimalist financial dashboard with rising pillars, a steady upward line, and subtle geometric accents in cool blue and green tones.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "e3f3cc7bfbdf7442"
+    },
+    {
+      "scene_idx": 1,
+      "prompt": "An abstract upward trajectory with stacked bars labeled by growth, a glowing savings vault icon, and a descending debt line in a polished corporate style.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "e0d488df65e996d4"
+    },
+    {
+      "scene_idx": 2,
+      "prompt": "A sleek donut chart with three dominant segments, surrounded by soft financial icons and a refined, professional layout on a light background.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "6c83e684e691d652"
+    },
+    {
+      "scene_idx": 3,
+      "prompt": "A minimalist flow diagram showing income moving automatically into savings and debt reduction buckets, with clean arrows and modern interface elements.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "49717e6d08e7b16b"
+    },
+    {
+      "scene_idx": 4,
+      "prompt": "A calm, abstract skyline made of ascending financial blocks, with soft light, balanced composition, and a polished inspirational finish.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "c016330b29312110"
+    }
+  ],
+  "narration_text_hash": "c3c98bda68dce51c"
+}

@@ -1,5 +1,5 @@
 # ADR-007: Route the Narrative LLM Through Genblaze (Genblaze as Sole AI Layer)
-**Status:** Accepted — implemented in v1.7.0 WS-1 (code + tests complete; `NARRATIVE_PROVIDER` defaults to `nvidia-nim` until the GMI credit top-up, then flips to `genblaze` via env var; automatic NIM fallback on invalid JSON or provider failure). The optional video scene (§ below) is **cut for cost** — see docs/COSTS.md. | **Date:** 2026-06-30
+**Status:** Accepted — **live in production**. Narrative LLM routes through Genblaze SDK chat to GMI Cloud (`openai/gpt-5.4-mini`; `NARRATIVE_PROVIDER=genblaze`), with automatic NVIDIA NIM fallback on provider failure or invalid JSON. This makes **3 of 4 AI steps** Genblaze-orchestrated. The optional Genblaze video scene (§ below) is **cut for cost** — see [COSTS.md](../../submission/COSTS.md). | **Date:** 2026-06-30
 
 ## Decision
 Route the `NarrativeAgent` LLM call through the Genblaze SDK (GMI Cloud chat/reasoning model)
