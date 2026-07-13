@@ -2,10 +2,10 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="assets/banner-light.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="assets/demo-cards/banner-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/demo-cards/banner-light.svg">
     <!-- ⬇ banner size — change this one width -->
-    <img width="620" src="assets/banner-light.svg"
+    <img width="620" src="assets/demo-cards/banner-light.svg"
          alt="Banker's Wrapped — Your financial year, told as a story. · Backblaze Generative Media Hackathon 2026"/>
   </picture>
 </p>
@@ -67,40 +67,16 @@ Banker's Wrapped solves this with an agentic pipeline that reads your transactio
 
 ## Architecture
 
-```mermaid
-graph LR
-    classDef user fill:#4A90E2,stroke:#2563EB,color:#fff
-    classDef api  fill:#009688,stroke:#00796B,color:#fff
-    classDef sk   fill:#0078D4,stroke:#005A9E,color:#fff
-    classDef nim  fill:#76B900,stroke:#5A8A00,color:#fff
-    classDef gmi  fill:#0059B3,stroke:#004080,color:#fff
-    classDef ff   fill:#007808,stroke:#005A06,color:#fff
-    classDef b2   fill:#E8392A,stroke:#C02A1D,color:#fff
-    classDef tts  fill:#7C3AED,stroke:#5B21B6,color:#fff
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/architecture/architecture-diagram-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/architecture/architecture-diagram-light.svg">
+    <img width="900" src="assets/architecture/architecture-diagram-light.svg"
+         alt="Banker's Wrapped architecture — User to FastAPI (rate-limit 5/hr) to the typed async Agent Pipeline to Backblaze B2 (14 files); the pipeline runs Document, Analytics, Narrative (Genblaze Chat on GMI Cloud, NIM fallback), and Media Agent, which fans out to GMI Cloud Seedream and OpenAI TTS before FFmpeg composes the final video"/>
+  </picture>
+</p>
 
-    U(["👤 User"]):::user
-    API["⚡ FastAPI<br/>rate-limit 5/hr"]:::api
-    PL["🤖 Agent Pipeline<br/>typed async"]:::sk
-    B2[("☁️ Backblaze B2<br/>14 files")]:::b2
-
-    U ==> API ==> PL ==> B2
-
-    subgraph pipe["🔍 Agent Pipeline · typed async agents"]
-        A1["① Document<br/>Transactions"]:::sk
-        A2["② Analytics<br/>Insights + Personality"]:::sk
-        A3["③ Narrative<br/>Genblaze Chat · GMI Cloud<br/>NIM fallback"]:::gmi
-        A4["④ Media Agent<br/>retry ×3 · asset manifest"]:::sk
-        GI["🖼️ GMI Cloud Seedream<br/>× 5 parallel"]:::gmi
-        AU["🔊 OpenAI TTS<br/>narration.mp3"]:::tts
-        FF["🎬 FFmpeg<br/>segments + concat → H.264/AAC"]:::ff
-        A1 --> A2 --> A3 --> A4
-        A4 -.-> GI
-        A4 -.-> AU
-        GI --> FF
-        AU --> FF
-    end
-
-    style pipe fill:transparent,stroke:#0078D4,stroke-width:2px,stroke-dasharray:6 3
+<sub>Source: [`assets/architecture/architecture-diagram.mmd`](assets/architecture/architecture-diagram.mmd) — rendered to brand-themed SVG/PNG (dark + light) via `mermaid-cli`; see [`assets/architecture/README.md`](assets/architecture/README.md) for the regenerate command.</sub>
 
     PL -.-> A1
 ```
@@ -405,10 +381,10 @@ All transaction data used in development and demonstration is **fully synthetic*
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/signoff-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="assets/signoff-light.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="assets/demo-cards/signoff-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/demo-cards/signoff-light.svg">
     <!-- ⬇ sign-off size — change this one width -->
-    <img width="620" src="assets/signoff-light.svg"
+    <img width="620" src="assets/demo-cards/signoff-light.svg"
          alt="Banker's Wrapped — One connection. Five scenes. Your financial story. · Powered by Genblaze on Backblaze B2"/>
   </picture>
 </p>

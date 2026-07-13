@@ -51,12 +51,24 @@ Maintenance + release-hardening pass ahead of submission. No runtime behavior ch
   B2 storage layout, lifecycle & integrity, provenance manifests); the README keeps the diagram + a
   summary + a link.
 - **Theme-aware SVG README banners** — the opening hero and closing sign-off reproduced as vector
-  `<picture>` banners (`assets/banner-{light,dark}.svg`, `assets/signoff-{light,dark}.svg`), ~3 KB each,
-  replacing ~380 KB PNGs in the README and following GitHub's light/dark toggle.
-- **Demo video title/closing cards** — `assets/demo-cards/` (1920×1080 PNGs, dark + light, with editable
-  HTML sources) for the ≤3-min video bookends; `submission/DEMO_SCRIPT.md` given a real-duration,
-  10-beat cut sheet + a two-recording OBS runbook (a one-time live-pipeline capture jump-cut into the
-  main take, plus a one-time architecture-diagram screenshot) targeting 2:50–2:55.
+  `<picture>` banners (`assets/demo-cards/banner-{light,dark}.svg`, `assets/demo-cards/signoff-{light,dark}.svg`), ~3 KB each,
+  replacing ~380 KB PNGs in the README and following GitHub's light/dark toggle. Bold-weight
+  emphasis on the tagline (`banner`) now matches the sign-off's existing partial-bold treatment.
+- **Demo video title/closing cards** — `assets/demo-cards/banner-{dark,light}.png` and
+  `signoff-{dark,light}.png` (1920×1080, sharing base names with their SVG counterparts — same
+  brand content, rendered to a video-editor-friendly format from theme-aware HTML sources) for the
+  ≤3-min video bookends; `submission/DEMO_SCRIPT.md` given a real-duration, 10-beat cut sheet and a
+  two-OBS-recording runbook (a one-time live-pipeline capture jump-cut into the main take) targeting
+  2:50–2:55.
+- **Brand-themed architecture diagram** — `assets/architecture/architecture-diagram-{dark,light}.svg/.png`,
+  rendered from `architecture-diagram.mmd` via `mermaid-cli` with the app's own fonts/background
+  tokens (replacing GitHub's generic mermaid theme in the README embed); forces a horizontal
+  drill-down layout (top summary row above, dotted expansion below) instead of mermaid-cli's default
+  vertical subgraph stacking. Doubles as the demo video's Step 0 asset (no manual screenshot needed).
+- **Assets folder reorganized** — `assets/banner-*.svg`/`signoff-*.svg` moved into `assets/demo-cards/`
+  (co-located with the video cards they share brand content with); the architecture diagram lives in
+  its own `assets/architecture/`. Every reference across README, CHANGELOG, and the submission docs
+  updated to match.
 
 ---
 

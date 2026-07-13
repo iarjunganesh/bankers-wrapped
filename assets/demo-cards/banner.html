@@ -15,6 +15,7 @@
     --grad: linear-gradient(90deg,#F59E0B,#14B8A6,#8B5CF6,#3B82F6,#6366f1);
     --divider: linear-gradient(90deg,transparent,#F59E0B,#14B8A6,#8B5CF6,#3B82F6,#6366f1,transparent);
     --sub:#8b8ba3;
+    --sub-strong:#ffffff;
     --event:#55556e;
     --toggle-bg:rgba(255,255,255,0.06); --toggle-fg:#9a9ab5; --toggle-bd:rgba(255,255,255,0.14);
   }
@@ -28,6 +29,7 @@
     --grad: linear-gradient(90deg,#b45309,#0f766e,#6d28d9,#1d4ed8,#4f46e5);
     --divider: linear-gradient(90deg,transparent,#b45309,#0f766e,#6d28d9,#1d4ed8,#4f46e5,transparent);
     --sub:#5c617b;
+    --sub-strong:#12131f;
     --event:#858ba3;
     --toggle-bg:rgba(35,42,80,0.05); --toggle-fg:#5c617b; --toggle-bd:rgba(35,42,80,0.16);
   }
@@ -50,6 +52,7 @@
     background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;
   }
   .subtitle { margin-top:36px; font-size:36px; font-weight:400; color:var(--sub); letter-spacing:0.4px; }
+  .subtitle b { font-weight:700; color:var(--sub-strong); }
   .divider { width:440px; height:2px; margin:56px auto 0; border-radius:2px; opacity:0.8; background:var(--divider); }
   .event { margin-top:34px; font-size:23px; font-weight:600; letter-spacing:7px; color:var(--event); }
 
@@ -105,7 +108,7 @@
       </div>
       <div class="kicker">BANKER&rsquo;S</div>
       <h1 class="wordmark">WRAPPED</h1>
-      <p class="subtitle">Your financial year, told as a story.</p>
+      <p class="subtitle"><b>Your financial year,</b> told as a story.</p>
       <div class="divider"></div>
       <p class="event">BACKBLAZE&nbsp; GENERATIVE&nbsp; MEDIA&nbsp; HACKATHON&nbsp; 2026</p>
     </div>

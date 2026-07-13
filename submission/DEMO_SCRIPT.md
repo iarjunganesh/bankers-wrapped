@@ -31,8 +31,8 @@ The live pipeline run takes ~90–120 seconds. Sitting through that live, on cam
 
 ## Step 0 — one-time prep, before recording anything
 
-1. **Architecture diagram screenshot**: on the **GitHub README Page** (`https://github.com/iarjunganesh/bankers-wrapped`), screenshot just the rendered architecture diagram (the boxes-and-arrows graph near the top, under the "Architecture" heading). Save it as `architecture-diagram.png`. This image is used **exactly once**, in the editor, at beat 5. You never need to show this diagram live in either OBS recording.
-2. **Opening/closing cards**: already built and ready at [`assets/demo-cards/`](../assets/demo-cards/) — `opening-card-{dark,light}.png` and `closing-card-{dark,light}.png`, 1920×1080. Pick the variant matching the theme you film the app in. These are inserted directly in the editor as the first/last clips — **do not record them in OBS** (a browser tab around them would show browser chrome).
+1. **Architecture diagram**: already built and ready at [`assets/architecture/`](../assets/architecture/) — `architecture-diagram-{dark,light}.png`, brand-themed (no GitHub screenshot needed). Pick the variant matching the theme you film the app in. Used **exactly once**, in the editor, at beat 5 — you never need to show this diagram live in either OBS recording.
+2. **Opening/closing cards**: already built and ready at [`assets/demo-cards/`](../assets/demo-cards/) — `banner-{dark,light}.png` (opening) and `signoff-{dark,light}.png` (closing), 1920×1080. Pick the variant matching the theme you film the app in. These are inserted directly in the editor as the first/last clips — **do not record them in OBS** (a browser tab around them would show browser chrome).
 3. Clean browser profile, 100% zoom, bookmarks bar hidden, notifications off, **already logged into Backblaze** (no login screen on camera).
 
 ---
@@ -84,16 +84,16 @@ Now start OBS recording once, and go through these in order without stopping:
 
 | # | Beat | VO clip (measured) | Source | Screen action | Duration | Ends at |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Opening card | silent | editor image (`assets/demo-cards/opening-card`) | Brand card | 3s | 0:03 |
+| 1 | Opening card | silent | editor image (`assets/demo-cards/banner-{dark,light}.png`) | Brand card | 3s | 0:03 |
 | 2 | Hook | `vo_01-hook` (12.2s) | Recording #2 — Spreadsheet | Slow scroll of CSV rows | 14s | 0:17 |
 | 3 | Reveal | `vo_02-reveal` (7.8s) | Recording #2 — Live App | Home screen, no clicks | 10s | 0:27 |
 | 4 | Ingestion | `vo_03-ingestion` (10.3s) | Recording #1 — trim to Connect-a-bank clicks through login/account selection, stop right before "Continue" | Plaid connect flow | 17s | 0:44 |
-| 5 | Architecture + Pipeline live | `vo_04-pipeline` (22.0s) | first 7s: editor image (`architecture-diagram.png`); remaining ~25s: Recording #1 — jump-cut 3–4 short (2–3s) clips of the progress tracker at different moments | Diagram flash → SSE tracker advancing | 32s | 1:16 |
+| 5 | Architecture + Pipeline live | `vo_04-pipeline` (22.0s) | first 7s: editor image (`assets/architecture/architecture-diagram-{dark,light}.png`); remaining ~25s: Recording #1 — jump-cut 3–4 short (2–3s) clips of the progress tracker at different moments | Diagram flash → SSE tracker advancing | 32s | 1:16 |
 | 6 | Payoff — recap plays | 5s recap audio + `vo_05-payoff` (6.0s) | Recording #1 — the finished recap playing | Let the recap's own audio play ~5s, then bring in `vo_05` and duck the recap audio under it | 15s | 1:31 |
 | 7 | B2 — share list → console → `generation.json` | `vo_06-b2` (16.2s) | Recording #2 — Pre-Generated Recap Page → Backblaze B2 Console | Artifact list, then `generation.json` with `llm` block + SHA-256 visible | 27s | 1:58 |
 | 8 | Durability — reload share link | `vo_07-durability` (6.9s) | Recording #2 — Pre-Generated Recap Page (refresh) | Page reloads, still plays | 12s | 2:10 |
 | 9 | Production — CI/coverage/ADRs | `vo_08-production` (8.1s) | Recording #2 — GitHub README Page → Codecov Page (optional) | Badges, then ADR list (not the diagram — see Step 0) | 15s | 2:25 |
-| 10 | Close | `vo_09-close` (6.9s) | editor image (`assets/demo-cards/closing-card`) | Brand card hold | 13s | ~2:38 |
+| 10 | Close | `vo_09-close` (6.9s) | editor image (`assets/demo-cards/signoff-{dark,light}.png`) | Brand card hold | 13s | ~2:38 |
 
 **Narration spine ≈ 1:36** across the nine `vo_NN` clips (`vo_full-reference.mp3` = the whole track). Total lands roughly **2:38–2:53** depending on how tight the pad trims run in the edit — comfortably inside the 2:50–2:55 target and the 3:00 hard cap. If you run long, trim the B2 browse (beat 7) or the SSE jump-cuts (beat 5) first. **Never hold a static frame > ~15s** under continuous narration.
 
