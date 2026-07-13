@@ -15,6 +15,41 @@ _Targeting **2.0.0** (submission):_
 
 ---
 
+## [1.9.1] — 2026-07-14
+
+Frontend typography + branding fixes so the deployed app matches the brand cards.
+No backend behavior change.
+
+### Added
+
+- **Font-independent wordmark** — `frontend/public/wordmark.svg`, the gradient "Wrapped"
+  wordmark with its Inter ExtraBold glyphs pre-converted to vector paths. It carries no
+  font dependency, so it renders pixel-identical on every browser/OS and stays crisp at any
+  DPI. Used on the home header and both recap-page headers. (The banner/signoff cards can't
+  be reused directly in the app: `<img>`-referenced SVGs can't load webfonts, and the PNGs
+  are fixed 16:9 video cards.)
+- **Idle-screen tagline** echoing the signoff card — "One connection. Five scenes. Your
+  financial story." + "Powered by Genblaze on Backblaze B2.", with the same bold emphasis.
+
+### Fixed
+
+- **Inter never actually loaded** — `globals.css` referenced `'Inter'` but no `@font-face`,
+  `next/font`, or Google Fonts link existed, so every weight silently fell back to
+  `system-ui`. Now loaded via `next/font/google` (400/600/700/800) and wired through the
+  `--font-inter` variable.
+- **"Wrapped" gradient was clipped** — as a full-width block the 5-stop `background-clip:text`
+  gradient painted across the whole card while the centered glyphs only covered its middle,
+  hiding the amber/teal ends. Resolved by the outlined-SVG wordmark above.
+- **Subtitle emphasis** — "Your financial year," is now bold, matching the brand cards.
+
+### Docs
+
+- `assets/demo-cards/README.md`: corrected the stale "Inter/Segoe typography" claim
+  (`banner.html`/`signoff.html` now load real Inter via Google Fonts) and fixed the
+  PNG re-export command (`--virtual-time-budget` + Windows `file://` path).
+
+---
+
 ## [1.9.0] — 2026-07-12
 
 Maintenance + release-hardening pass ahead of submission. No runtime behavior change.

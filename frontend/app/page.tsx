@@ -363,8 +363,8 @@ export default function Home() {
         <div className="bw-header">
           <img src="/icon.svg" alt="" aria-hidden="true" className="bw-logo-icon" width="72" height="72" />
           <span className="bw-brand-label">BANKER&apos;S</span>
-          <h1 className="bw-title">Wrapped</h1>
-          <p className="bw-subtitle">Your financial year, told as a story.</p>
+          <h1 className="bw-title"><img src="/wordmark.svg" alt="Wrapped" className="bw-wordmark" /></h1>
+          <p className="bw-subtitle"><strong>Your financial year,</strong> told as a story.</p>
         </div>
 
         {/* Upload zone */}
@@ -412,6 +412,13 @@ export default function Home() {
               </button>
             )}
           </div>
+        )}
+        {stage === "idle" && (
+          <p className="bw-idle-tagline">
+            <strong>One connection.</strong> <strong>Five scenes.</strong> Your financial story.
+            <br />
+            Powered by <strong>Genblaze</strong> on <strong>Backblaze B2</strong>.
+          </p>
         )}
 
         {/* Live pipeline progress */}

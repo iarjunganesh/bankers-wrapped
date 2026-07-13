@@ -73,7 +73,7 @@ Now start OBS recording once, and go through these in order without stopping:
 3. **Switch to the Pre-Generated Recap Page**: scroll down to where it lists the artifact files (video, images, audio, JSON files — the "Pipeline Artifacts" section). Pause on it for a few seconds so it's readable.
 4. **Switch to the Backblaze B2 Console**: click into `generation.json` and hover near the `"llm"` block and the SHA-256 hash list so both are visible on screen.
 5. **Switch back to the Pre-Generated Recap Page**: hit your browser's refresh button and let the page reload and finish loading.
-6. **Switch to the GitHub README Page**: sit for a few seconds on the row of badges (CI, coverage, etc.) near the top, then scroll *past* the architecture diagram — don't linger on it, it's not used from here (see Step 0) — down to wherever the ADR list is (the architecture decision records), and pause there for a couple seconds.
+6. **Switch to the GitHub README Page**: sit for a few seconds on the row of badges (CI, coverage, etc.) near the top, then scroll down past the architecture diagram — don't linger on it, it's not used from here (see Step 0) — the ADR list sits right underneath it now, so pause there for a couple seconds.
 7. **Switch to the Codecov Page** *(optional, only if time allows)*: sit on it for 2–3 seconds.
 8. Stop OBS recording.
 9. Save this file separately, e.g. `main-take.mp4`.

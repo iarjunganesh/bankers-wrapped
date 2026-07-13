@@ -90,7 +90,7 @@ body { margin: 0; padding: 0; }
   align-items: center;
   justify-content: center;
   padding: 24px;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
 }
 
 .bw-card {
@@ -122,18 +122,13 @@ body { margin: 0; padding: 0; }
   margin: 0 0 2px;
 }
 
-.bw-title {
-  font-size: 40px;
-  font-weight: 800;
-  margin: 0;
-  letter-spacing: -0.03em;
-  background: linear-gradient(90deg, #F59E0B, #14B8A6, #8B5CF6, #3B82F6, #6366f1);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
+.bw-title { margin: 0; line-height: 0; }
+/* Wordmark is a pre-outlined SVG (glyphs → vector paths) so it renders
+   identically everywhere with zero font-loading dependency. */
+.bw-wordmark { display: block; margin: 0 auto; width: 210px; height: auto; }
 
 .bw-subtitle { color: var(--text-subtle); margin-top: 8px; font-size: 15px; }
+.bw-subtitle strong { font-weight: 700; color: var(--text-emphasis); }
 
 /* ── Drop zone ───────────────────────────────────────────────────────────── */
 .bw-dropzone {
@@ -150,6 +145,8 @@ body { margin: 0; padding: 0; }
 .bw-drop-icon  { font-size: 48px; margin-bottom: 16px; }
 .bw-drop-text  { color: var(--text-secondary); font-size: 16px; margin: 0 0 6px; }
 .bw-drop-hint  { color: var(--text-dimmer); font-size: 13px; margin: 0 0 28px; }
+.bw-idle-tagline { color: var(--text-dimmest); font-size: 12px; line-height: 1.7; text-align: center; margin: 20px 0 0; letter-spacing: 0.01em; }
+.bw-idle-tagline strong { font-weight: 700; color: var(--text-secondary); }
 .bw-demo-btn {
   background: transparent;
   border: 1px solid var(--border-dim);

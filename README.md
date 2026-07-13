@@ -68,22 +68,39 @@ Banker's Wrapped solves this with an agentic pipeline that reads your transactio
 ## Architecture
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/architecture/architecture-diagram-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="assets/architecture/architecture-diagram-light.svg">
-    <img width="900" src="assets/architecture/architecture-diagram-light.svg"
-         alt="Banker's Wrapped architecture — User to FastAPI (rate-limit 5/hr) to the typed async Agent Pipeline to Backblaze B2 (14 files); the pipeline runs Document, Analytics, Narrative (Genblaze Chat on GMI Cloud, NIM fallback), and Media Agent, which fans out to GMI Cloud Seedream and OpenAI TTS before FFmpeg composes the final video"/>
-  </picture>
+  <a href="assets/architecture/architecture-diagram-light.svg" target="_blank" rel="noopener noreferrer">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="assets/architecture/architecture-diagram-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="assets/architecture/architecture-diagram-light.svg">
+      <img width="900" src="assets/architecture/architecture-diagram-light.svg"
+           alt="Banker's Wrapped architecture — User to FastAPI (rate-limit 5/hr) to the typed async Agent Pipeline to Backblaze B2 (14 files); the pipeline runs Document, Analytics, Narrative (Genblaze Chat on GMI Cloud, NIM fallback), and Media Agent, which fans out to GMI Cloud Seedream and OpenAI TTS before FFmpeg composes the final video"/>
+    </picture>
+  </a>
 </p>
 
-<sub>Source: [`assets/architecture/architecture-diagram.mmd`](assets/architecture/architecture-diagram.mmd) — rendered to brand-themed SVG/PNG (dark + light) via `mermaid-cli`; see [`assets/architecture/README.md`](assets/architecture/README.md) for the regenerate command.</sub>
-
-    PL -.-> A1
-```
+<sub>Click to enlarge (opens full-resolution SVG — scales without pixelation): <a href="assets/architecture/architecture-diagram-light.svg" target="_blank" rel="noopener noreferrer">light</a> / <a href="assets/architecture/architecture-diagram-dark.svg" target="_blank" rel="noopener noreferrer">dark</a> · Source: [`assets/architecture/architecture-diagram.mmd`](assets/architecture/architecture-diagram.mmd) — rendered to brand-themed SVG/PNG (dark + light) via `mermaid-cli`; see [`assets/architecture/README.md`](assets/architecture/README.md) for the regenerate command.</sub>
 
 **In short:** ~2–4 minutes end to end, with image generation dominating (5 scenes generated in parallel); **14 files across 10 artifact types** persisted to Backblaze B2 as the source of truth; every artifact carries a **SHA-256** and every step logs model, latency, and retries.
 
 > **Deep dive** → **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)** — per-step pipeline timing, the full B2 storage layout, lifecycle & integrity (45-day retention + per-artifact SHA-256), and the four machine-readable provenance manifests.
+
+### Architecture Decision Records
+
+Eleven decisions documented (001–011), **all accepted and implemented** — see [`docs/adr/`](docs/adr/) for full rationale.
+
+| ADR | Decision |
+| --- | --- |
+| [001](docs/adr/001-genblaze-central.md) | Genblaze as sole media generation layer — no direct provider calls |
+| [002](docs/adr/002-semantic-kernel-orchestration.md) | Lightweight typed async agent pipeline — Semantic Kernel considered, not adopted (no framework dependency) |
+| [003](docs/adr/003-ffmpeg-over-remotion.md) | FFmpeg for composition; Runway ML / Luma AI excluded (impl revised in v1.6.0) |
+| [004](docs/adr/004-sqlite-for-mvp.md) | SQLite for MVP, PostgreSQL as documented production upgrade |
+| [005](docs/adr/005-financial-personality-core.md) | Financial Personality promoted to required scope — the emotional hook |
+| [006](docs/adr/006-observability-scope.md) | structlog JSON logging only — OpenTelemetry is post-hackathon |
+| [007](docs/adr/007-genblaze-sole-ai-layer.md) | Route the narrative LLM through Genblaze (GMI Cloud chat, NIM fallback) — 3 of 4 AI steps via Genblaze |
+| [008](docs/adr/008-b2-source-of-truth.md) | B2 as session source of truth — SQLite is a cache; sessions survive redeploys |
+| [009](docs/adr/009-b2-lifecycle-integrity.md) | B2 lifecycle rules (45-day retention) + per-artifact SHA-256 integrity |
+| [010](docs/adr/010-plaid-sandbox-ingestion.md) | Plaid sandbox connector — optional "connect a bank" path (live in production) |
+| [011](docs/adr/011-compositor-redesign.md) | Memory-bounded segment+concat compositor + non-blocking event loop (v1.6.0 redesign) |
 
 ---
 
@@ -337,24 +354,6 @@ winget install k6   # or: brew install k6
 k6 run tests/load/k6_smoke.js                                  # local backend
 k6 run -e BASE_URL=https://<railway-url> tests/load/k6_smoke.js  # production
 ```
-
-### Architecture Decision Records
-
-Eleven decisions documented (001–011), **all accepted and implemented** — see [`docs/adr/`](docs/adr/) for full rationale.
-
-| ADR | Decision |
-| --- | --- |
-| [001](docs/adr/001-genblaze-central.md) | Genblaze as sole media generation layer — no direct provider calls |
-| [002](docs/adr/002-semantic-kernel-orchestration.md) | Lightweight typed async agent pipeline — Semantic Kernel considered, not adopted (no framework dependency) |
-| [003](docs/adr/003-ffmpeg-over-remotion.md) | FFmpeg for composition; Runway ML / Luma AI excluded (impl revised in v1.6.0) |
-| [004](docs/adr/004-sqlite-for-mvp.md) | SQLite for MVP, PostgreSQL as documented production upgrade |
-| [005](docs/adr/005-financial-personality-core.md) | Financial Personality promoted to required scope — the emotional hook |
-| [006](docs/adr/006-observability-scope.md) | structlog JSON logging only — OpenTelemetry is post-hackathon |
-| [007](docs/adr/007-genblaze-sole-ai-layer.md) | Route the narrative LLM through Genblaze (GMI Cloud chat, NIM fallback) — 3 of 4 AI steps via Genblaze |
-| [008](docs/adr/008-b2-source-of-truth.md) | B2 as session source of truth — SQLite is a cache; sessions survive redeploys |
-| [009](docs/adr/009-b2-lifecycle-integrity.md) | B2 lifecycle rules (45-day retention) + per-artifact SHA-256 integrity |
-| [010](docs/adr/010-plaid-sandbox-ingestion.md) | Plaid sandbox connector — optional "connect a bank" path (live in production) |
-| [011](docs/adr/011-compositor-redesign.md) | Memory-bounded segment+concat compositor + non-blocking event loop (v1.6.0 redesign) |
 
 ---
 

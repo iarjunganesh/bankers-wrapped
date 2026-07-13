@@ -103,7 +103,7 @@ export default function SharePage() {
           <div className="bw-header">
             <img src="/icon.svg" alt="" aria-hidden="true" className="bw-logo-icon" width="72" height="72" />
             <span className="bw-brand-label">BANKER&apos;S</span>
-            <h1 className="bw-title">Wrapped</h1>
+            <h1 className="bw-title"><img src="/wordmark.svg" alt="Wrapped" className="bw-wordmark" /></h1>
           </div>
           <div className="bw-error-box">
             <p className="bw-error-text">⚠️ {error}</p>
@@ -140,7 +140,7 @@ export default function SharePage() {
         <div className="bw-header">
           <img src="/icon.svg" alt="" aria-hidden="true" className="bw-logo-icon" width="72" height="72" />
           <span className="bw-brand-label">BANKER&apos;S</span>
-          <h1 className="bw-title">Wrapped</h1>
+          <h1 className="bw-title"><img src="/wordmark.svg" alt="Wrapped" className="bw-wordmark" /></h1>
           <p className="bw-subtitle">Someone shared their financial story with you.</p>
         </div>
 
