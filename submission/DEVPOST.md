@@ -169,14 +169,14 @@ Artifacts are served via presigned URLs on both the results page and a public sh
 
 ## Demo Video Script (≤ 3 min)
 
-Suggested beats:
-1. **(0:00–0:20)** Problem: banking apps are boring, nobody engages with their data
-2. **(0:20–0:40)** Ingest: click **"Connect a bank (sandbox)"** (Plaid Link) — mention CSV upload works too
-3. **(0:40–1:20)** Watch the live SSE progress — call out each step and the per-step latency
-4. **(1:20–1:50)** Play the generated recap video in-browser — personality badge, all 5 scenes
-5. **(1:50–2:20)** Share page + **B2 console**: artifact layout, `generation.json` provenance (models, latency, retries, SHA-256 per artifact), lifecycle rule
-6. **(2:20–2:40)** Durability punchline: redeploy the backend — the share link still works (B2 is the source of truth)
-7. **(2:40–3:00)** Close: "One connection. Five scenes. Your financial story." + Genblaze/B2 architecture one-liner
+Full shot-by-shot shooting script — 10 beats, two OBS recordings (a one-time live-pipeline capture
+jump-cut into the main take, plus a one-time architecture-diagram screenshot), targeting 2:50–2:55:
+see [`submission/DEMO_SCRIPT.md`](DEMO_SCRIPT.md).
+
+Beat summary: problem hook → brand reveal → Plaid "Connect a bank" (CSV works too) → architecture
+diagram + live SSE pipeline (Genblaze routing) → recap plays (personality, 5 scenes) → B2 console +
+`generation.json` provenance (models, latency, retries, SHA-256 per artifact) → durability (redeploy,
+share link still works) → CI/coverage/ADRs → close.
 
 ---
 

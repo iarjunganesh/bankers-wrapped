@@ -1,6 +1,6 @@
 # Demo Video — Opening / Closing Cards
 
-Title and end cards for the ≤3-min submission video (`submission/DEMO_SCRIPT.md`, beats 1 and 9).
+Title and end cards for the ≤3-min submission video (`submission/DEMO_SCRIPT.md`, beats 1 and 10).
 Ready-to-use **1920×1080 PNGs** — drop straight onto the video timeline; no export step.
 
 > **These are the video cards, not the README banners.** The repo README uses separate vector
@@ -10,7 +10,7 @@ Ready-to-use **1920×1080 PNGs** — drop straight onto the video timeline; no e
 | File | Use |
 | --- | --- |
 | `opening-card-dark.png` · `opening-card-light.png` | Beat 1 (0:00) — title card |
-| `closing-card-dark.png` · `closing-card-light.png` | Beat 9 (~2:20) — brand / thank-you card |
+| `closing-card-dark.png` · `closing-card-light.png` | Beat 10 (~2:25) — brand / thank-you card |
 
 **Which theme?** The app follows the system light/dark setting, and the landing page can be
 filmed either way (`DEMO_SCRIPT` reveal beat). **Match the card to the mode you record the app in** —

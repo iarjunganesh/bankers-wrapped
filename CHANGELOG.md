@@ -54,8 +54,9 @@ Maintenance + release-hardening pass ahead of submission. No runtime behavior ch
   `<picture>` banners (`assets/banner-{light,dark}.svg`, `assets/signoff-{light,dark}.svg`), ~3 KB each,
   replacing ~380 KB PNGs in the README and following GitHub's light/dark toggle.
 - **Demo video title/closing cards** — `assets/demo-cards/` (1920×1080 PNGs, dark + light, with editable
-  HTML sources) for the ≤3-min video bookends; `submission/DEMO_SCRIPT.md` given a real-duration cut
-  sheet + OBS runbook.
+  HTML sources) for the ≤3-min video bookends; `submission/DEMO_SCRIPT.md` given a real-duration,
+  10-beat cut sheet + a two-recording OBS runbook (a one-time live-pipeline capture jump-cut into the
+  main take, plus a one-time architecture-diagram screenshot) targeting 2:50–2:55.
 
 ---
 
