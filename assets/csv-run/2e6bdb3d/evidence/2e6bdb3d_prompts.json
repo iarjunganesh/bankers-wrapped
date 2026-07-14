@@ -1,0 +1,52 @@
+{
+  "session_id": "2e6bdb3d-228f-456c-971e-9855274b0d54",
+  "generated_at": "2026-07-14T13:05:12.110628+00:00",
+  "scenes": [
+    {
+      "scene_idx": 0,
+      "prompt": "A clean, professional abstract scene with stacked geometric blocks forming a stable financial foundation, subtle upward lines, and a calm blue-green palette.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "90882ad82fc5fd79"
+    },
+    {
+      "scene_idx": 1,
+      "prompt": "A minimalist financial visualization with a descending debt line transforming into an ascending investment curve, accented by small glowing markers of progress.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "3a749eeb8e0d0edb"
+    },
+    {
+      "scene_idx": 2,
+      "prompt": "An abstract dashboard with three balanced bars labeled by color only, featuring housing, savings, and travel as elegant proportional segments in a polished layout.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "99166d1185434cde"
+    },
+    {
+      "scene_idx": 3,
+      "prompt": "A sleek, professional illustration of two synchronized flow lines moving into savings and debt-reduction pathways, with a simple automation motif in the center.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "b2f1d86265c1cd81"
+    },
+    {
+      "scene_idx": 4,
+      "prompt": "A minimalist cinematic closing shot of a rising financial skyline made of clean bars and soft light, suggesting steady growth and long-term confidence.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "3c53169c42fbc69d"
+    }
+  ],
+  "narration_text_hash": "b3b78270815333f5"
+}

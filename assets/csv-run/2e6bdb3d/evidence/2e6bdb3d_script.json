@@ -1,0 +1,31 @@
+{
+  "title": "Your January 2026 Financial Journey",
+  "personality": "Financial Builder",
+  "scenes": [
+    {
+      "id": 1,
+      "narration": "Financial Builder \u2014 you\u2019re laying a strong foundation with purpose and consistency. This month, your numbers show a clear focus on progress, balance, and long-term stability.",
+      "visual_prompt": "A clean, professional abstract scene with stacked geometric blocks forming a stable financial foundation, subtle upward lines, and a calm blue-green palette."
+    },
+    {
+      "id": 2,
+      "narration": "Your January wins were meaningful: you reduced debt by 250 and invested 500 toward your future. Those moves show momentum in both protection and growth.",
+      "visual_prompt": "A minimalist financial visualization with a descending debt line transforming into an ascending investment curve, accented by small glowing markers of progress."
+    },
+    {
+      "id": 3,
+      "narration": "Your top spending categories were housing at 28%, savings at 28%, and travel at 12%. That mix reflects a steady approach \u2014 meeting essentials while still making room for future goals and life experiences.",
+      "visual_prompt": "An abstract dashboard with three balanced bars labeled by color only, featuring housing, savings, and travel as elegant proportional segments in a polished layout."
+    },
+    {
+      "id": 4,
+      "narration": "As a Financial Builder, one powerful next step is to keep automating your savings and debt payments together. That way, your best habits stay consistent even when life gets busy.",
+      "visual_prompt": "A sleek, professional illustration of two synchronized flow lines moving into savings and debt-reduction pathways, with a simple automation motif in the center."
+    },
+    {
+      "id": 5,
+      "narration": "With income of 13,850 and a savings rate of 8.7%, you\u2019re building real momentum month by month. Keep going \u2014 your foundation is getting stronger, and your future is already taking shape.",
+      "visual_prompt": "A minimalist cinematic closing shot of a rising financial skyline made of clean bars and soft light, suggesting steady growth and long-term confidence."
+    }
+  ]
+}

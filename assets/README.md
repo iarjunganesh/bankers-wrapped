@@ -7,8 +7,8 @@ all 12 content artifacts** in `generation.json`.
 
 | Run | Folder | Session | Ingestion | Recap URL |
 | --- | --- | --- | --- | --- |
-| **CSV upload** (canonical) | [`csv-run/`](csv-run/) | `d5b45acf-3094-42b6-9147-4f0d236f4d95` | `data/synthetic/transactions_jan_2026.csv` | [/recap/d5b45acf…](https://bankers-wrapped.vercel.app/recap/d5b45acf-3094-42b6-9147-4f0d236f4d95) |
-| **Plaid Sandbox** (WS-4) | [`plaid-run/`](plaid-run/) | `481ede61-191f-4c45-b281-2c3fd0d67a57` | "Connect a bank" → `input/plaid_sandbox.csv` | [/recap/481ede61…](https://bankers-wrapped.vercel.app/recap/481ede61-191f-4c45-b281-2c3fd0d67a57) |
+| **CSV upload** (canonical) | [`csv-run/`](csv-run/) | `2e6bdb3d-228f-456c-971e-9855274b0d54` | `data/synthetic/transactions_jan_2026.csv` | [/recap/2e6bdb3d…](https://bankers-wrapped.vercel.app/recap/2e6bdb3d-228f-456c-971e-9855274b0d54) |
+| **Plaid Sandbox** (WS-4) | [`plaid-run/`](plaid-run/) | `84cdf98f-b8ce-457a-969f-724cf116c130` | "Connect a bank" → `input/plaid_sandbox.csv` | [/recap/84cdf98f…](https://bankers-wrapped.vercel.app/recap/84cdf98f-b8ce-457a-969f-724cf116c130) |
 
 Each folder has `evidence/` (raw B2 JSONs, prefixed with the short session id) and `screenshots/`
 (numbered in walkthrough order).
@@ -20,9 +20,10 @@ Each folder has `evidence/` (raw B2 JSONs, prefixed with the short session id) a
 - **Financial story, personality, stats, the recap video** → use **`csv-run/`**. It runs on the committed
   synthetic dataset, so the numbers are coherent: *Financial Builder*, January 2026, income **$13,850**,
   expenses **$4,352**, an **8.7% savings rate**.
-- **Zero-friction ingestion ("Connect a bank")** → use **`plaid-run/`**. Screenshots `01–06` capture the full
-  Plaid Link flow (institution search → First Platypus Bank → `user_good` login → account select), and
-  `12` shows the resulting **`input/plaid_sandbox.csv`** in B2 — proof that a live bank connection flows into
+- **Zero-friction ingestion ("Connect a bank")** → use **`plaid-run/`**. Screenshot `01` is the in-app
+  "Connect a bank" click, `02–07` capture the full Plaid Link flow (institution search → First Platypus
+  Bank → `user_good` login → account select → save prompt), and `14` shows the resulting
+  **`input/plaid_sandbox.csv`** in B2 — proof that a live bank connection flows into
   the **exact same** pipeline and B2 layout as a CSV upload, with zero code forking between paths.
   > **On the numbers:** this run is powered by Plaid's Sandbox, which by design serves *synthetic* test
   > transactions (the canonical `user_good` account) rather than a real spending history. That's exactly what
@@ -39,8 +40,8 @@ Each folder has `evidence/` (raw B2 JSONs, prefixed with the short session id) a
 "llm": {
   "provider": "gmi-cloud",
   "model": "gpt-5.4-mini-2026-03-17",
-  "tokens_in": 386, "tokens_out": 502,
-  "cost_usd": 0.0025
+  "tokens_in": 386, "tokens_out": 474,
+  "cost_usd": 0.002422
 }
 ```
 
@@ -52,13 +53,13 @@ Each folder has `evidence/` (raw B2 JSONs, prefixed with the short session id) a
 
 `evidence/<session>_generation.json` (model, provider, latency, retries, tokens, cost, per-artifact SHA-256) ·
 `_session-metadata.json` (self-contained manifest + all 14 b2_keys) · `_analytics.json` · `_script.json` ·
-`_prompts.json`. The Plaid run additionally includes `481ede61_input-plaid_sandbox.csv` (the Plaid→CSV
+`_prompts.json`. The Plaid run additionally includes `84cdf98f_input-plaid_sandbox.csv` (the Plaid→CSV
 normalisation output); the CSV run's input is the committed `data/synthetic/transactions_jan_2026.csv`.
 
 ## Screenshot highlights
 
-- **`csv-run/`** (`d5b45acf_01…13`): upload portal · live SSE progress (script step ~6 s on GMI) · result +
+- **`csv-run/`** (`2e6bdb3d_01…13`): upload portal · live SSE progress (script step ~4 s on GMI) · result +
   personality badge · in-app 14-file B2 artifact list · B2 console: bucket overview (custom lifecycle rule),
   root session index, session/pipeline/scenes folders, `generation.json` + `session_metadata.json` details.
-- **`plaid-run/`** (`481ede61_01…20`): the full **Plaid Link** flow (`01–06`) · SSE progress · result · B2
-  console browse including **`12` `input/plaid_sandbox.csv`** details.
+- **`plaid-run/`** (`84cdf98f_01…19`): in-app "Connect a bank" click (`01`) · the full **Plaid Link** flow
+  (`02–07`) · SSE progress · result · B2 console browse including **`14` `input/plaid_sandbox.csv`** details.

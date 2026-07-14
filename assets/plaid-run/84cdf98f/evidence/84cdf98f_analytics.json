@@ -1,0 +1,31 @@
+{
+  "period_label": "June 2026",
+  "total_income": 504.22,
+  "total_expenses": 11149.46,
+  "savings_amount": 6850.0,
+  "savings_rate": 1358.5,
+  "top_categories": [
+    {
+      "category": "savings",
+      "amount": 6850.0,
+      "percentage": 61.4
+    },
+    {
+      "category": "debt",
+      "amount": 2103.5,
+      "percentage": 18.9
+    },
+    {
+      "category": "travel",
+      "amount": 1011.73,
+      "percentage": 9.1
+    }
+  ],
+  "achievements": [
+    "Saved 1359% of income \u2014 well above average",
+    "Reduced debt by 2,104"
+  ],
+  "personality": "Financial Builder",
+  "personality_reason": "You consistently prioritise savings and debt reduction \u2014 building a strong financial foundation.",
+  "currency": "USD"
+}

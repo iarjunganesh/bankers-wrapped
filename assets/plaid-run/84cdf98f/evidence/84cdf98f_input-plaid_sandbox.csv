@@ -1,0 +1,17 @@
+date,description,amount,currency,category
+2026-07-13,CREDIT CARD 3333 PAYMENT *//,-25.00,USD,debt
+2026-07-13,Uber,-5.40,USD,travel
+2026-07-12,ACH Electronic CreditGUSTO PAY 123456,-5850.00,USD,savings
+2026-07-12,CD DEPOSIT .INITIAL.,-1000.00,USD,savings
+2026-07-11,Touchstone Climbing,-78.50,USD,other
+2026-07-11,United Airlines,500.00,USD,travel
+2026-07-10,McDonald's,-12.00,USD,food
+2026-07-10,Starbucks,-4.33,USD,food
+2026-07-09,FUN,-89.40,USD,other
+2026-07-08,INTRST PYMNT,4.22,USD,income
+2026-06-28,United Airlines,-500.00,USD,travel
+2026-06-26,Uber,-6.33,USD,travel
+2026-06-23,Tectra Inc,-500.00,USD,housing
+2026-06-22,AUTOMATIC PAYMENT - THANK,-2078.50,USD,debt
+2026-06-22,KFC,-500.00,USD,food
+2026-06-22,Madison Bicycle Shop,-500.00,USD,travel

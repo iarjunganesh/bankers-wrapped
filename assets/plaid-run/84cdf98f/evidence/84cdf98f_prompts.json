@@ -1,0 +1,52 @@
+{
+  "session_id": "84cdf98f-b8ce-457a-969f-724cf116c130",
+  "generated_at": "2026-07-14T13:31:57.012705+00:00",
+  "scenes": [
+    {
+      "scene_idx": 0,
+      "prompt": "A clean, professional abstract financial visualization with rising foundation blocks, subtle upward lines, and a calm blue-and-gold palette.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "58fce8e868102097"
+    },
+    {
+      "scene_idx": 1,
+      "prompt": "A minimalist dashboard-style graphic showing a strong upward savings bar, a declining debt line, and polished geometric accents representing progress.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "1a38ade9cd4c7a10"
+    },
+    {
+      "scene_idx": 2,
+      "prompt": "A refined abstract pie chart with savings highlighted prominently, alongside balanced segments for debt and travel in a modern professional layout.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "6a0d36b2bde7e904"
+    },
+    {
+      "scene_idx": 3,
+      "prompt": "A sleek abstract workflow illustration with automated arrows flowing into savings and debt-reduction containers, designed in a clean corporate style.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "5b8b9a8028f70e05"
+    },
+    {
+      "scene_idx": 4,
+      "prompt": "A cinematic abstract horizon scene with a glowing financial path, layered foundation shapes, and a calm, optimistic professional aesthetic.",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "a439ea9678062cbe"
+    }
+  ],
+  "narration_text_hash": "92adace73ef26123"
+}

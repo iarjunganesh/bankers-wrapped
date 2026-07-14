@@ -3,7 +3,7 @@
 > **Target 2:50–2:55** (hard cap 3:00) · public on YouTube · **no copyrighted music** · 1080p screen capture.
 > Two OBS recordings, not one — see **Recording #1** and **Recording #2** below. The live pipeline run is captured once, separately, then jump-cut clips from it are dropped into the edit — the main take never sits and waits for it.
 > Fallback: two runs are pre-generated and validated if the live run on shoot day fails or needs a retake without spending more GMI credit:
-> **CSV** `d5b45acf…` and **Plaid** `481ede61…` (see [`assets/README.md`](../assets/README.md)).
+> **CSV** `2e6bdb3d…` and **Plaid** `84cdf98f…` (see [`assets/README.md`](../assets/README.md)).
 
 **Every criterion is earned on screen** — the mapping:
 
@@ -61,8 +61,9 @@ Open these before you start recording, arranged so you can switch between them q
 | --- | --- | --- |
 | **Spreadsheet** | Excel (or Notepad/VS Code) | `data/synthetic/transactions_jan_2026.csv` open, scrolled to the top |
 | **Live App** | The Banker's Wrapped Vercel web app | `https://bankers-wrapped.vercel.app`, fresh, nothing clicked |
-| **Pre-Generated Recap Page** | The public share page for an already-finished demo session | `https://bankers-wrapped.vercel.app/recap/d5b45acf-3094-42b6-9147-4f0d236f4d95` — use this run for on-screen numbers, *not* the live Plaid run (Plaid sandbox numbers are randomized) |
-| **Backblaze B2 Console** | The Backblaze web dashboard, already logged in | Drilled into that same session's `pipeline/` folder, one click away from opening `generation.json` (bucket `bankers-wrapped-assets` → `d5e87bd9-…/d5b45acf-…/pipeline/generation.json`) |
+| **Pre-Generated Recap Page** | The public share page for an already-finished demo session | `https://bankers-wrapped.vercel.app/recap/2e6bdb3d-228f-456c-971e-9855274b0d54` — use this run for on-screen numbers, *not* the live Plaid run (Plaid sandbox numbers are randomized) |
+| **Backblaze B2 Console** | The Backblaze web dashboard, already logged in | Drilled into that same session's `pipeline/` folder, `generation.json` visible in the file listing (bucket `bankers-wrapped-assets` → `4d0f560b-…/2e6bdb3d-…/pipeline/`) |
+| **GitHub — generation.json evidence** | The same file, downloaded from that exact B2 path and committed as evidence, viewed on GitHub (syntax-highlighted, actually readable) | `https://github.com/iarjunganesh/bankers-wrapped/blob/main/assets/csv-run/2e6bdb3d/evidence/2e6bdb3d_generation.json`, scrolled to the `"llm"` block |
 | **GitHub README Page** | The project's GitHub repository page | `https://github.com/iarjunganesh/bankers-wrapped`, scrolled to the badges near the top |
 | **Codecov Page** *(optional)* | The Codecov coverage report | `https://codecov.io/gh/iarjunganesh/bankers-wrapped` |
 
@@ -71,7 +72,7 @@ Now start OBS recording once, and go through these in order without stopping:
 1. **On the Spreadsheet**: slowly scroll down through the transaction rows. Don't click anything. Hold for about 14 seconds.
 2. **Switch to the Live App**: sit on the home screen (the first screen you see before clicking any button). Don't click anything yet. Hold for about 10 seconds.
 3. **Switch to the Pre-Generated Recap Page**: scroll down to where it lists the artifact files (video, images, audio, JSON files — the "Pipeline Artifacts" section). Pause on it for a few seconds so it's readable.
-4. **Switch to the Backblaze B2 Console**: click into `generation.json` and hover near the `"llm"` block and the SHA-256 hash list so both are visible on screen.
+4. **Switch to the Backblaze B2 Console**: sit on the `pipeline/` folder listing for a couple seconds with `generation.json` visible — this proves it's really stored in B2. Then **switch to the GitHub evidence file**: scroll to the `"llm"` block and the SHA-256 hash list so both are visible on screen (same file, just readable).
 5. **Switch back to the Pre-Generated Recap Page**: hit your browser's refresh button and let the page reload and finish loading.
 6. **Switch to the GitHub README Page**: sit for a few seconds on the row of badges (CI, coverage, etc.) near the top, then scroll down past the architecture diagram — don't linger on it, it's not used from here (see Step 0) — the ADR list sits right underneath it now, so pause there for a couple seconds.
 7. **Switch to the Codecov Page** *(optional, only if time allows)*: sit on it for 2–3 seconds.
@@ -90,7 +91,7 @@ Now start OBS recording once, and go through these in order without stopping:
 | 4 | Ingestion | `vo_03-ingestion` (10.3s) | Recording #1 — trim to Connect-a-bank clicks through login/account selection, stop right before "Continue" | Plaid connect flow | 17s | 0:44 |
 | 5 | Architecture + Pipeline live | `vo_04-pipeline` (22.0s) | first 7s: editor image (`assets/architecture/architecture-diagram-{dark,light}.png`); remaining ~25s: Recording #1 — jump-cut 3–4 short (2–3s) clips of the progress tracker at different moments | Diagram flash → SSE tracker advancing | 32s | 1:16 |
 | 6 | Payoff — recap plays | 5s recap audio + `vo_05-payoff` (6.0s) | Recording #1 — the finished recap playing | Let the recap's own audio play ~5s, then bring in `vo_05` and duck the recap audio under it | 15s | 1:31 |
-| 7 | B2 — share list → console → `generation.json` | `vo_06-b2` (16.2s) | Recording #2 — Pre-Generated Recap Page → Backblaze B2 Console | Artifact list, then `generation.json` with `llm` block + SHA-256 visible | 27s | 1:58 |
+| 7 | B2 — share list → console → `generation.json` | `vo_06-b2` (16.2s) | Recording #2 — Pre-Generated Recap Page → Backblaze B2 Console → GitHub evidence file | Artifact list, then `generation.json` sitting in the B2 folder, then the same file on GitHub with `llm` block + SHA-256 visible | 27s | 1:58 |
 | 8 | Durability — reload share link | `vo_07-durability` (6.9s) | Recording #2 — Pre-Generated Recap Page (refresh) | Page reloads, still plays | 12s | 2:10 |
 | 9 | Production — CI/coverage/ADRs | `vo_08-production` (8.1s) | Recording #2 — GitHub README Page → Codecov Page (optional) | Badges, then ADR list (not the diagram — see Step 0) | 15s | 2:25 |
 | 10 | Close | `vo_09-close` (6.9s) | editor image (`assets/demo-cards/signoff-{dark,light}.png`) | Brand card hold | 13s | ~2:38 |
@@ -110,7 +111,7 @@ You'll end up with 3 image files (opening card, `architecture-diagram.png`, clos
 5. `architecture-diagram.png` (image)
 6. From **live-run-take.mp4**: 3–4 short (2–3s) clips of the progress tracker at different moments (e.g. "Writing narrative script", "3/5 scenes done", "composing video") — skip over the waiting parts
 7. From **live-run-take.mp4**: the finished recap playing
-8. From **main-take.mp4**: the Pre-Generated Recap Page artifact-list clip, then the Backblaze B2 Console clip
+8. From **main-take.mp4**: the Pre-Generated Recap Page artifact-list clip, then the Backblaze B2 Console clip, then the GitHub evidence-file clip
 9. From **main-take.mp4**: the page-refresh clip
 10. From **main-take.mp4**: the GitHub README Page clip, then Codecov clip if used
 11. Closing card (image)

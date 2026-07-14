@@ -1,0 +1,31 @@
+{
+  "title": "Your June 2026 Financial Journey",
+  "personality": "Financial Builder",
+  "scenes": [
+    {
+      "id": 1,
+      "narration": "Financial Builder \u2014 you\u2019re laying a strong foundation with every decision you make. June shows a clear pattern of discipline, focus, and long-term thinking.",
+      "visual_prompt": "A clean, professional abstract financial visualization with rising foundation blocks, subtle upward lines, and a calm blue-and-gold palette."
+    },
+    {
+      "id": 2,
+      "narration": "Your biggest achievement this month is remarkable: you saved USD 6,850.00, reaching a 1358.5% savings rate. You also reduced debt by 2,104, proving that momentum is working in your favor.",
+      "visual_prompt": "A minimalist dashboard-style graphic showing a strong upward savings bar, a declining debt line, and polished geometric accents representing progress."
+    },
+    {
+      "id": 3,
+      "narration": "Your top spending category was savings at 61%, which is a powerful sign of priority and purpose. Debt at 19% and travel at 9% round out a spending mix that still keeps your future front and center.",
+      "visual_prompt": "A refined abstract pie chart with savings highlighted prominently, alongside balanced segments for debt and travel in a modern professional layout."
+    },
+    {
+      "id": 4,
+      "narration": "As a Financial Builder, your next move is simple: keep automating savings so your momentum continues without extra effort. That consistency will help you keep building while making debt reduction even more efficient.",
+      "visual_prompt": "A sleek abstract workflow illustration with automated arrows flowing into savings and debt-reduction containers, designed in a clean corporate style."
+    },
+    {
+      "id": 5,
+      "narration": "June proves you\u2019re not just managing money \u2014 you\u2019re constructing something lasting. Keep going, because each disciplined step is strengthening the financial future you\u2019re building.",
+      "visual_prompt": "A cinematic abstract horizon scene with a glowing financial path, layered foundation shapes, and a calm, optimistic professional aesthetic."
+    }
+  ]
+}

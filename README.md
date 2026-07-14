@@ -207,9 +207,9 @@ Full judge-facing galleries and raw evidence for two complete runs (CSV upload a
 
 | Product Flow | B2 Provenance |
 | --- | --- |
-| ![Upload Portal](assets/csv-run/screenshots/d5b45acf_01-app-upload-portal.png) | ![B2 Bucket + Lifecycle](assets/csv-run/screenshots/d5b45acf_05-b2-bucket-overview-lifecycle.png) |
-| ![Connect a Bank via Plaid](assets/plaid-run/screenshots/481ede61_01-plaid-connect-intro.png) | ![Session Folder](assets/csv-run/screenshots/d5b45acf_07-b2-session-folder-overview.png) |
-| ![Generated Video Result](assets/csv-run/screenshots/d5b45acf_03-generated-video-result.png) | ![Generation JSON Details](assets/csv-run/screenshots/d5b45acf_10-b2-generation-json-details.png) |
+| ![Upload Portal](assets/csv-run/2e6bdb3d/screenshots/2e6bdb3d_01-app-upload-portal.png) | ![B2 Bucket + Lifecycle](assets/csv-run/2e6bdb3d/screenshots/2e6bdb3d_05-b2-bucket-overview-lifecycle.png) |
+| ![Connect a Bank via Plaid](assets/plaid-run/84cdf98f/screenshots/84cdf98f_02-plaid-connect-intro.png) | ![Session Folder](assets/csv-run/2e6bdb3d/screenshots/2e6bdb3d_07-b2-session-folder-overview.png) |
+| ![Generated Video Result](assets/csv-run/2e6bdb3d/screenshots/2e6bdb3d_03-generated-video-result.png) | ![Generation JSON Details](assets/csv-run/2e6bdb3d/screenshots/2e6bdb3d_10-b2-generation-json-details.png) |
 
 ---
 
