@@ -13,6 +13,24 @@ _Targeting **2.0.0** (submission):_
   "▶ Watch" badge and the Submission Links table (README, `submission/SUBMISSION.md`).
 - Devpost submission form completed; add the Devpost project URL alongside the video link.
 
+### Changed
+
+- **Dependencies refreshed** (`uv lock --upgrade`): `genblaze-core` 0.3.4 → **0.3.7**,
+  `genblaze-s3` 0.3.4 → **0.3.6**, `genblaze-gmicloud` 0.3.2 → **0.3.4** (the upstream
+  "v0.6.0" release wave — a monorepo tag, not a single package version; see the pinned
+  floors in `pyproject.toml` for the exact per-package numbers). Notable upstream fixes we
+  now pick up: a Windows `file://` asset-upload bug (percent-encoded drive letters broke
+  local-to-B2 uploads on this dev machine's OS), ReDoS pattern-safety hardening, CAS-key
+  case-normalization for dedup, and correct handling of B2 `HeadObject` 403s during
+  transfer re-checks. No breaking API changes for how `GenblazeClient` calls the SDK.
+  Also refreshed: `fastapi` 0.140.0, `uvicorn` 0.51.0, `pydantic` 2.13.4, `boto3` 1.43.56,
+  `openai` 2.48.0, `pandas` 3.0.5, `mypy` 2.3.0, `ruff` 0.16.0, plus patch-level
+  transitives. Frontend: `next` 16.2.11, `react`/`react-dom` 19.2.8, `typescript` 5.9.3
+  (staying on the 5.x line — 7.0.2 is a new major, deferred past submission), `@types/*`
+  refreshed to match; added `frontend/.nvmrc` pinning Node 26.
+- 148 backend tests still pass at 99.61% coverage after the bump; `npm run build` succeeds
+  on the new frontend toolchain.
+
 ---
 
 ## [1.9.1] — 2026-07-14
