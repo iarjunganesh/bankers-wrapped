@@ -12,6 +12,36 @@ _Targeting **2.0.0** (submission):_
 - Demo video (≤ 3 min) recorded and uploaded public to YouTube; wire the URL into the
   "▶ Watch" badge and the Submission Links table (README, `submission/SUBMISSION.md`).
 - Devpost submission form completed; add the Devpost project URL alongside the video link.
+- Fresh CSV + Plaid pipeline evidence captured against `bankers-wrapped.arjunganesh.dev`
+  (the runs currently in `assets/csv-run/` and `assets/plaid-run/` predate the domain
+  migration in 1.9.2).
+
+---
+
+## [1.9.2] — 2026-07-25
+
+A submission-quality sweep: dependency/genblaze refresh, custom-domain hosting migration,
+and an evidence-first rewrite of the judge-facing submission dossier. No pipeline behavior
+change beyond the genblaze/dependency bump (verified via the existing test suite).
+
+### Added
+
+- **`CLAUDE.md` version/tag/doc synchronization policy** — a mandatory checklist (which
+  fields move together on a version bump, which docs to reconcile each session, the
+  ADR-addendum pattern for revising decisions in place, a pre-handoff staleness grep) since
+  the repo has no automated drift-detection test. Also records the no-co-author commit
+  convention.
+- **`scripts/generate_demo_voiceover.py`** — the demo video's narration text and TTS
+  generation now has a committed, reproducible source (previously only an ephemeral,
+  uncommitted scratchpad script existed). Reuses `GenblazeClient.generate_narration_audio()`
+  — same OpenAI-TTS-via-Genblaze path as production, no direct provider calls. Regenerated
+  all 9 VO clips with real `ffprobe`-measured durations (spine ≈1:17, down from the
+  undocumented ~1:36 the old clips actually ran).
+- **`submission/DEVPOST_README.md`** — a Devpost-paste mirror of the root README with every
+  relative link/image rewritten to an absolute `github.com`/`raw.githubusercontent.com` URL,
+  since Devpost's form has no repo-root context.
+- **ADR-012** — custom domain hosting decision, context, and verification evidence.
+- `frontend/.nvmrc` pinning Node 26.
 
 ### Changed
 
@@ -27,9 +57,8 @@ _Targeting **2.0.0** (submission):_
   `openai` 2.48.0, `pandas` 3.0.5, `mypy` 2.3.0, `ruff` 0.16.0, plus patch-level
   transitives. Frontend: `next` 16.2.11, `react`/`react-dom` 19.2.8, `typescript` 5.9.3
   (staying on the 5.x line — 7.0.2 is a new major, deferred past submission), `@types/*`
-  refreshed to match; added `frontend/.nvmrc` pinning Node 26.
-- 148 backend tests still pass at 99.61% coverage after the bump; `npm run build` succeeds
-  on the new frontend toolchain.
+  refreshed to match. 148 backend tests still pass at 99.61% coverage after the bump;
+  `npm run build` succeeds on the new frontend toolchain.
 - **Frontend hosting moved to a custom domain** — `bankers-wrapped.arjunganesh.dev` (ADR-012),
   attached and DNS-verified via the Vercel CLI (`configured-correctly`, no conflicts).
   `bankers-wrapped.vercel.app` still resolves as a fallback during cutover. Railway's
@@ -39,7 +68,25 @@ _Targeting **2.0.0** (submission):_
   live Vercel app · backend · storage · hosting/live deployments), with a dedicated "live
   deployment" badge row separate from the tech-stack badges, and version numbers refreshed to
   match the dependency bump above.
-- **New ADR-012** — custom domain hosting decision, context, and verification evidence.
+- `frontend/package.json` version now tracks the backend's (`1.0.0` → `1.9.2`) per the new
+  sync policy above — it had never been bumped since the project's first commit.
+
+### Docs
+
+- **`submission/SUBMISSION.md` rewritten evidence-first** — the deliverables checklist is
+  now split into "Required before submitting" (each item citing how to verify it) and "Do
+  not claim until verified" (explicit overclaiming guardrails: domain migration status, test
+  counts, PostgreSQL/MCP claims). The Judging Alignment table cites a verification method per
+  row instead of asserting numbers as fact.
+- **`submission/DEMO_SCRIPT.md`** — added a verbatim "Narration Script" table (measured VO
+  durations, mirrors `generate_demo_voiceover.py`); re-paced the "Final beat timeline" to
+  ~2:47 total (the newly measured, shorter VO clips had initially left it under-padded at
+  ~1:53 — the added screen time is real content: a fuller Plaid flow, more SSE jump-cuts
+  across the pipeline run, a longer B2 browse, more room for the recap payoff).
+- Swept every `bankers-wrapped.vercel.app` reference to the new domain across README,
+  submission docs, and `assets/README.md`, except intentional historical records (old
+  CHANGELOG entries, `notebooks/DEMO_RUNBOOK.ipynb`'s stored prior-execution outputs) and
+  explicit fallback mentions.
 
 ---
 

@@ -1,6 +1,6 @@
 [project]
 name = "bankers-wrapped"
-version = "1.9.1"
+version = "1.9.2"
 description = "AI-powered financial storytelling platform — Backblaze Generative Media Hackathon 2026"
 authors = [{name = "Arjun Ganesh", email = "iarjunganesh@gmail.com"}]
 license = {text = "MIT"}
