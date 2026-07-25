@@ -16,6 +16,55 @@ _Targeting **2.0.0** (submission):_
   (the runs currently in `assets/csv-run/` and `assets/plaid-run/` predate the domain
   migration in 1.9.2).
 
+### Changed (staged for the video shoot)
+
+- **Swagger UI (`/docs`) now has a theme-aware banner header**: a custom `/docs` route splices a
+  real `<picture>` banner (light/dark `assets/demo-cards/banner-*.svg`) into the page shell above
+  `#swagger-ui` — previously the theme-aware banner only appeared in the README, not on the live
+  API docs judges land on from the Railway badge. The banner lives outside the OpenAPI
+  `description` field because Swagger UI's markdown renderer sanitizes `<picture>`/`<source>` out
+  of that field, leaving only a static `<img>`. The SVGs are served from a new `/brand/{theme}.svg`
+  route reading a local file (`Dockerfile` now copies `assets/demo-cards/banner-*.svg` into the
+  image) rather than an external CDN — an earlier jsDelivr-based version resolved fine when curled
+  directly but rendered blank in real browsers (ad blockers / corporate proxies commonly block
+  `cdn.jsdelivr.net/gh/...` proxying arbitrary GitHub content), a class of failure a same-origin
+  asset eliminates outright. The two banner SVGs also gained explicit `width`/`height` attributes
+  (previously only `viewBox`) and `<picture>` was given an explicit block-level width in CSS
+  (`<picture>` is inline by default, so a percentage-width `<img>` inside it resolved
+  inconsistently — Chromium fell back to a tiny default replaced-element size, Firefox rendered
+  nothing) — a real cross-browser check confirmed the banner now renders at its intended size in
+  both engines. The header's padding also switched to a `calc((100vw - 900px) / 2)` hero technique
+  (edge-to-edge background strip, image capped and centered) so the banner reads as a real header
+  rather than a small thumbnail. The Swagger UI panel itself intentionally stays in its native light
+  theme always — an earlier `filter: invert()` attempt at full dark mode also inverted hue-coded
+  schema/type badges into looking spuriously highlighted, trading one cosmetic bug for another.
+- **`signoff-*.svg` gained the same `width`/`height` fix as the banner SVGs**, for consistency —
+  they weren't currently broken (both consumers already pin an explicit `width=` override) but
+  carried the same latent defect.
+- **Demo-card PNGs (`assets/demo-cards/`) now render directly from the corresponding SVG** instead
+  of a separately hand-authored HTML/CSS reimplementation — one design to edit, not two kept
+  manually in sync. `banner-*.png`/`signoff-*.png` (the video's title/closing cards) are the SVG
+  letterboxed onto a 1920×1080 canvas (background color matches the card, so the padding is
+  invisible); new `banner-*-native.png`/`signoff-*-native.png` are 1:1 references at the SVG's own
+  size. `banner.html`/`signoff.html` are now thin theme-aware preview/export wrappers around the
+  real SVG (`?native=1` switches the canvas; `?theme=` forces a theme) rather than a duplicate
+  implementation — the previous version had already drifted from the SVG (the old signoff video
+  card had a `github.com/...` URL line the SVG never had; dropped intentionally, confirmed with
+  a byte-for-byte before/after comparison). Fixed along the way: the wrapper `<img>` used to have
+  its `src` set only via JavaScript, which VS Code's Live Preview webview doesn't resolve on local
+  relative paths (shows a broken image) — it now also has a static default `src` in the markup.
+- **`submission/DEMO_SCRIPT.md` restructured with a new opening beat**: a GitHub-repo-intro beat
+  (`vo_00-intro`, over "What Is This?" / "The Problem") now opens the video before the CSV hook —
+  the video previously never showed the actual repo/README context, and never named Genblaze or
+  Backblaze B2 until several beats in. `vo_00-intro` now states both sponsor technologies by role
+  in its first breath ("Genblaze is the sole AI layer, Backblaze B2 the source of truth for every
+  session"). `vo_01-hook` and `vo_02-reveal` were trimmed to drop redundant re-introduction now
+  that `vo_00` covers it. Beat timeline re-paced to ~2:50 (11 beats). Added a lower-third overlay
+  column, an explicit "Honesty rules" section, and edit-rhythm/audio-off/video-off production
+  guidance.
+- Regenerated all 10 VO clips (`scripts/generate_demo_voiceover.py`) with the revised script;
+  real narration spine is now ≈1:24 (was ≈1:17 with 9 clips).
+
 ---
 
 ## [1.9.2] — 2026-07-25

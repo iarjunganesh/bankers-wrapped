@@ -5,8 +5,10 @@ AI-narrated voiceover for the ≤3-min submission video, generated with the proj
 product's voice stands out when the recap plays). Text is verbatim from
 [`submission/DEMO_SCRIPT.md`](../../submission/DEMO_SCRIPT.md).
 
-- `vo_01-hook … vo_09-close.mp3` — one clip per beat (~1:17 total, measured via ffprobe), for
-  precise placement against the screen recording.
+- `vo_00-intro … vo_09-close.mp3` — one clip per beat (~1:24 total, measured via ffprobe), for
+  precise placement against the screen recording. `vo_00-intro` narrates over a GitHub repo
+  screenshot ("What Is This?" / "The Problem"), opening the video on real project context before
+  the CSV hook.
 - `vo_full-reference.mp3` — the whole narration as one continuous track (reference/fallback).
 
 Regenerate or tweak wording via [`scripts/generate_demo_voiceover.py`](../../scripts/generate_demo_voiceover.py)

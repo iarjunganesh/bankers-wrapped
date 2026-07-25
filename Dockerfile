@@ -16,6 +16,8 @@ RUN uv sync --no-dev --frozen --no-install-project
 
 # Application code
 COPY backend/ ./backend/
+# Swagger UI banner (served by backend/main.py:brand_asset) — only the two SVGs it needs
+COPY assets/demo-cards/banner-light.svg assets/demo-cards/banner-dark.svg ./assets/demo-cards/
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1

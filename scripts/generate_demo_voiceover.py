@@ -37,17 +37,22 @@ OUTPUT_DIR = ROOT / "assets" / "demo-voiceover"
 # timeline" table in submission/DEMO_SCRIPT.md.
 BEATS: list[tuple[str, str, str]] = [
     (
+        "intro",
+        "vo_00-intro",
+        "Banks generate mountains of transaction data but deliver it as an "
+        "unreadable table. Customers disengage. Banker's Wrapped turns that "
+        "data into a personalized, narrated recap video — Genblaze is the "
+        "sole AI layer, Backblaze B2 the source of truth for every session.",
+    ),
+    (
         "hook",
         "vo_01-hook",
-        "Every bank app shows you the same thing: a wall of numbers, a chart "
-        "you scroll past, then nothing. Your money has a story. Nobody's "
-        "telling it.",
+        "Here's the raw material — just rows, dates, and numbers.",
     ),
     (
         "reveal",
         "vo_02-reveal",
-        "This is Banker's Wrapped — an AI pipeline that turns your "
-        "transactions into a narrated recap video.",
+        "See it live, right now — no mockup, no slides.",
     ),
     (
         "ingestion",

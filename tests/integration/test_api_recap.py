@@ -69,6 +69,24 @@ class TestRecapEndpoint:
         assert response.status_code == 200
         assert "Banker" in response.json()["name"]
 
+    def test_docs_are_theme_aware(self, api_client):
+        response = api_client.get("/docs")
+        assert response.status_code == 200
+        assert "prefers-color-scheme: dark" in response.text
+        assert '<div id="docs-banner">' in response.text
+        assert "<picture>" in response.text
+        assert "/brand/dark.svg" in response.text
+        assert "/brand/light.svg" in response.text
+
+    def test_brand_asset_serves_known_theme(self, api_client):
+        response = api_client.get("/brand/light.svg")
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "image/svg+xml"
+
+    def test_brand_asset_rejects_unknown_theme(self, api_client):
+        response = api_client.get("/brand/nope.svg")
+        assert response.status_code == 404
+
     def test_generate_rejects_non_csv(self, api_client):
         response = api_client.post(
             "/api/v1/recap/generate",
