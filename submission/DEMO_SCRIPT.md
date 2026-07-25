@@ -113,21 +113,21 @@ length alone to carry each beat.
 | # | Beat | VO clip (measured) | Source | Screen action | Duration | Ends at |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Opening card | silent | editor image (`assets/demo-cards/banner-{dark,light}.png`) | Brand card | 3s | 0:03 |
-| 2 | Hook | `vo_01-hook` (8.5s) | Recording #2 — Spreadsheet | Slow scroll of CSV rows | 11s | 0:14 |
-| 3 | Reveal | `vo_02-reveal` (6.3s) | Recording #2 — Live App | Home screen, no clicks | 8s | 0:22 |
-| 4 | Ingestion | `vo_03-ingestion` (7.4s) | Recording #1 — trim to Connect-a-bank clicks through login/account selection, stop right before "Continue" | Plaid connect flow (needs real time to read: institution search, login, account select) | 13s | 0:35 |
-| 5 | Architecture + Pipeline live | `vo_04-pipeline` (17.0s) | first 7s: editor image (`assets/architecture/architecture-diagram-{dark,light}.png`); remaining ~15s: Recording #1 — jump-cut 3–4 short (2–3s) clips of the progress tracker at different moments | Diagram flash → SSE tracker advancing | 22s | 0:57 |
-| 6 | Payoff — recap plays | 5s recap audio + `vo_05-payoff` (4.6s) | Recording #1 — the finished recap playing | Let the recap's own audio play ~5s, then bring in `vo_05` and duck the recap audio under it | 10s | 1:07 |
-| 7 | B2 — share list → console → `generation.json` | `vo_06-b2` (12.3s) | Recording #2 — Pre-Generated Recap Page → Backblaze B2 Console → GitHub evidence file | Artifact list, then `generation.json` sitting in the B2 folder, then the same file on GitHub with `llm` block + SHA-256 visible | 18s | 1:25 |
-| 8 | Durability — reload share link | `vo_07-durability` (6.0s) | Recording #2 — Pre-Generated Recap Page (refresh) | Page reloads, still plays | 8s | 1:33 |
-| 9 | Production — CI/coverage/ADRs | `vo_08-production` (8.4s) | Recording #2 — GitHub README Page → Codecov Page (optional) | Badges, then ADR list (not the diagram — see Step 0) | 11s | 1:44 |
-| 10 | Close | `vo_09-close` (6.6s) | editor image (`assets/demo-cards/signoff-{dark,light}.png`) | Brand card hold | 9s | ~1:53 |
+| 2 | Hook | `vo_01-hook` (8.5s) | Recording #2 — Spreadsheet | Slow, deliberate scroll of CSV rows — let numbers actually register | 13s | 0:16 |
+| 3 | Reveal | `vo_02-reveal` (6.3s) | Recording #2 — Live App | Home screen, no clicks, hold a beat | 9s | 0:25 |
+| 4 | Ingestion | `vo_03-ingestion` (7.4s) | Recording #1 — trim to the full Connect-a-bank flow: institution search → First Platypus Bank → login → account selection, stop right before "Continue" | Plaid connect flow shown at natural pace, not sped up | 22s | 0:47 |
+| 5 | Architecture + Pipeline live | `vo_04-pipeline` (17.0s) | first 8s: editor image (`assets/architecture/architecture-diagram-{dark,light}.png`); remaining ~27s: Recording #1 — jump-cut 5–6 short (3–5s) clips of the progress tracker across the full run (parsing → scripting → each scene → composing → uploading) | Diagram flash → SSE tracker advancing through more of the real pipeline stages | 35s | 1:22 |
+| 6 | Payoff — recap plays | 5s recap audio + `vo_05-payoff` (4.6s) | Recording #1 — the finished recap playing | Let the recap's own audio play longer before ducking — this is the emotional payoff, don't rush it | 16s | 1:38 |
+| 7 | B2 — share list → console → `generation.json` | `vo_06-b2` (12.3s) | Recording #2 — Pre-Generated Recap Page → Backblaze B2 Console → GitHub evidence file | Artifact list, then a real browse of the B2 folder structure, then `generation.json` on GitHub with `llm` block + SHA-256 visible — give each screen its own moment | 28s | 2:06 |
+| 8 | Durability — reload share link | `vo_07-durability` (6.0s) | Recording #2 — Pre-Generated Recap Page (refresh) | Page reloads, still plays | 9s | 2:15 |
+| 9 | Production — CI/coverage/ADRs | `vo_08-production` (8.4s) | Recording #2 — GitHub README Page → Codecov Page (optional) | Badges, then a real pause on the ADR list (not the diagram — see Step 0), then Codecov | 17s | 2:32 |
+| 10 | Close | `vo_09-close` (6.6s) | editor image (`assets/demo-cards/signoff-{dark,light}.png`) | Brand card hold | 15s | ~2:47 |
 
-Total lands roughly **1:53** with the pad above — well inside the 2:50–2:55 target and the 3:00
-hard cap, leaving real headroom. **This is intentionally generous, not a floor** — if beats feel
-rushed in the edit (especially 4 and 7, which each show multiple distinct screens), extend the
-hold times; there's ~55s of slack before you'd even approach the target, let alone the cap. If you
-still run long after that, trim the B2 browse (beat 7) or the SSE jump-cuts (beat 5) first.
+Total lands roughly **2:47** — inside the 2:50–2:55 target and comfortably under the 3:00 hard cap.
+The pad beyond each measured VO clip is deliberate screen time (Plaid's multi-step flow, more SSE
+jump-cuts across the full pipeline run, a longer B2 browse, the recap payoff breathing) — not dead
+air. If it still runs short in the edit, extend beat 5 (more SSE clips) or beat 7 (linger longer on
+`generation.json`) first; if you run long, trim those same two beats first.
 **Never hold a static frame > ~15s** under continuous narration.
 
 ---
