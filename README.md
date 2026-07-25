@@ -11,27 +11,43 @@
 </p>
 
 [![CI](https://github.com/iarjunganesh/bankers-wrapped/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/iarjunganesh/bankers-wrapped/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/iarjunganesh/bankers-wrapped/graph/badge.svg?token=GSBUXVREL7)](https://codecov.io/gh/iarjunganesh/bankers-wrapped)
+[![Codecov](https://codecov.io/gh/iarjunganesh/bankers-wrapped/graph/badge.svg?token=GSBUXVREL7)](https://codecov.io/gh/iarjunganesh/bankers-wrapped)
 [![Release](https://img.shields.io/badge/release-latest-2ea44f?logo=github&logoColor=white)](https://github.com/iarjunganesh/bankers-wrapped/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Watch Video](https://img.shields.io/badge/%E2%96%B6_Watch-3--min_demo-FF0000?logo=youtube&logoColor=white)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Watch Video](https://img.shields.io/badge/%E2%96%B6_Watch-3--min_demo-FF0000?logo=youtube&logoColor=white)](#)
 
-[![Backblaze B2](https://img.shields.io/badge/Backblaze_B2-Cloud_Storage-E21C2A?logo=backblaze&logoColor=white)](https://www.backblaze.com/cloud-storage)
+<!-- Row 2 — AI & Genblaze core -->
+[![Agent Pattern](https://img.shields.io/badge/Agent_Pattern-asyncio_typed_agents-3776AB?logo=python&logoColor=white)](backend/agents/base.py)
 [![Genblaze](https://img.shields.io/badge/Genblaze-SDK-7C3AED)](https://github.com/backblaze-labs/genblaze)
 [![GMI Cloud](https://img.shields.io/badge/GMI_Cloud-Seedream-0066CC)](https://cloud.gmi.ai/)
 [![NVIDIA NIM](https://img.shields.io/badge/NVIDIA_NIM-LLM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-TTS--1-412991?logo=openai&logoColor=white)](https://platform.openai.com/)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/)
-[![Pydantic](https://img.shields.io/badge/Pydantic-typed_models-E92063?logo=pydantic&logoColor=white)](https://pydantic.dev/)
-[![Plaid](https://img.shields.io/badge/Plaid-Sandbox-111111?logo=plaid&logoColor=white)](https://plaid.com/)
+[![Pydantic](https://img.shields.io/badge/Pydantic-2.13_models-E92063?logo=pydantic&logoColor=white)](https://pydantic.dev/)
+[![structlog](https://img.shields.io/badge/structlog-JSON_observability-4A90E2)](https://www.structlog.org/)
+[![Plaid](https://img.shields.io/badge/Plaid-Sandbox_ingestion-111111?logo=plaid&logoColor=white)](https://plaid.com/)
 
-[![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![Next.js](https://img.shields.io/badge/Next.js-16.2.9-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-26.4.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![Vercel](https://img.shields.io/badge/Vercel-Frontend-000000?logo=vercel&logoColor=white)](https://bankers-wrapped.vercel.app)
+<!-- Row 3 — Frontend + live Vercel app -->
+[![Next.js](https://img.shields.io/badge/Next.js-16.2.11-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-26-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Vercel Hobby](https://img.shields.io/badge/Vercel-Hobby-000000?logo=vercel&logoColor=white)](https://vercel.com)
 
+<!-- Row 4 — Backend -->
 [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.139-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Railway](https://img.shields.io/badge/Railway-Backend-0B0D0E?logo=railway&logoColor=white)](https://bankers-wrapped-api-production.up.railway.app/docs)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.140-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Ruff](https://img.shields.io/badge/Ruff-lint%20%2B%20format-D7FF64?logo=ruff&logoColor=111827)](https://docs.astral.sh/ruff/)
+[![pytest](https://img.shields.io/badge/pytest-9.1-0A9EDC?logo=pytest&logoColor=white)](https://docs.pytest.org/)
+[![Railway Hobby](https://img.shields.io/badge/Railway-Hobby-0B0D0E?logo=railway&logoColor=white)](https://railway.com)
+
+<!-- Row 5 — Storage (source of truth) -->
+[![Backblaze B2](https://img.shields.io/badge/Backblaze_B2-source_of_truth-E21C2A?logo=backblaze&logoColor=white)](https://www.backblaze.com/cloud-storage)
+[![SQLite](https://img.shields.io/badge/SQLite-read_cache-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/)
+
+<!-- Row 6 — Hosting (live deployments) -->
+[![Vercel live frontend](https://img.shields.io/badge/Vercel-live_frontend-000000?logo=vercel&logoColor=white)](https://bankers-wrapped.arjunganesh.dev)
+[![Railway live API](https://img.shields.io/badge/Railway-live_API-0B0D0E?logo=railway&logoColor=white)](https://bankers-wrapped-api-production.up.railway.app/docs)
 
 ---
 
@@ -86,7 +102,7 @@ Banker's Wrapped solves this with an agentic pipeline that reads your transactio
 
 ### Architecture Decision Records
 
-Eleven decisions documented (001–011), **all accepted and implemented** — see [`docs/adr/`](docs/adr/) for full rationale.
+Twelve decisions documented (001–012), **all accepted and implemented** — see [`docs/adr/`](docs/adr/) for full rationale.
 
 | ADR | Decision |
 | --- | --- |
@@ -101,6 +117,7 @@ Eleven decisions documented (001–011), **all accepted and implemented** — se
 | [009](docs/adr/009-b2-lifecycle-integrity.md) | B2 lifecycle rules (45-day retention) + per-artifact SHA-256 integrity |
 | [010](docs/adr/010-plaid-sandbox-ingestion.md) | Plaid sandbox connector — optional "connect a bank" path (live in production) |
 | [011](docs/adr/011-compositor-redesign.md) | Memory-bounded segment+concat compositor + non-blocking event loop (v1.6.0 redesign) |
+| [012](docs/adr/012-custom-domain-hosting.md) | Custom domain for the frontend (`bankers-wrapped.arjunganesh.dev`) + explicit Railway CORS origins |
 
 ---
 
@@ -160,7 +177,7 @@ The personality label opens Scene 1 and drives the entire visual and narrative t
 | **LLM** | [![Genblaze](https://img.shields.io/badge/Genblaze-SDK_chat-7C3AED)](https://github.com/backblaze-labs/genblaze) [![NVIDIA NIM](https://img.shields.io/badge/NVIDIA_NIM-76B900?logo=nvidia&logoColor=white)](https://build.nvidia.com/) | Narrative script — Genblaze SDK chat on GMI Cloud (`openai/gpt-5.4-mini`), automatic NVIDIA NIM fallback |
 | **Images** | [![GMI Cloud](https://img.shields.io/badge/GMI_Cloud-Seedream-0066CC)](https://cloud.gmi.ai/) | Scene visuals 1344×768, seedream-4-0-250828 (via Genblaze) — 5 parallel, retry ×3 |
 | **Video Compose** | [![FFmpeg](https://img.shields.io/badge/FFmpeg-8.1.2-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/) | Scene images + narration → H.264/AAC MP4 (segment + concat, dip-to-black) |
-| **Frontend** | [![Next.js](https://img.shields.io/badge/Next.js-16.2.9-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/) [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/) [![Node.js](https://img.shields.io/badge/Node.js-26.4.0-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) | Upload portal + video player |
+| **Frontend** | [![Next.js](https://img.shields.io/badge/Next.js-16.2.11-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org/) [![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)](https://react.dev/) [![Node.js](https://img.shields.io/badge/Node.js-26-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/) | Upload portal + video player |
 | **Session State** | [![Backblaze B2](https://img.shields.io/badge/B2-source_of_truth-FF0000?logo=backblaze&logoColor=white)](https://www.backblaze.com/cloud-storage) [![SQLite](https://img.shields.io/badge/SQLite-cache-003B57?logo=sqlite&logoColor=white)](https://sqlite.org/) | B2 manifest is the durable record (ADR-008); SQLite is a fast read cache |
 | **Hosting** | [![Railway](https://img.shields.io/badge/Backend-Railway-0B0D0E?logo=railway&logoColor=white)](https://railway.app) [![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000?logo=vercel&logoColor=white)](https://vercel.com) | Backend on Railway · Frontend on Vercel |
 | **Observability** | [![structlog](https://img.shields.io/badge/structlog-JSON-4A90E2)](https://www.structlog.org/) | Structured request + agent logging |
@@ -171,7 +188,7 @@ The personality label opens Scene 1 and drives the entire visual and narrative t
 
 | | |
 | --- | --- |
-| **App** | [https://bankers-wrapped.vercel.app](https://bankers-wrapped.vercel.app) ✅ live |
+| **App** | [https://bankers-wrapped.arjunganesh.dev](https://bankers-wrapped.arjunganesh.dev) ✅ live (verified 2026-07-25) — previously `bankers-wrapped.vercel.app`, still live as a fallback |
 | **API** | [https://bankers-wrapped-api-production.up.railway.app](https://bankers-wrapped-api-production.up.railway.app) |
 | **Demo Video** | `https://youtu.be/TBD` *(≤ 3 min, recorded before submission)* |
 | **Try It Now** | `make demo` — runs the full pipeline with synthetic data, no real bank account needed |
@@ -328,7 +345,7 @@ bankers-wrapped/
 │   └── COSTS.md           # Component budget — everything stays live through judging
 ├── docs/
 │   ├── ARCHITECTURE.md  # Deep dive — timing, B2 layout, lifecycle, provenance manifests
-│   └── adr/             # 11 Architecture Decision Records (all accepted)
+│   └── adr/             # 12 Architecture Decision Records (all accepted)
 ├── Dockerfile           # python:3.14-slim + FFmpeg + uv
 ├── railway.json         # Railway backend deployment
 ├── render.yaml          # Render backend deployment (alternative)

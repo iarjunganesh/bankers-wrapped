@@ -200,6 +200,6 @@ Submission due: **August 3, 2026**. Required deliverables: working hosted URL + 
 ## Judging Criteria (all equally weighted)
 
 1. **Real-World Utility** — solves low engagement in banking; clear market (retail banks / fintechs)
-2. **Production Readiness** — CI/CD, 99% coverage, rate limiting, structured logging, health endpoint, retry logic, 11 ADRs
+2. **Production Readiness** — CI/CD, 99% coverage, rate limiting, structured logging, health endpoint, retry logic, 12 ADRs
 3. **B2 Storage & Data Orchestration** — 10 artifact types stored per session; complete provenance manifest; share page + ZIP download show full B2 layout
 4. **Use of Genblaze** — image generation (Genblaze → GMI Cloud) + narration audio (OpenAI TTS via GenblazeClient); two provider types; retry tracking in generation.json

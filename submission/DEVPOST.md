@@ -139,7 +139,7 @@ Python, FastAPI, Next.js, Genblaze SDK, GMI Cloud (Seedream + chat), NVIDIA NIM 
 
 #### App URL
 
-`https://bankers-wrapped.vercel.app` (frontend) · `https://bankers-wrapped-api-production.up.railway.app` (API)
+`https://bankers-wrapped.arjunganesh.dev` (frontend) · `https://bankers-wrapped-api-production.up.railway.app` (API)
 
 #### GitHub Repo URL
 

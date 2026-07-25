@@ -41,7 +41,7 @@ The live pipeline run takes ~90–120 seconds. Sitting through that live, on cam
 
 ## Recording #1 — Live Pipeline (record this first, by itself)
 
-1. Open your browser to the **Live App** — `https://bankers-wrapped.vercel.app` — fresh, nothing clicked yet.
+1. Open your browser to the **Live App** — `https://bankers-wrapped.arjunganesh.dev` — fresh, nothing clicked yet.
 2. Start OBS recording.
 3. Click the button labeled **"🏦 Connect a bank (sandbox)"**.
 4. In the window that opens (Plaid), search for and select **"First Platypus Bank"**.
@@ -62,8 +62,8 @@ Open these before you start recording, arranged so you can switch between them q
 | Label used below | What it actually is | What to have on screen before recording |
 | --- | --- | --- |
 | **Spreadsheet** | Excel (or Notepad/VS Code) | `data/synthetic/transactions_jan_2026.csv` open, scrolled to the top |
-| **Live App** | The Banker's Wrapped Vercel web app | `https://bankers-wrapped.vercel.app`, fresh, nothing clicked |
-| **Pre-Generated Recap Page** | The public share page for an already-finished demo session | `https://bankers-wrapped.vercel.app/recap/2e6bdb3d-228f-456c-971e-9855274b0d54` — use this run for on-screen numbers, *not* the live Plaid run (Plaid sandbox numbers are randomized) |
+| **Live App** | The Banker's Wrapped Vercel web app | `https://bankers-wrapped.arjunganesh.dev`, fresh, nothing clicked |
+| **Pre-Generated Recap Page** | The public share page for an already-finished demo session | `https://bankers-wrapped.arjunganesh.dev/recap/2e6bdb3d-228f-456c-971e-9855274b0d54` — use this run for on-screen numbers, *not* the live Plaid run (Plaid sandbox numbers are randomized) |
 | **Backblaze B2 Console** | The Backblaze web dashboard, already logged in | Drilled into that same session's `pipeline/` folder, `generation.json` visible in the file listing (bucket `bankers-wrapped-assets` → `4d0f560b-…/2e6bdb3d-…/pipeline/`) |
 | **GitHub — generation.json evidence** | The same file, downloaded from that exact B2 path and committed as evidence, viewed on GitHub (syntax-highlighted, actually readable) | `https://github.com/iarjunganesh/bankers-wrapped/blob/main/assets/csv-run/2e6bdb3d/evidence/2e6bdb3d_generation.json`, scrolled to the `"llm"` block |
 | **GitHub README Page** | The project's GitHub repository page | `https://github.com/iarjunganesh/bankers-wrapped`, scrolled to the badges near the top |

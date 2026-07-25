@@ -7,8 +7,8 @@ all 12 content artifacts** in `generation.json`.
 
 | Run | Folder | Session | Ingestion | Recap URL |
 | --- | --- | --- | --- | --- |
-| **CSV upload** (canonical) | [`csv-run/`](csv-run/) | `2e6bdb3d-228f-456c-971e-9855274b0d54` | `data/synthetic/transactions_jan_2026.csv` | [/recap/2e6bdb3d…](https://bankers-wrapped.vercel.app/recap/2e6bdb3d-228f-456c-971e-9855274b0d54) |
-| **Plaid Sandbox** (WS-4) | [`plaid-run/`](plaid-run/) | `84cdf98f-b8ce-457a-969f-724cf116c130` | "Connect a bank" → `input/plaid_sandbox.csv` | [/recap/84cdf98f…](https://bankers-wrapped.vercel.app/recap/84cdf98f-b8ce-457a-969f-724cf116c130) |
+| **CSV upload** (canonical) | [`csv-run/`](csv-run/) | `2e6bdb3d-228f-456c-971e-9855274b0d54` | `data/synthetic/transactions_jan_2026.csv` | [/recap/2e6bdb3d…](https://bankers-wrapped.arjunganesh.dev/recap/2e6bdb3d-228f-456c-971e-9855274b0d54) |
+| **Plaid Sandbox** (WS-4) | [`plaid-run/`](plaid-run/) | `84cdf98f-b8ce-457a-969f-724cf116c130` | "Connect a bank" → `input/plaid_sandbox.csv` | [/recap/84cdf98f…](https://bankers-wrapped.arjunganesh.dev/recap/84cdf98f-b8ce-457a-969f-724cf116c130) |
 
 Each folder has `evidence/` (raw B2 JSONs, prefixed with the short session id) and `screenshots/`
 (numbered in walkthrough order).

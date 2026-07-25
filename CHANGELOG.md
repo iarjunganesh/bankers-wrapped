@@ -30,6 +30,16 @@ _Targeting **2.0.0** (submission):_
   refreshed to match; added `frontend/.nvmrc` pinning Node 26.
 - 148 backend tests still pass at 99.61% coverage after the bump; `npm run build` succeeds
   on the new frontend toolchain.
+- **Frontend hosting moved to a custom domain** — `bankers-wrapped.arjunganesh.dev` (ADR-012),
+  attached and DNS-verified via the Vercel CLI (`configured-correctly`, no conflicts).
+  `bankers-wrapped.vercel.app` still resolves as a fallback during cutover. Railway's
+  `CORS_ALLOW_ORIGINS` (previously unset, defaulting to the code's wildcard fallback) is now
+  explicitly scoped to both origins; verified via a live CORS preflight and a Railway redeploy.
+- **README badges restructured** into labeled rows (status · AI & Genblaze core · frontend +
+  live Vercel app · backend · storage · hosting/live deployments), with a dedicated "live
+  deployment" badge row separate from the tech-stack badges, and version numbers refreshed to
+  match the dependency bump above.
+- **New ADR-012** — custom domain hosting decision, context, and verification evidence.
 
 ---
 
