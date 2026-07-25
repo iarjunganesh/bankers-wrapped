@@ -25,6 +25,8 @@ The live pipeline run takes ~90–120 seconds. Sitting through that live, on cam
 
 **Shared OBS settings for both recordings** — Base + Output **1920×1080**, **30 fps**, cursor **visible**; **Display Capture** (or Window Capture of the browser); **microphone disabled** (mic OFF — narration is pre-generated, you never narrate live); MP4 (or MKV → remux) at ~12–16 Mbps; set a **Start/Stop hotkey** so you never film the OBS window.
 
+**Audio differs between the two recordings**: mic is OFF for both, no exceptions. **Desktop/system audio must stay ON for Recording #1** — the recap video autoplays with sound at the end of the live run, and beat 6 (payoff) needs that captured audio to duck `vo_05` under. **Recording #2 has no audio at all** — it's pure silent visual capture (scrolling, tab switches, no video playback), so speakers/system audio can be OFF too; nothing in that take needs sound.
+
 **Mouse discipline** (what makes it read as polished) — move **deliberately**, click **confidently**, **pause** on anything a judge should read. Avoid rapid scrolling, excess cursor motion, hovering, and repeated tab-switching.
 
 ---
@@ -81,22 +83,52 @@ Now start OBS recording once, and go through these in order without stopping:
 
 ---
 
+## Narration Script (verbatim, source of truth)
+
+Generated via `scripts/generate_demo_voiceover.py` — OpenAI `tts-1`, voice `nova` — which is the
+single source of truth for both the text below and the committed MP3s. Edit the text in that
+script, not here; re-run it, then paste the fresh measured durations into this table so the two
+never drift apart (see the version-sync policy in `CLAUDE.md`).
+
+| Clip | Text | Words | Measured |
+| --- | --- | --- | --- |
+| `vo_01-hook` | "Every bank app shows you the same thing: a wall of numbers, a chart you scroll past, then nothing. Your money has a story. Nobody's telling it." | 27 | 8.5s |
+| `vo_02-reveal` | "This is Banker's Wrapped — an AI pipeline that turns your transactions into a narrated recap video." | 17 | 6.3s |
+| `vo_03-ingestion` | "Connect a bank in one click through Plaid, or just upload a CSV. Same pipeline either way — zero friction, zero forking." | 22 | 7.4s |
+| `vo_04-pipeline` | "Four typed agents take it from there — parsing, analytics, a narrative script, and scene generation — all routed through the Genblaze SDK. GMI Cloud Seedream paints five scenes in parallel, OpenAI TTS narrates them, and FFmpeg composes the final video, live, in under two minutes." | 46 | 17.0s |
+| `vo_05-payoff` | "Meet the Financial Builder — your personality, your story, playing right now." | 12 | 4.6s |
+| `vo_06-b2` | "Every artifact lands on Backblaze B2 — fourteen files, ten types, from the input CSV to the final video — each one hashed and verifiable, with full generation provenance you can inspect yourself." | 33 | 12.3s |
+| `vo_07-durability` | "Refresh the page after a full backend redeploy — the recap still plays. B2 is the source of truth." | 19 | 6.0s |
+| `vo_08-production` | "Ninety-nine percent test coverage, a hard CI gate, structured logging, and eleven architecture decision records — this isn't a prototype." | 20 | 8.4s |
+| `vo_09-close` | "One connection. Five scenes. Your financial story — Banker's Wrapped, built on Genblaze and Backblaze B2." | 16 | 6.6s |
+
+**Narration spine ≈ 1:17** (77.1s measured via ffprobe, 2026-07-25) — shorter than the previous
+script (was ≈1:36), so the beat timeline below adds visual pad rather than relying on narration
+length alone to carry each beat.
+
+---
+
 ## Final beat timeline
 
 | # | Beat | VO clip (measured) | Source | Screen action | Duration | Ends at |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Opening card | silent | editor image (`assets/demo-cards/banner-{dark,light}.png`) | Brand card | 3s | 0:03 |
-| 2 | Hook | `vo_01-hook` (12.2s) | Recording #2 — Spreadsheet | Slow scroll of CSV rows | 14s | 0:17 |
-| 3 | Reveal | `vo_02-reveal` (7.8s) | Recording #2 — Live App | Home screen, no clicks | 10s | 0:27 |
-| 4 | Ingestion | `vo_03-ingestion` (10.3s) | Recording #1 — trim to Connect-a-bank clicks through login/account selection, stop right before "Continue" | Plaid connect flow | 17s | 0:44 |
-| 5 | Architecture + Pipeline live | `vo_04-pipeline` (22.0s) | first 7s: editor image (`assets/architecture/architecture-diagram-{dark,light}.png`); remaining ~25s: Recording #1 — jump-cut 3–4 short (2–3s) clips of the progress tracker at different moments | Diagram flash → SSE tracker advancing | 32s | 1:16 |
-| 6 | Payoff — recap plays | 5s recap audio + `vo_05-payoff` (6.0s) | Recording #1 — the finished recap playing | Let the recap's own audio play ~5s, then bring in `vo_05` and duck the recap audio under it | 15s | 1:31 |
-| 7 | B2 — share list → console → `generation.json` | `vo_06-b2` (16.2s) | Recording #2 — Pre-Generated Recap Page → Backblaze B2 Console → GitHub evidence file | Artifact list, then `generation.json` sitting in the B2 folder, then the same file on GitHub with `llm` block + SHA-256 visible | 27s | 1:58 |
-| 8 | Durability — reload share link | `vo_07-durability` (6.9s) | Recording #2 — Pre-Generated Recap Page (refresh) | Page reloads, still plays | 12s | 2:10 |
-| 9 | Production — CI/coverage/ADRs | `vo_08-production` (8.1s) | Recording #2 — GitHub README Page → Codecov Page (optional) | Badges, then ADR list (not the diagram — see Step 0) | 15s | 2:25 |
-| 10 | Close | `vo_09-close` (6.9s) | editor image (`assets/demo-cards/signoff-{dark,light}.png`) | Brand card hold | 13s | ~2:38 |
+| 2 | Hook | `vo_01-hook` (8.5s) | Recording #2 — Spreadsheet | Slow scroll of CSV rows | 11s | 0:14 |
+| 3 | Reveal | `vo_02-reveal` (6.3s) | Recording #2 — Live App | Home screen, no clicks | 8s | 0:22 |
+| 4 | Ingestion | `vo_03-ingestion` (7.4s) | Recording #1 — trim to Connect-a-bank clicks through login/account selection, stop right before "Continue" | Plaid connect flow (needs real time to read: institution search, login, account select) | 13s | 0:35 |
+| 5 | Architecture + Pipeline live | `vo_04-pipeline` (17.0s) | first 7s: editor image (`assets/architecture/architecture-diagram-{dark,light}.png`); remaining ~15s: Recording #1 — jump-cut 3–4 short (2–3s) clips of the progress tracker at different moments | Diagram flash → SSE tracker advancing | 22s | 0:57 |
+| 6 | Payoff — recap plays | 5s recap audio + `vo_05-payoff` (4.6s) | Recording #1 — the finished recap playing | Let the recap's own audio play ~5s, then bring in `vo_05` and duck the recap audio under it | 10s | 1:07 |
+| 7 | B2 — share list → console → `generation.json` | `vo_06-b2` (12.3s) | Recording #2 — Pre-Generated Recap Page → Backblaze B2 Console → GitHub evidence file | Artifact list, then `generation.json` sitting in the B2 folder, then the same file on GitHub with `llm` block + SHA-256 visible | 18s | 1:25 |
+| 8 | Durability — reload share link | `vo_07-durability` (6.0s) | Recording #2 — Pre-Generated Recap Page (refresh) | Page reloads, still plays | 8s | 1:33 |
+| 9 | Production — CI/coverage/ADRs | `vo_08-production` (8.4s) | Recording #2 — GitHub README Page → Codecov Page (optional) | Badges, then ADR list (not the diagram — see Step 0) | 11s | 1:44 |
+| 10 | Close | `vo_09-close` (6.6s) | editor image (`assets/demo-cards/signoff-{dark,light}.png`) | Brand card hold | 9s | ~1:53 |
 
-**Narration spine ≈ 1:36** across the nine `vo_NN` clips (`vo_full-reference.mp3` = the whole track). Total lands roughly **2:38–2:53** depending on how tight the pad trims run in the edit — comfortably inside the 2:50–2:55 target and the 3:00 hard cap. If you run long, trim the B2 browse (beat 7) or the SSE jump-cuts (beat 5) first. **Never hold a static frame > ~15s** under continuous narration.
+Total lands roughly **1:53** with the pad above — well inside the 2:50–2:55 target and the 3:00
+hard cap, leaving real headroom. **This is intentionally generous, not a floor** — if beats feel
+rushed in the edit (especially 4 and 7, which each show multiple distinct screens), extend the
+hold times; there's ~55s of slack before you'd even approach the target, let alone the cap. If you
+still run long after that, trim the B2 browse (beat 7) or the SSE jump-cuts (beat 5) first.
+**Never hold a static frame > ~15s** under continuous narration.
 
 ---
 
