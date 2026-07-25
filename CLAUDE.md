@@ -22,6 +22,44 @@ make demo-start   # start backend + frontend (bash scripts/start_demo.sh)
 make demo-stop    # stop all services
 ```
 
+## Version, Tag, and Doc Synchronization (mandatory)
+
+Every session that changes the version, a hosted URL, a dependency pin, a test count, or a
+judging-relevant claim **must** reconcile the fields and docs below before handoff — this repo has
+no automated drift-detection test, so it relies on this checklist being followed by hand.
+
+**Fields that move together in one commit** (a version bump touching only some of these is a
+defect, not a partial release):
+`pyproject.toml` `[project].version` · `frontend/package.json` `.version` · `backend/config.py`
+`Settings.app_version` · `CHANGELOG.md` (new `## [x.y.z]` heading — **required**:
+`.github/workflows/release.yml` extracts the GitHub Release body straight from this heading via
+regex and falls back to a bare `"Banker's Wrapped {tag}"` string if the heading text doesn't match
+the pushed tag exactly) · the "Current phase" line in this file · `README.md` status line/badges ·
+`submission/*.md`.
+
+**Status-bearing docs to reconcile every session** (grep each for anything the session touched):
+`README.md`, `CLAUDE.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/adr/*.md`,
+`submission/SUBMISSION.md`, `submission/DEMO_SCRIPT.md`, `submission/DEVPOST.md`,
+`submission/DEVPOST_README.md`, `submission/COSTS.md`.
+
+**ADR-addendum pattern**: when a decision's context changes after the fact (redeploy, dependency
+swap, hosting migration) — append a dated `**YYYY-MM-DD addendum:**` paragraph to the *existing*
+ADR instead of rewriting it. Preserves the decision history instead of erasing what was true when
+it was written.
+
+**Pre-handoff staleness grep (mandatory before ending a session that touched any of the above)**:
+grep the repo for the *previous* version string, the *previous* hosted URL, the *previous*
+dependency pin, and the *previous* test/coverage count that the session just changed. Every hit
+must be either updated or confirmed as an intentional historical record (e.g. an old `CHANGELOG.md`
+entry, a dated ADR addendum). A stale version/URL/count in a *current-state* sentence is a defect.
+
+**Source-version vs. deployed-version**: these are two distinct facts and must never be conflated.
+If `pyproject.toml`/`CHANGELOG.md` are bumped in a commit but Railway/Vercel haven't redeployed yet,
+say so explicitly in status docs — never assume a version bump implies the live app changed.
+
+**Git commit authorship**: this repo's commits are authored solely by **Arjun Ganesh** — do not add
+a `Co-Authored-By` trailer (Claude or otherwise) to commit messages in this project.
+
 ## Architecture
 
 4-agent pipeline — each agent is a typed async `BaseAgent`:
