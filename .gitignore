@@ -48,3 +48,12 @@ xfade_*.mp4
 
 # Scratch / temp
 .tmp/
+
+# Demo-video working files — raw OBS takes are large and re-shootable, so they
+# stay local. The stills and the pre-rendered beat clip are small and ARE tracked
+# (see submission/DEMO_SCRIPT.md), so they're re-included below.
+assets/demo-video/*.mp4
+!assets/demo-video/beat02-repo-pan.mp4
+
+# Windows folder metadata
+desktop.ini

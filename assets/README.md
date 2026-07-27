@@ -13,6 +13,11 @@ all 12 content artifacts** in `generation.json`.
 Each folder has `evidence/` (raw B2 JSONs, prefixed with the short session id) and `screenshots/`
 (numbered in walkthrough order).
 
+**Provider-side corroboration** lives in [`gmi-cloud/`](gmi-cloud/): GMI Cloud's own console showing
+the account's recently-used models (`GPT-5.4-mini` + `seedream-4-0-250828`), real per-model spend,
+and the generated scene images with timestamps matching both runs above. Everything else in this
+folder is the application's own record of what it did — that one is the provider's.
+
 ---
 
 ## Which run to cite for what
@@ -31,6 +36,17 @@ Each folder has `evidence/` (raw B2 JSONs, prefixed with the short session id) a
   > independent of any one dataset. The pipeline faithfully renders whatever the bank returns — and the
   > `csv-run/` above demonstrates the analytics on a realistic dataset (a coherent 8.7% savings story). Two
   > runs, one pipeline: **real connectivity** proven by Plaid, **real insight quality** proven by the CSV run.
+  >
+  > **Why this run shows a 1358% savings rate:** Plaid's sandbox fixture is internally inconsistent, and
+  > it is identical for every sandbox institution (the transactions are bound to the `user_good` test
+  > user, not the bank). It reports the `ACH Electronic Credit GUSTO PAY` payroll row as
+  > `amount=+5850, personal_finance_category=TRANSFER_OUT` — i.e. money *leaving* the account — while the
+  > only inflows it labels are a `$4.22` interest payment and a `$500` airline refund. Income therefore
+  > reads as `$504.22` against `$11,149.46` of outflows, and `savings ÷ income` lands at 1358%. The
+  > connector's sign handling follows Plaid's documented convention (outflows positive, negated on
+  > ingest — `backend/ingest/plaid_connector.py`), so this is a property of the sandbox dataset, not of
+  > the analytics. The `csv-run/` figures above are the ones that reflect how the analytics behave on a
+  > coherent month.
 
 ---
 

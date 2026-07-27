@@ -93,7 +93,7 @@ BEATS: list[tuple[str, str, str]] = [
         "production",
         "vo_08-production",
         "Ninety-nine percent test coverage, a hard CI gate, structured "
-        "logging, and eleven architecture decision records — this isn't a "
+        "logging, and twelve architecture decision records — this isn't a "
         "prototype.",
     ),
     (

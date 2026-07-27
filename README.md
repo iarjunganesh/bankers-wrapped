@@ -149,6 +149,11 @@ audio_result = await genblaze_client.generate_narration_audio(
 
 Every run produces a **SHA-256 provenance manifest** stored in B2 metadata — full model traceability per video.
 
+Provenance is verifiable from **both sides**: the pipeline's own `generation.json` per session, and
+GMI Cloud's console — see [`assets/gmi-cloud/`](assets/gmi-cloud/) for the provider's record of the
+same calls (recently-used models, per-model spend, and the generated scene images with timestamps
+matching the committed runs).
+
 ---
 
 ## Financial Personality
