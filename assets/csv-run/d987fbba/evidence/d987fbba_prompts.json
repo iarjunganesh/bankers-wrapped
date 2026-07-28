@@ -1,0 +1,52 @@
+{
+  "session_id": "d987fbba-b143-46e6-be5b-c9326d3bf88e",
+  "generated_at": "2026-07-28T07:32:03.637696+00:00",
+  "scenes": [
+    {
+      "scene_idx": 0,
+      "prompt": "A clean, professional abstract financial dashboard with balanced bars, a stable foundation motif, and soft upward lines in a minimalist blue and gold palette",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "10a7236d920a9080"
+    },
+    {
+      "scene_idx": 1,
+      "prompt": "A minimalist illustration of a debt gauge moving downward beside an investment growth curve rising upward, with subtle glowing accents and a polished corporate style",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "6a93827ba28c3d09"
+    },
+    {
+      "scene_idx": 2,
+      "prompt": "A sleek abstract pie chart with three highlighted segments labeled by proportion, surrounded by clean icons for home, savings, and travel in a modern financial interface",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "5cbfa62b8830385b"
+    },
+    {
+      "scene_idx": 3,
+      "prompt": "A minimalist workflow graphic showing income flowing into automated savings and debt payoff channels, with smooth arrows and a refined professional layout",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "3966af63a08b36c1"
+    },
+    {
+      "scene_idx": 4,
+      "prompt": "A calm, forward-looking abstract scene with a rising path, subtle light beams, and a polished financial horizon in a clean modern style",
+      "negative_prompt": "",
+      "seed": null,
+      "provider": "gmi-cloud",
+      "model": "seedream-4-0-250828",
+      "prompt_hash": "6055a472de4e7fc4"
+    }
+  ],
+  "narration_text_hash": "95f827457506a3ec"
+}

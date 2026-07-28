@@ -7,8 +7,14 @@ all 12 content artifacts** in `generation.json`.
 
 | Run | Folder | Session | Ingestion | Recap URL |
 | --- | --- | --- | --- | --- |
-| **CSV upload** (canonical) | [`csv-run/`](csv-run/) | `2e6bdb3d-228f-456c-971e-9855274b0d54` | `data/synthetic/transactions_jan_2026.csv` | [/recap/2e6bdb3d…](https://bankers-wrapped.arjunganesh.dev/recap/2e6bdb3d-228f-456c-971e-9855274b0d54) |
+| **CSV upload** (canonical — the run the demo video shows) | [`csv-run/d987fbba/`](csv-run/d987fbba/) | `d987fbba-b143-46e6-be5b-c9326d3bf88e` | `data/synthetic/transactions_jan_2026.csv` | [/recap/d987fbba…](https://bankers-wrapped.arjunganesh.dev/recap/d987fbba-b143-46e6-be5b-c9326d3bf88e) |
+| **CSV upload** (earlier run, 2026-07-14) | [`csv-run/2e6bdb3d/`](csv-run/2e6bdb3d/) | `2e6bdb3d-228f-456c-971e-9855274b0d54` | same CSV | [/recap/2e6bdb3d…](https://bankers-wrapped.arjunganesh.dev/recap/2e6bdb3d-228f-456c-971e-9855274b0d54) |
 | **Plaid Sandbox** (WS-4) | [`plaid-run/`](plaid-run/) | `84cdf98f-b8ce-457a-969f-724cf116c130` | "Connect a bank" → `input/plaid_sandbox.csv` | [/recap/84cdf98f…](https://bankers-wrapped.arjunganesh.dev/recap/84cdf98f-b8ce-457a-969f-724cf116c130) |
+
+Both CSV runs use the **same input file two weeks apart** and produce identical insights (January 2026,
+$13,850 income, 8.7% savings, Financial Builder) — the pipeline is deterministic on its analytics.
+`d987fbba` is the one to cite: it ran on 2026-07-28 against the custom domain and current UI, in
+**90.4 s**, and is what the demo video shows on screen.
 
 Each folder has `evidence/` (raw B2 JSONs, prefixed with the short session id) and `screenshots/`
 (numbered in walkthrough order).
@@ -74,8 +80,14 @@ normalisation output); the CSV run's input is the committed `data/synthetic/tran
 
 ## Screenshot highlights
 
-- **`csv-run/`** (`2e6bdb3d_01…13`): upload portal · live SSE progress (script step ~4 s on GMI) · result +
-  personality badge · in-app 14-file B2 artifact list · B2 console: bucket overview (custom lifecycle rule),
-  root session index, session/pipeline/scenes folders, `generation.json` + `session_metadata.json` details.
+- **`csv-run/d987fbba/`** (`d987fbba_01, 03, 04, 09, 10`) — **the current set**, captured 2026-07-28 on the
+  custom domain with the shipped v1.9.2 UI: upload portal · result + personality badge with the recap
+  playing · in-app 14-file B2 artifact list · B2 console `pipeline/` folder · `generation.json` details.
+- **`csv-run/2e6bdb3d/`** (`2e6bdb3d_01…13`): the fuller earlier walkthrough (2026-07-14) — upload portal ·
+  live SSE progress (script step ~4 s on GMI) · result + personality badge · in-app 14-file B2 artifact
+  list · B2 console: bucket overview (custom lifecycle rule), root session index, session/pipeline/scenes
+  folders, `generation.json` + `session_metadata.json` details. Retained because it covers B2 console
+  screens the newer set doesn't, and because two runs a fortnight apart on identical input demonstrate
+  the analytics are deterministic.
 - **`plaid-run/`** (`84cdf98f_01…19`): in-app "Connect a bank" click (`01`) · the full **Plaid Link** flow
   (`02–07`) · SSE progress · result · B2 console browse including **`14` `input/plaid_sandbox.csv`** details.

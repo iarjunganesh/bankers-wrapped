@@ -1,0 +1,144 @@
+{
+  "session_id": "d987fbba-b143-46e6-be5b-c9326d3bf88e",
+  "generated_at": "2026-07-28T07:32:35.629409+00:00",
+  "pipeline_version": "1.0.0",
+  "images": [
+    {
+      "scene_idx": 0,
+      "model": "seedream-4-0-250828",
+      "provider": "gmi-cloud",
+      "prompt_hash": "10a7236d920a9080",
+      "latency_ms": 39371,
+      "retry_count": 0,
+      "manifest_hash": "ddd3110bbe9ec2a8da0ad4484f6f859264306ace77fcedc6a07885d96f595fd7",
+      "success": true
+    },
+    {
+      "scene_idx": 1,
+      "model": "seedream-4-0-250828",
+      "provider": "gmi-cloud",
+      "prompt_hash": "6a93827ba28c3d09",
+      "latency_ms": 40688,
+      "retry_count": 0,
+      "manifest_hash": "b70324467bcc498f65c1e3493cc3bc9936bd5b06f78778d7865969fcdc3c932a",
+      "success": true
+    },
+    {
+      "scene_idx": 2,
+      "model": "seedream-4-0-250828",
+      "provider": "gmi-cloud",
+      "prompt_hash": "5cbfa62b8830385b",
+      "latency_ms": 43964,
+      "retry_count": 0,
+      "manifest_hash": "4dd168f10c95db5d17fc442256f76648671dd1accb821d89edf54df34d22a93c",
+      "success": true
+    },
+    {
+      "scene_idx": 3,
+      "model": "seedream-4-0-250828",
+      "provider": "gmi-cloud",
+      "prompt_hash": "3966af63a08b36c1",
+      "latency_ms": 48236,
+      "retry_count": 0,
+      "manifest_hash": "b549b082de258793068ce4db6a789346bb4bd7c8e0837520028e14af368a0ac4",
+      "success": true
+    },
+    {
+      "scene_idx": 4,
+      "model": "seedream-4-0-250828",
+      "provider": "gmi-cloud",
+      "prompt_hash": "6055a472de4e7fc4",
+      "latency_ms": 46215,
+      "retry_count": 0,
+      "manifest_hash": "076e9e789fbda61c72e99e21111aef74bcfc8fc66c6f716edbfddaccec32542d",
+      "success": true
+    }
+  ],
+  "audio": {
+    "model": "tts-1",
+    "voice": "alloy",
+    "provider": "openai",
+    "latency_ms": 5735,
+    "retry_count": 0,
+    "success": true
+  },
+  "compositor": {
+    "tool": "ffmpeg",
+    "scenes": 5,
+    "latency_ms": 25995,
+    "success": true
+  },
+  "llm": {
+    "label": "gmi-cloud/gpt-5.4-mini-2026-03-17",
+    "provider": "gmi-cloud",
+    "model": "gpt-5.4-mini-2026-03-17",
+    "latency_ms": 4793,
+    "retry_count": 0,
+    "tokens_in": 386,
+    "tokens_out": 488,
+    "cost_usd": 0.002485
+  },
+  "total_latency_ms": 90409,
+  "artifacts": [
+    {
+      "key": "0a569f37-f2ad-4d3f-bf92-2dcefc7eb3cd/d987fbba-b143-46e6-be5b-c9326d3bf88e/input/transactions_jan_2026.csv",
+      "bytes": 1123,
+      "sha256": "a05561d9b0e1180044a2f4bc7721bfa83870d3585565270163468a1c6e1f4e2f"
+    },
+    {
+      "key": "0a569f37-f2ad-4d3f-bf92-2dcefc7eb3cd/d987fbba-b143-46e6-be5b-c9326d3bf88e/pipeline/script.json",
+      "bytes": 2307,
+      "sha256": "aadbc1aaa1b02c8e9d5d407f8d419003d9645d446201807d35650eaf11892112"
+    },
+    {
+      "key": "0a569f37-f2ad-4d3f-bf92-2dcefc7eb3cd/d987fbba-b143-46e6-be5b-c9326d3bf88e/pipeline/analytics.json",
+      "bytes": 718,
+      "sha256": "b09552aa1c6343a04ec2ac74ac764e9c593b27acbf04a074960bbf53abafb651"
+    },
+    {
+      "key": "0a569f37-f2ad-4d3f-bf92-2dcefc7eb3cd/d987fbba-b143-46e6-be5b-c9326d3bf88e/pipeline/scenes/scene_00.jpg",
+      "bytes": 775934,
+      "sha256": "f25a5fe4c461bc5359654e48de3f4ef456e4166666adc41cebc9b70cb0ed8876"
+    },
+    {
+      "key": "0a569f37-f2ad-4d3f-bf92-2dcefc7eb3cd/d987fbba-b143-46e6-be5b-c9326d3bf88e/pipeline/scenes/scene_01.jpg",
+      "bytes": 1271395,
+      "sha256": "05bba142816ac21f447acf5d3911b0822efd4ace3e7fb0fb5771015262b570f0"
+    },
+    {
+      "key": "0a569f37-f2ad-4d3f-bf92-2dcefc7eb3cd/d987fbba-b143-46e6-be5b-c9326d3bf88e/pipeline/scenes/scene_02.jpg",
+      "bytes": 665835,
+      "sha256": "5e5de2fe1437e113f4960aae5711712061b005b3af5d4a725d3ddf50fa117823"
+    },
+    {
+      "key": "0a569f37-f2ad-4d3f-bf92-2dcefc7eb3cd/d987fbba-b143-46e6-be5b-c9326d3bf88e/pipeline/scenes/scene_03.jpg",
+      "bytes": 814274,
+      "sha256": "e81b06119479659d821c9d3a9cd0d1e264350b1d8ac344500f579743d4fbcf77"
+    },
+    {
+      "key": "0a569f37-f2ad-4d3f-bf92-2dcefc7eb3cd/d987fbba-b143-46e6-be5b-c9326d3bf88e/pipeline/scenes/scene_04.jpg",
+      "bytes": 715229,
+      "sha256": "6570712347fbde119be4f9e6eaf00f215a5129cf18de242d199be22fd1b11611"
+    },
+    {
+      "key": "0a569f37-f2ad-4d3f-bf92-2dcefc7eb3cd/d987fbba-b143-46e6-be5b-c9326d3bf88e/pipeline/thumbnail.jpg",
+      "bytes": 775934,
+      "sha256": "f25a5fe4c461bc5359654e48de3f4ef456e4166666adc41cebc9b70cb0ed8876"
+    },
+    {
+      "key": "0a569f37-f2ad-4d3f-bf92-2dcefc7eb3cd/d987fbba-b143-46e6-be5b-c9326d3bf88e/pipeline/prompts.json",
+      "bytes": 2020,
+      "sha256": "671de0961f2c02f0e22a0ae7c8c0b733e8fe11166476ca421bfae9d58b64dc4b"
+    },
+    {
+      "key": "0a569f37-f2ad-4d3f-bf92-2dcefc7eb3cd/d987fbba-b143-46e6-be5b-c9326d3bf88e/pipeline/narration.mp3",
+      "bytes": 1051392,
+      "sha256": "2adf16428a7def3d5a0626b4a1034fc5102febe4a77f57e9035779e755ef3766"
+    },
+    {
+      "key": "0a569f37-f2ad-4d3f-bf92-2dcefc7eb3cd/d987fbba-b143-46e6-be5b-c9326d3bf88e/output/recap_d987fbba-b143-46e6-be5b-c9326d3bf88e.mp4",
+      "bytes": 2394210,
+      "sha256": "d60607b85337aeb036efb49ac85c524fc30a92fe9b468185dc5509f0f53fcb67"
+    }
+  ]
+}

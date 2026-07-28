@@ -231,9 +231,9 @@ Full judge-facing galleries and raw evidence for two complete runs (CSV upload a
 
 | Product Flow | B2 Provenance |
 | --- | --- |
-| ![Upload Portal](https://raw.githubusercontent.com/iarjunganesh/bankers-wrapped/main/assets/csv-run/2e6bdb3d/screenshots/2e6bdb3d_01-app-upload-portal.png) | ![B2 Bucket + Lifecycle](https://raw.githubusercontent.com/iarjunganesh/bankers-wrapped/main/assets/csv-run/2e6bdb3d/screenshots/2e6bdb3d_05-b2-bucket-overview-lifecycle.png) |
-| ![Connect a Bank via Plaid](https://raw.githubusercontent.com/iarjunganesh/bankers-wrapped/main/assets/plaid-run/84cdf98f/screenshots/84cdf98f_02-plaid-connect-intro.png) | ![Session Folder](https://raw.githubusercontent.com/iarjunganesh/bankers-wrapped/main/assets/csv-run/2e6bdb3d/screenshots/2e6bdb3d_07-b2-session-folder-overview.png) |
-| ![Generated Video Result](https://raw.githubusercontent.com/iarjunganesh/bankers-wrapped/main/assets/csv-run/2e6bdb3d/screenshots/2e6bdb3d_03-generated-video-result.png) | ![Generation JSON Details](https://raw.githubusercontent.com/iarjunganesh/bankers-wrapped/main/assets/csv-run/2e6bdb3d/screenshots/2e6bdb3d_10-b2-generation-json-details.png) |
+| ![Upload Portal](https://raw.githubusercontent.com/iarjunganesh/bankers-wrapped/main/assets/csv-run/d987fbba/screenshots/d987fbba_01-app-upload-portal.png) | ![B2 Bucket + Lifecycle](https://raw.githubusercontent.com/iarjunganesh/bankers-wrapped/main/assets/csv-run/2e6bdb3d/screenshots/2e6bdb3d_05-b2-bucket-overview-lifecycle.png) |
+| ![Connect a Bank via Plaid](https://raw.githubusercontent.com/iarjunganesh/bankers-wrapped/main/assets/plaid-run/84cdf98f/screenshots/84cdf98f_02-plaid-connect-intro.png) | ![Session Folder](https://raw.githubusercontent.com/iarjunganesh/bankers-wrapped/main/assets/csv-run/d987fbba/screenshots/d987fbba_09-b2-pipeline-folder.png) |
+| ![Generated Video Result](https://raw.githubusercontent.com/iarjunganesh/bankers-wrapped/main/assets/csv-run/d987fbba/screenshots/d987fbba_03-generated-video-result.png) | ![Generation JSON Details](https://raw.githubusercontent.com/iarjunganesh/bankers-wrapped/main/assets/csv-run/d987fbba/screenshots/d987fbba_10-b2-generation-json-details.png) |
 
 ---
 

@@ -2,8 +2,8 @@
 
 > **Target 2:50–2:55** (hard cap 3:00) · public on YouTube · **no copyrighted music** · 1080p.
 > **One live OBS take, one 15-second evidence take, and stills** — see **Recording #1**, **Recording #2**, and **Stills** below. The live pipeline run is captured once, separately, then jump-cut clips from it are dropped into the edit. Every screen whose job is simply *to be read* is a high-resolution still with a slow move applied in the editor: sharper text than screen capture, and free to redo.
-> Fallback if the live run fails and you don't want to spend more GMI credit: the pre-generated
-> **CSV** run `2e6bdb3d…` (see [`assets/README.md`](../assets/README.md)). The pre-generated
+> **Shot 2026-07-28**: the live run is `d987fbba…` (CSV, custom domain, 90.4 s, 8.7% savings) —
+> that's what beats 6–8 show. Earlier CSV run `2e6bdb3d…` remains as a fallback. The
 > **Plaid** run `84cdf98f…` is *evidence only* — never use its numbers on screen (see Honesty rules).
 
 **Every criterion is earned on screen** — the mapping:
@@ -38,7 +38,9 @@ stay as video. Don't let stills creep into those four beats.
 
 **Shared OBS settings for both recordings** — Base + Output **1920×1080**, **30 fps**, cursor **visible**; **Display Capture** (or Window Capture of the browser); **microphone disabled** (mic OFF — narration is pre-generated, you never narrate live); MP4 (or MKV → remux) at ~12–16 Mbps; set a **Start/Stop hotkey** so you never film the OBS window.
 
-**Audio**: mic is OFF for both takes, no exceptions. **Desktop/system audio must stay ON for Recording #1** — the recap video autoplays with sound at the end of the live run, and beat 7 (payoff) needs that captured audio to duck `vo_05` under. **Recording #2 needs system audio ON too** if you play the video after reloading; otherwise it can be silent.
+**Audio — set it once and never touch it again**: **mic OFF, desktop/system audio ON**, for every take. Don't vary it per recording; a per-take toggle is how you end up discovering afterwards that the one take you can't cheaply redo was captured silent.
+
+The mic is never used — narration is pre-generated, you never speak. System audio is genuinely *required* for **#1b**, because beat 7 ducks `vo_05` under the recap's own audio; it's merely harmless in **#1a** (nothing plays) and **#2** (you'll probably mute the recap under `vo_07` anyway, but you can only mute audio you actually captured).
 
 **Mouse discipline** in both OBS takes (what makes it read as polished) — move **deliberately**, click **confidently**, **pause** on anything a judge should read. Avoid rapid scrolling, excess cursor motion, hovering, and repeated tab-switching.
 
@@ -108,7 +110,7 @@ The one beat left that has to be motion. **Skip this section entirely if you are
 see Honesty rules; it only airs if you actually redeployed.
 
 1. Trigger a real Railway redeploy and wait for the backend to come back up.
-2. Open `https://bankers-wrapped.arjunganesh.dev/recap/2e6bdb3d-228f-456c-971e-9855274b0d54`.
+2. Open `https://bankers-wrapped.arjunganesh.dev/recap/d987fbba-b143-46e6-be5b-c9326d3bf88e` — the same session beats 6–8 show.
 3. Start OBS. Keep the **URL bar in frame** — it's what makes this beat mean anything.
 4. Click reload. Let the page fully repaint: thumbnail, personality badge, stats, artifact list.
 5. Press play and let the video run 2–3 seconds.
@@ -116,7 +118,7 @@ see Honesty rules; it only airs if you actually redeployed.
 
 *Optional, only if you'd rather show live navigation than the committed B2 screenshots in beat 8*:
 keep recording and browse the B2 console from the bucket root down into
-`4d0f560b-…/2e6bdb3d-…/pipeline/` until `generation.json` is visible. A live drill-down is more
+`0a569f37-…/d987fbba-…/pipeline/` until `generation.json` is visible. A live drill-down is more
 convincing than four stills of the same path — and it's also four more chances to fumble. Either is
 defensible; pick one and don't mix both inside the same beat.
 
@@ -140,17 +142,18 @@ Two capture types, and the difference decides whether a still can move:
 | `s01-repo-top.png` | 2 | A | `github.com/iarjunganesh/bankers-wrapped`, **full-page capture** (1920×12476 — native frame width, so the pan renders 1:1 with no rescaling). The pan is **pre-rendered** to `assets/demo-video/beat02-repo-pan.mp4` — drop that in, don't re-do the move by hand | (baked into the clip) |
 | `s02-csv` | 3 | A | `data/synthetic/transactions_jan_2026.csv` as GitHub renders it (crisp and pannable). Fallback: an Excel window as Type B, held static | Slow vertical pan down the rows |
 | `s03-app-home` | 4 | **B** | `bankers-wrapped.arjunganesh.dev` home screen, **URL bar visible**, nothing clicked | Static hold |
-| `s04-artifact-list` | 8 | *committed* | [`2e6bdb3d_04-app-b2-artifact-list.png`](../assets/csv-run/2e6bdb3d/screenshots/2e6bdb3d_04-app-b2-artifact-list.png) | Static hold |
-| `s05-b2-pipeline` | 8 | *committed* | [`2e6bdb3d_09-b2-pipeline-folder.png`](../assets/csv-run/2e6bdb3d/screenshots/2e6bdb3d_09-b2-pipeline-folder.png) | Static hold |
-| `s06-b2-generation` | 8 | *committed* | [`2e6bdb3d_10-b2-generation-json-details.png`](../assets/csv-run/2e6bdb3d/screenshots/2e6bdb3d_10-b2-generation-json-details.png) | Static hold |
-| `s07-evidence-json` | 8 | A | The committed `generation.json` on GitHub — `"llm"` block through the SHA-256 list | Slow pan from `llm` down to the hashes |
+| `s04-artifact-list` | 8 | B | The `d987fbba` share page, "Pipeline Artifacts — Backblaze B2 (14 files)" expanded | Static hold |
+| `s05-b2-pipeline` | 8 | B | B2 console, `0a569f37-…/d987fbba-…/pipeline/` folder listing | Static hold |
+| `s06-b2-generation` | 8 | B | B2 console, `generation.json` **Details** panel (key, bucket, size, upload time) | Static hold |
+| `s07-evidence-json` | 8 | B | `generation.json` itself, expanded — `llm` block, `total_latency_ms`, and the 12-artifact SHA-256 list all in one frame | Static hold |
 | `s08-badges` | 10 | A | README badge rows (CI, coverage, release, licence) | Static hold |
 | `s09-adrs` | 10 | A | README ADR list (sits just under the architecture diagram) | Slow pan down |
 | `s10-codecov` | 10 | A | `codecov.io/gh/iarjunganesh/bankers-wrapped` | Static hold |
 
-`s04`–`s06` are **already in the repo** — captured from the real `2e6bdb3d` run and committed as
-evidence, so there's nothing to re-shoot and nothing a judge could call staged. They're
-1920×947–1059, i.e. **no headroom**: scale to fit and hold static.
+`s04`–`s07` were captured from the **live `d987fbba` run** on 2026-07-28 and are mirrored into
+[`assets/csv-run/d987fbba/`](../assets/csv-run/d987fbba/) as committed evidence, so every screen in
+beat 8 shows the same session the video's payoff beat shows, on the custom domain and current UI.
+All four are 1920×1080 with **no headroom**: hold them static, don't zoom.
 
 **Viewport width when capturing Type A** — this is the setting that decides whether the beat looks
 composed or empty. GitHub's README sits in a centred column only ~800 px wide, so captured at a
@@ -294,7 +297,7 @@ overlays) — both have to pass before calling it done.
 ## Honesty rules (what not to imply on screen)
 
 - **Never present pre-generated material as live.** Recording #1 is the only footage allowed to
-  stand in for "this is happening right now." The committed runs (`2e6bdb3d`, `84cdf98f`) belong to
+  stand in for "this is happening right now." The earlier committed runs (`2e6bdb3d`, `84cdf98f`) belong to
   beat 8's *static* artifact/B2/evidence stills, where the pipeline events already happened.
 - **Never show a Plaid-derived recap result** (verified 2026-07-27). Plaid's sandbox returns the
   same fixture for *every* institution — the transaction set is bound to the `user_good` test user,
@@ -337,7 +340,7 @@ overlays) — both have to pass before calling it done.
 - [ ] Recording #1b (CSV run) done once — only re-record if something goes visibly wrong, since each run spends GMI credit.
 - [ ] #1a and #1b shot at the same window size / zoom / theme so the beat-5 cut doesn't jump.
 - [ ] Recording #2 (Durability, ~15s) done *after* a real Railway redeploy — or beat 9 cut entirely.
-- [ ] All ten stills captured: `s01`–`s03` and `s07`–`s10` fresh, `s04`–`s06` pulled from the committed `assets/csv-run/2e6bdb3d/screenshots/`.
+- [x] All ten stills captured — `s04`–`s07` from the live `d987fbba` run, mirrored into `assets/csv-run/d987fbba/screenshots/`.
 - [ ] Beat 2's pan starts on the README banner, not on the repo file listing above it.
 - [ ] Every still is either Type A (has pan headroom) or held static — no still is zoomed without spare pixels.
 - [ ] One theme held throughout — app, cards, and diagram all dark or all light, never mixed.

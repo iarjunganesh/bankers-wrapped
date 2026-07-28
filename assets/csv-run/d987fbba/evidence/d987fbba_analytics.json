@@ -1,0 +1,31 @@
+{
+  "period_label": "January 2026",
+  "total_income": 13850.0,
+  "total_expenses": 4352.38,
+  "savings_amount": 1200.0,
+  "savings_rate": 8.7,
+  "top_categories": [
+    {
+      "category": "housing",
+      "amount": 1200.0,
+      "percentage": 27.6
+    },
+    {
+      "category": "savings",
+      "amount": 1200.0,
+      "percentage": 27.6
+    },
+    {
+      "category": "travel",
+      "amount": 534.0,
+      "percentage": 12.3
+    }
+  ],
+  "achievements": [
+    "Reduced debt by 250",
+    "Invested 500 toward your future"
+  ],
+  "personality": "Financial Builder",
+  "personality_reason": "You consistently prioritise savings and debt reduction \u2014 building a strong financial foundation.",
+  "currency": "USD"
+}

@@ -1,0 +1,31 @@
+{
+  "title": "Your January 2026 Financial Journey",
+  "personality": "Financial Builder",
+  "scenes": [
+    {
+      "id": 1,
+      "narration": "Financial Builder \u2014 you\u2019re laying down a strong foundation with every smart move you make. This month shows a steady balance of income, spending, saving, and progress that reflects real financial discipline.",
+      "visual_prompt": "A clean, professional abstract financial dashboard with balanced bars, a stable foundation motif, and soft upward lines in a minimalist blue and gold palette"
+    },
+    {
+      "id": 2,
+      "narration": "Your January momentum is clear: you reduced debt by 250 and invested 500 toward your future. That\u2019s the kind of progress that compounds quietly, then transforms everything over time.",
+      "visual_prompt": "A minimalist illustration of a debt gauge moving downward beside an investment growth curve rising upward, with subtle glowing accents and a polished corporate style"
+    },
+    {
+      "id": 3,
+      "narration": "Your top spending category was housing at 28%, followed closely by savings at 28%, with travel at 12%. That mix shows you\u2019re covering the essentials while still making room for both future goals and meaningful experiences.",
+      "visual_prompt": "A sleek abstract pie chart with three highlighted segments labeled by proportion, surrounded by clean icons for home, savings, and travel in a modern financial interface"
+    },
+    {
+      "id": 4,
+      "narration": "As a Financial Builder, your best next step is to keep automating your savings and debt reduction right after income lands. That simple system helps protect your momentum and keeps your foundation growing without extra effort.",
+      "visual_prompt": "A minimalist workflow graphic showing income flowing into automated savings and debt payoff channels, with smooth arrows and a refined professional layout"
+    },
+    {
+      "id": 5,
+      "narration": "You closed January with an 8.7% savings rate and a clear sense of direction. Keep building patiently \u2014 your consistency today is shaping a stronger, more flexible tomorrow.",
+      "visual_prompt": "A calm, forward-looking abstract scene with a rising path, subtle light beams, and a polished financial horizon in a clean modern style"
+    }
+  ]
+}
