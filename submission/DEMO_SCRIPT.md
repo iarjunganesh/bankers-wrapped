@@ -48,7 +48,7 @@ The mic is never used — narration is pre-generated, you never speak. System au
 
 ## Step 0 — one-time prep, before recording anything
 
-1. **Architecture diagram**: already built and ready at [`assets/architecture/`](../assets/architecture/) — `architecture-diagram-{dark,light}.png`, brand-themed (no GitHub screenshot needed). Used **exactly once**, in the editor, at beat 6 — you never show this diagram live in either OBS recording. Note it is **2352×450**, a wide strip rather than 16:9: fit it to the frame *width* and hold it static (see Motion direction for why it must not be zoomed).
+1. **Architecture diagram**: use **`architecture-diagram-{dark,light}-16x9.png`** in [`assets/architecture/`](../assets/architecture/) — pre-letterboxed to exactly 1920×1080 with the diagram's own background colour (`#0A0A0F` dark / `#EEF0F7` light), so it drops straight onto the timeline with no canvas-background setup and no black bars. Used **exactly once**, at beat 6; never shown live in either OBS recording. The source `architecture-diagram-{dark,light}.png` is **2352×450** (a 5.23:1 strip) — at frame width the diagram fills the middle third of the picture, which is the ceiling for a diagram this wide. Hold it static; do not zoom (see Motion direction).
 2. **Opening/closing cards**: already built and ready at [`assets/demo-cards/`](../assets/demo-cards/) — `banner-{dark,light}.png` (opening) and `signoff-{dark,light}.png` (closing), exactly 1920×1080. These are inserted directly in the editor as the first/last clips — **do not record them in OBS** (a browser tab around them would show browser chrome).
 3. **Pick one theme and hold it** — dark or light — across the app, the cards, and the diagram. Every committed asset ships in both variants; mixing them mid-video reads as an accident.
 4. **Capture the stills** — see the [Stills](#stills--capture-list) section below. Do this before you open the editor, so assembly is one uninterrupted pass.
@@ -271,7 +271,7 @@ sits on matching colour instead of default black. Then build in this order:
 | 4 | 4 | `s03-app-home` | static |
 | 5 | 5a | **plaid-connect-take.mp4** — Connect-a-bank clicks through login and account list, stopping before "Continue" | native |
 | 5b | 5b | **csv-run-take.mp4** — the CSV path starting the run | native |
-| 6 | 6a | `architecture-diagram-{dark,light}.png` | static, fit to width |
+| 6 | 6a | `architecture-diagram-{dark,light}-16x9.png` | static, drop in as-is (already 1920×1080) |
 | 7 | 6b | **csv-run-take.mp4** — 5–6 short (3–5s) clips of the progress tracker at different moments ("Writing narrative script", "3/5 scenes done", "composing video", "uploading"), skipping the waiting parts | native |
 | 8 | 7 | **csv-run-take.mp4** — the finished recap playing | native |
 | 9 | 8 | `s04` → `s05` → `s06` → `s07` | static ×3 (cross-dissolve between the B2 pair), pan on `s07` |
