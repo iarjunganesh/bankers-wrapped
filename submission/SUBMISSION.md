@@ -28,7 +28,7 @@ Every cell below carries how to verify it yourself — no claim here should be t
 - [x] Working hosted URL — `https://bankers-wrapped.arjunganesh.dev` live and verified 2026-07-25 (Vercel domain attached, DNS `configured-correctly`, `/recap/{session_id}` pages return 200, Railway CORS updated to allow the new origin — preflight from `https://bankers-wrapped.arjunganesh.dev` confirmed). `bankers-wrapped.vercel.app` still resolves as a fallback.
 - [x] `make demo` runs clean on a fresh clone — verified 2026-07-25 against the current dependency lock (`genblaze-core` 0.3.7 / `genblaze-s3` 0.3.6 / `genblaze-gmicloud` 0.3.4)
 - [x] Demo video ≤ 3 min uploaded to YouTube — [youtu.be/eTw1TCcYFk4](https://youtu.be/eTw1TCcYFk4), **2:50**, public, licensed stock music only (no copyrighted tracks), authored English captions. Shot against the custom domain on canonical CSV run `d987fbba`. Shooting script + measured narration: [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md)
-- [ ] Devpost submission form completed
+- [x] Devpost submission form completed — [devpost.com/software/banker-s-wrapped](https://devpost.com/software/banker-s-wrapped), public, with the live app, demo video and repo links all resolving
 - [x] README links to demo video and hosted URL — "▶ Watch" badge and the Submission Links table in [`README.md`](../README.md), mirrored in [`DEVPOST_README.md`](DEVPOST_README.md)
 - [ ] Product feedback filed via [Genblaze GitHub Issues](https://github.com/backblaze-labs/genblaze/issues) — qualifies for one of 10 **Feedback Prizes** (mentorship), winnable in addition to an overall prize
 - [ ] App + APIs stay funded and live through **Aug 11** (end of judging) — see [`COSTS.md`](COSTS.md)
@@ -42,10 +42,12 @@ Every cell below carries how to verify it yourself — no claim here should be t
   demo video. Evidence in `assets/csv-run/d987fbba/`.
 - Do not state a test count or coverage percentage without having just run `make test` — both
   numbers move with the codebase and the last-known value goes stale within a session.
-- The demo-video box is checked because the artifact exists at a real, public URL
-  ([youtu.be/eTw1TCcYFk4](https://youtu.be/eTw1TCcYFk4)) — not because the edit was finished
-  locally. **The Devpost box stays unchecked until the form is actually filed**; do not describe
-  the submission as complete on the strength of this checklist alone.
+- Both the demo-video and Devpost boxes are checked because each artifact exists at a real, public
+  URL that was fetched and confirmed — [youtu.be/eTw1TCcYFk4](https://youtu.be/eTw1TCcYFk4)
+  (visibility `Public` verified in YouTube Studio) and
+  [devpost.com/software/banker-s-wrapped](https://devpost.com/software/banker-s-wrapped) (page
+  publicly reachable, entered in the right hackathon, all three links resolving) — not because a
+  local file was finished. The two boxes that remain open are genuinely open.
 - Do not claim PostgreSQL, MCP, or any integration this repo doesn't implement — see `CLAUDE.md`'s
   "Critical Constraints" for the exhaustive list of what's real vs. documented-as-future-only.
 
@@ -92,5 +94,5 @@ index/{session_id}.json                                ← flat session→user i
 | **App** | `https://bankers-wrapped.arjunganesh.dev` ✅ live (verified 2026-07-25) · `bankers-wrapped.vercel.app` still resolves as a fallback |
 | **API** | `https://bankers-wrapped-api-production.up.railway.app` ✅ live |
 | **Demo Video** | `https://youtu.be/eTw1TCcYFk4` ✅ published — 2:50, **Public** (confirmed in YouTube Studio), authored English captions |
-| **Devpost** | `https://devpost.com/TBD` — not submitted yet |
+| **Devpost** | `https://devpost.com/software/banker-s-wrapped` ✅ submitted — public, entered in Backblaze Generative Media Hackathon 2026 |
 | **GitHub** | `https://github.com/iarjunganesh/bankers-wrapped` |

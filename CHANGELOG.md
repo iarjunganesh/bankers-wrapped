@@ -7,8 +7,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
-- Devpost project URL — add alongside the demo-video link in `README.md`,
-  `submission/SUBMISSION.md` and `submission/DEVPOST_README.md` once the form is filed.
+- Genblaze Feedback Prize — file genuine product feedback via
+  [Genblaze GitHub Issues](https://github.com/backblaze-labs/genblaze/issues) and reference it in
+  the submission. Optional, stackable with an overall prize.
+- Keep Railway, Vercel, B2 and all provider keys funded through **Aug 11** (end of judging) —
+  see `submission/COSTS.md`.
+- `savings_rate` guard in `backend/agents/analytics_agent.py` — `savings / income * 100` has no
+  upper bound, so a low-income month renders an implausible percentage. Deferred deliberately
+  during the feature freeze; nothing judge-facing depends on it.
+
+---
 
 ---
 
@@ -17,6 +25,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 **Submission release.** The ≤3-minute demo video is shot, cut and published, and the judge-facing
 dossier is evidence-first end to end. No pipeline behaviour changed — this release is the
 deliverable, its evidence, and the documentation sweep around them.
+
+> **2026-07-30 addendum:** the Devpost entry is filed and public at
+> [devpost.com/software/banker-s-wrapped](https://devpost.com/software/banker-s-wrapped), entered in
+> the Backblaze Generative Media Hackathon 2026, with the live app, demo video and repo links all
+> confirmed resolving. **All three required deliverables are now shipped** — hosted URL, ≤3-min demo
+> video, Devpost form. `submission/DEVPOST.md` also gained a drafted *"describe your contribution"*
+> field, which the form requires and the repo had no source of truth for. No code changed, so this
+> stays inside 2.0.0 rather than cutting a patch release — the deployed `/health` version continues
+> to report the tag the submission was judged from.
 
 ### Added
 
