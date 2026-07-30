@@ -7,16 +7,70 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
-_Targeting **2.0.0** (submission):_
+- Devpost project URL — add alongside the demo-video link in `README.md`,
+  `submission/SUBMISSION.md` and `submission/DEVPOST_README.md` once the form is filed.
 
-- Demo video (≤ 3 min) recorded and uploaded public to YouTube; wire the URL into the
-  "▶ Watch" badge and the Submission Links table (README, `submission/SUBMISSION.md`).
-- Devpost submission form completed; add the Devpost project URL alongside the video link.
-- Fresh CSV + Plaid pipeline evidence captured against `bankers-wrapped.arjunganesh.dev`
-  (the runs currently in `assets/csv-run/` and `assets/plaid-run/` predate the domain
-  migration in 1.9.2).
+---
 
-### Changed (staged for the video shoot)
+## [2.0.0] — 2026-07-29
+
+**Submission release.** The ≤3-minute demo video is shot, cut and published, and the judge-facing
+dossier is evidence-first end to end. No pipeline behaviour changed — this release is the
+deliverable, its evidence, and the documentation sweep around them.
+
+### Added
+
+- **Demo video** — [youtu.be/eTw1TCcYFk4](https://youtu.be/eTw1TCcYFk4), 2:50, public, English
+  captions. Filmed against the custom domain on canonical CSV run `d987fbba` (90.4 s end to end,
+  8.7 % savings rate, Financial Builder), so the payoff beat and the B2 storage beat show the same
+  session on the shipped UI. Caption track committed at `assets/demo-video/bankers-wrapped.srt`,
+  timed against the exported audio rather than the planned beat sheet — speech recognition mangles
+  *Genblaze*, *Seedream* and *NIM*, so the captions are authored, not auto-generated.
+- **`assets/csv-run/d987fbba/`** — the canonical run promoted to primary evidence: five B2 evidence
+  JSONs plus the five screenshots the video uses. `generation.json` records all five Seedream images
+  on `gmi-cloud` with zero retries, `tts-1` narration, and `llm.provider=gmi-cloud` at `$0.002485`,
+  i.e. no NIM fallback was needed. The 2026-07-14 run is retained: it covers B2 console screens the
+  newer set does not, and two runs a fortnight apart on identical input demonstrate the analytics
+  are deterministic.
+- **`assets/gmi-cloud/`** — provider-side corroboration. Every other evidence folder is the
+  application's own record of what it did; this is GMI Cloud's. Recently-used models
+  (`GPT-5.4-mini` + `seedream-4-0-250828`), per-model spend, and 207 generations with timestamps
+  matching the committed runs. Account PII redacted; the API Keys page is deliberately never
+  screenshotted.
+- **`scripts/fetch_session_evidence.py`** — resolves a session's owning user via the B2 index
+  (ADR-008) and pulls its evidence JSONs into `assets/<label>/<short-id>/`, with a plausibility
+  check that flags incoherent Plaid sandbox figures before they can reach a screen. Read-only,
+  no GMI cost.
+- **Pre-letterboxed 16:9 demo assets** — `architecture-diagram-{dark,light}-16x9.png` (the source is
+  a 2352×450 strip, now padded to frame size with its own background colour) and a padded
+  `s07-evidence-json.png`, so every timeline asset drops in without editor-side canvas setup.
+
+### Changed
+
+- **`submission/COSTS.md` reconciled against measured spend.** The per-run figure was a planning
+  estimate assuming `$0.05/image`; the GMI console shows **$0.153** for a full 5-scene run
+  (`seedream` $0.15 + `gpt-5.4-mini` $0.003), implying roughly `$0.03/image`. Per-run total drops
+  from an estimated $0.27 to a measured **$0.17**, and lifetime OpenAI spend on this project is
+  **$0.686**. The $10 GMI top-up was already purchased, leaving $8.59 — about 50 further runs, so
+  the judging-week reserve is far more comfortable than the original plan assumed.
+- **`submission/DEMO_SCRIPT.md` restructured around the CSV run.** Recording #1 splits into 1a
+  (Plaid connect, cancelled before the exchange so it costs nothing) and 1b (the CSV pipeline run,
+  the only take that spends GMI credit). Beat 5 shows both ingestion paths; beats 6–7 only ever show
+  the CSV run, so no Plaid-derived numbers reach the screen. Most read-only screens moved from screen
+  capture to high-resolution stills with a documented capture list and motion rules, and beat 2's pan
+  is pre-rendered to `assets/demo-video/beat02-repo-pan.mp4`. Audio rule simplified to mic OFF /
+  system audio ON for every take, rather than a per-take toggle that can silently sink the paid take.
+- **`vo_08-production` regenerated** — it said "eleven architecture decision records" against 12 on
+  screen and in `docs/adr/`; corrected to "twelve" and re-measured at 8.4 s.
+- **Plaid sandbox limitation documented** (`assets/README.md`). Plaid's sandbox fixture is identical
+  for every institution — the transactions are bound to the `user_good` test user, not the bank — and
+  is internally inconsistent: it reports the GUSTO payroll credit as `amount=+5850, TRANSFER_OUT`,
+  i.e. an outflow, leaving `$4.22` of interest as the only labelled inflow. Analytics therefore
+  renders a 1358 % savings rate. Verified against four institutions. The connector's sign handling
+  follows Plaid's documented convention and is correct, so this is a property of the dataset rather
+  than a defect.
+
+### Changed (brand + docs work that preceded the shoot)
 
 - **Swagger UI (`/docs`) now has a theme-aware banner header**: a custom `/docs` route splices a
   real `<picture>` banner (light/dark `assets/demo-cards/banner-*.svg`) into the page shell above

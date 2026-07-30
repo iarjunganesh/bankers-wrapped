@@ -91,4 +91,4 @@ Rules of thumb:
 2. **Free access**: no auth in front of the app (already true); judges must not need credentials.
 3. **Demo video**: <3 min, publicly on YouTube/Vimeo/Youku, **no copyrighted music** — use silence or licensed audio only.
 4. **Feedback Prize** (free +EV): submitting product feedback via Genblaze GitHub Issues makes us eligible for one of 10 mentorship prizes, winnable *in addition to* an overall prize.
-5. **Originality window**: project must be newly created or significantly updated during the submission period (Jun 22 – Aug 3) to use B2 + Genblaze — the v1.6.0 → v1.9.2 work all lands inside it; keep committing.
+5. **Originality window**: project must be newly created or significantly updated during the submission period (Jun 22 – Aug 3) to use B2 + Genblaze — the v1.6.0 → v2.0.0 work all lands inside it; keep committing.

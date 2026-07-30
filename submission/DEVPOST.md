@@ -27,19 +27,30 @@ Target: **Grand Prize (top 1–3 of 300+ participants)**
 - [x] Built with list drafted
 
 ### Additional Info (Judges Only)
-- [ ] App URL — fill in Railway/Vercel deployment URL
-- [ ] GitHub Repo URL — fill in; grant `b2genblaze` contributor access if private
+
+- [x] App URL — `https://bankers-wrapped.arjunganesh.dev` (API: `https://bankers-wrapped-api-production.up.railway.app`)
+- [x] GitHub Repo URL — `https://github.com/iarjunganesh/bankers-wrapped` (public; no contributor grant needed)
 - [x] Providers and models drafted
 - [x] B2 and Genblaze usage drafted
 
 ### Project Media
-- [ ] Demo video (≤ 3 min) — record and upload (public; no copyrighted music)
-- [ ] Screenshot: upload + live SSE progress UI
-- [ ] Screenshot: share page (video player + B2 artifact list)
-- [ ] Screenshot: personality result (one of the 4 types)
-- [ ] Generated scene image(s) from a real run
+
+All assets exist and are committed — this is a copy/upload exercise, nothing left to produce.
+
+- [x] Demo video (≤ 3 min) — [youtu.be/eTw1TCcYFk4](https://youtu.be/eTw1TCcYFk4), 2:50, public, licensed stock music only, authored English captions
+- [x] Screenshot: upload portal — `assets/csv-run/d987fbba/screenshots/d987fbba_01-app-upload-portal.png`
+- [x] Screenshot: share page (video player + B2 artifact list) — `d987fbba_04-app-b2-artifact-list.png`
+- [x] Screenshot: personality result (Financial Builder) — `d987fbba_03-generated-video-result.png`
+- [x] Screenshot: B2 provenance — `d987fbba_10-b2-generation-json-details.png`
+- [x] Screenshot: Plaid "connect a bank" flow — `assets/plaid-run/84cdf98f/screenshots/84cdf98f_02-plaid-connect-intro.png`
+- [x] Generated scene images from a real run — `assets/csv-run/d987fbba/` (session `d987fbba`, 5 Seedream scenes in B2)
+
+### Project Description
+
+- [x] Paste the full contents of [`DEVPOST_README.md`](DEVPOST_README.md) into the description field — it is a verified byte-exact mirror of the root README with every link and image rewritten to absolute URLs, and its maintainer note is an HTML comment so it renders nothing
 
 ### Feedback Prize (free extra — 10 winners, stackable with an overall prize)
+
 - [ ] File genuine product feedback (bug report / feature request) via [Genblaze GitHub Issues](https://github.com/backblaze-labs/genblaze/issues) and reference it in the submission
 
 ---

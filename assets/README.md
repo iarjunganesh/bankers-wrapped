@@ -81,7 +81,7 @@ normalisation output); the CSV run's input is the committed `data/synthetic/tran
 ## Screenshot highlights
 
 - **`csv-run/d987fbba/`** (`d987fbba_01, 03, 04, 09, 10`) — **the current set**, captured 2026-07-28 on the
-  custom domain with the shipped v1.9.2 UI: upload portal · result + personality badge with the recap
+  custom domain with the shipped frontend (v1.9.1 typography onward, unchanged through 2.0.0): upload portal · result + personality badge with the recap
   playing · in-app 14-file B2 artifact list · B2 console `pipeline/` folder · `generation.json` details.
 - **`csv-run/2e6bdb3d/`** (`2e6bdb3d_01…13`): the fuller earlier walkthrough (2026-07-14) — upload portal ·
   live SSE progress (script step ~4 s on GMI) · result + personality badge · in-app 14-file B2 artifact

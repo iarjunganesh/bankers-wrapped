@@ -335,29 +335,32 @@ overlays) — both have to pass before calling it done.
 
 ## Production checklist
 
-- [ ] Record at 1920×1080; hide bookmarks/personal tabs; close every tab not being filmed; clean browser profile.
-- [ ] Recording #1a (Plaid connect) done — cancelled before "Continue", so no credit spent; retake freely.
-- [ ] Recording #1b (CSV run) done once — only re-record if something goes visibly wrong, since each run spends GMI credit.
-- [ ] #1a and #1b shot at the same window size / zoom / theme so the beat-5 cut doesn't jump.
-- [ ] Recording #2 (Durability, ~15s) done *after* a real Railway redeploy — or beat 9 cut entirely.
+**Shot, cut and published 2026-07-29** — [youtu.be/eTw1TCcYFk4](https://youtu.be/eTw1TCcYFk4), final
+cut **2:50.2**, 1920×1080/30 fps, AAC 192 kbps. Items below are checked only where the exported file
+was actually inspected; the few that remain open say why.
+
+- [x] Recorded at 1920×1080 — all three takes probed and confirmed; clean profile, single tab in every take.
+- [x] Recording #1a (Plaid connect) done — 44.2 s, silent (nothing plays), free. *Note: the take itself runs past "Continue" to Plaid's save prompt; the **cut** stops on the account list, which is what the honesty rule requires.*
+- [x] Recording #1b (CSV run) done once — 3:11.7, audio captured (mean −21.2 dB), one GMI run spent.
+- [x] #1a and #1b shot at the same window size / zoom / theme — beat-5 cut does not jump.
+- [x] Recording #2 (Durability, 20.4 s → 9.5 s cut) shot after a **real** Railway redeploy; B2-manifest fallback confirmed live on the fresh container before filming.
 - [x] All ten stills captured — `s04`–`s07` from the live `d987fbba` run, mirrored into `assets/csv-run/d987fbba/screenshots/`.
-- [ ] Beat 2's pan starts on the README banner, not on the repo file listing above it.
-- [ ] Every still is either Type A (has pan headroom) or held static — no still is zoomed without spare pixels.
-- [ ] One theme held throughout — app, cards, and diagram all dark or all light, never mixed.
-- [ ] Editor canvas background set to `#0a0a0f` / `#eef0f7` so letterboxed stills sit on matching colour, not black.
-- [ ] No still that lacks spare pixels has a zoom on it (demo cards, `s03`, `s04`–`s06`, architecture diagram are all static).
-- [ ] Architecture diagram used only at beat 6, fit to frame width, held static.
-- [ ] Live-run personality matches `vo_05`'s "Financial Builder" — otherwise beat 7 footage swapped or VO re-generated.
-- [ ] Jump-cut the generation wait in beat 6 (progress bar → result); total cut **≤ 3:00**.
-- [ ] Captions/subtitles on (accessibility + judges often watch muted first).
-- [ ] Music: silence, or a license-free bed only. **No copyrighted tracks** (rules).
-- [ ] Upload **public** (not unlisted) to YouTube; paste the URL into README (badge + links row) and SUBMISSION/DEVPOST.
-- [ ] Address bar reads `bankers-wrapped.arjunganesh.dev` in **every** frame that shows it — no `vercel.app`.
-- [ ] The recap shown from beat 6 onward came from the **CSV** path; the Plaid dialog was cancelled before Continue.
-- [ ] Result page sanity-checked before editing: savings rate plausible, expenses below income (not the 1358% Plaid figure).
-- [ ] Watch once at 1.0× end-to-end to confirm nothing reads as broken.
-- [ ] Lower-third overlays present for every beat that specifies one (see Final beat timeline), each on screen ≤ 4s.
-- [ ] Watched once with audio off (story survives on picture + overlays alone) and once with video off (narration survives alone).
-- [ ] Every "live" claim in the narration is backed by footage of `bankers-wrapped.arjunganesh.dev`, not a local dev server.
-- [ ] Beat 10's coverage/ADR numbers re-verified against `make test` / `ls docs/adr/*.md` on shoot day, not carried over from an earlier session.
-- [ ] Beat 2's GitHub repo scroll shows the current "What Is This?" / "The Problem" text, re-captured if the README changed since this script was written.
+- [x] Beat 2's pan starts on the README banner, not the repo file listing — verified on the rendered clip's first frame.
+- [x] Every still is exact 16:9 or pre-letterboxed; nothing without spare pixels is zoomed.
+- [x] One theme held throughout — light, across app, cards and diagram.
+- [x] Architecture diagram used only at beat 6, held static (pre-letterboxed `-16x9` variant, so no canvas setup needed).
+- [x] Live-run personality matches `vo_05`'s "Financial Builder" — confirmed on the result page.
+- [x] Jump-cut the generation wait in beat 6; total cut **2:50.2 ≤ 3:00**.
+- [x] Captions — authored `assets/demo-video/bankers-wrapped.srt` uploaded (auto-generated captions mangle *Genblaze*, *Seedream*, *NIM*).
+- [x] Music: Clipchamp licensed stock bed only, ~17 dB below narration, continuous with a closing fade. **No copyrighted tracks.**
+- [x] URL pasted into README (badge + links row), `SUBMISSION.md` and `DEVPOST_README.md`.
+- [x] Address bar reads `bankers-wrapped.arjunganesh.dev` in every frame that shows it — no `vercel.app`.
+- [x] The recap shown from beat 6 onward came from the **CSV** path.
+- [x] Result page sanity-checked: $13,850 income, $4,352.38 expenses, **8.7 %** — not the 1358 % Plaid figure.
+- [x] Every "live" claim in the narration is backed by footage of the hosted app.
+- [x] Beat 10's numbers re-verified on shoot day — `151 passed, 99.62 % coverage`, `ls docs/adr/*.md` → 12 files.
+- [x] Beat 2's scroll shows the current "What Is This?" / "The Problem" text.
+- [x] **YouTube visibility is Public, not Unlisted** — confirmed in YouTube Studio → Channel content (Visibility column reads `Public`, state `Published`). Rules require unrestricted judge access.
+- [x] Thumbnail set — `assets/demo-cards/banner-light.png`, confirmed rendering in Studio.
+- [ ] Watched once at 1.0× end-to-end, once with audio off, once with video off.
+- [ ] ~~Lower-third overlays~~ — **not implemented.** The authored caption track carries the same facts for muted viewers; accepted trade-off rather than re-opening a verified timeline.

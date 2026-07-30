@@ -17,8 +17,8 @@ Every cell below carries how to verify it yourself — no claim here should be t
 | Criterion | How Banker's Wrapped Addresses It | Verify |
 | --- | --- | --- |
 | **Real-World Utility** | Solves chronically low engagement in banking apps — turns opaque data into a story people want to share. Zero-friction ingestion: **"Connect a bank" via Plaid Sandbox** (ADR-010) or CSV upload. Clear target market: retail banks and fintechs. | Live: click "Connect a bank (sandbox)" on the app, or upload either file in `data/synthetic/` |
-| **Production Readiness** | CI/CD with 80%+ coverage gate, structured JSON logging, health endpoint, rate limiting (5 req/hr/IP), binary CSV validation, 12 ADRs (all accepted and implemented), k6 load-test script, synthetic demo data committed. Sessions survive redeploys — B2 is the source of truth (ADR-008), SQLite is a cache. Memory-bounded compositor + non-blocking event loop — battle-tested under a 0.5 GB container. | `uv run pytest tests/ --cov=backend` → **151 passed, 99.62% coverage** (measured 2026-07-25, `coverage.xml`); CI badge in README; `ls docs/adr/*.md` → 12 files |
-| **B2 Storage + Orchestration** | **B2 is the source of truth** (ADR-008): share links survive full backend redeploys via the self-contained session manifest + flat `index/` lookup; SQLite is only a read cache. **14 files across 10 artifact types** per session, each with a **SHA-256 in `generation.json`** (ADR-009); a committed **45-day lifecycle rule** (`infra/b2-lifecycle.json`) bounds storage. Presigned URLs regenerated per request; `/download` streams a full ZIP. | `assets/csv-run/` and `assets/plaid-run/` — two full captured sessions (raw B2 JSON + numbered screenshots); or browse the live B2 bucket console directly |
+| **Production Readiness** | CI/CD with 80%+ coverage gate, structured JSON logging, health endpoint, rate limiting (5 req/hr/IP), binary CSV validation, 12 ADRs (all accepted and implemented), k6 load-test script, synthetic demo data committed. Sessions survive redeploys — B2 is the source of truth (ADR-008), SQLite is a cache. Memory-bounded compositor + non-blocking event loop — battle-tested under a 0.5 GB container. | `uv run pytest tests/ --cov=backend` → **151 passed, 99.62% coverage** (re-measured 2026-07-29 at the 2.0.0 tag, `coverage.xml`); CI badge in README; `ls docs/adr/*.md` → 12 files |
+| **B2 Storage + Orchestration** | **B2 is the source of truth** (ADR-008): share links survive full backend redeploys via the self-contained session manifest + flat `index/` lookup; SQLite is only a read cache. **14 files across 10 artifact types** per session, each with a **SHA-256 in `generation.json`** (ADR-009); a committed **45-day lifecycle rule** (`infra/b2-lifecycle.json`) bounds storage. Presigned URLs regenerated per request; `/download` streams a full ZIP. | `assets/csv-run/d987fbba/` (canonical — the run the demo video shows), `assets/csv-run/2e6bdb3d/` and `assets/plaid-run/84cdf98f/` — three full captured sessions (raw B2 JSON + numbered screenshots); `assets/gmi-cloud/` adds GMI Cloud's own console record of the same calls; or browse the live B2 bucket console directly |
 | **Genblaze Usage** | **3 of 4 AI steps route through Genblaze**: images (GMI Cloud Seedream, 5 in parallel), the narrative LLM (GMI Cloud chat with automatic NVIDIA NIM fallback, ADR-007), and narration audio (OpenAI TTS wrapped in `GenblazeClient`). No provider is called directly outside `genblaze_client.py`; per-step provenance incl. tokens + cost recorded in `generation.json`. | `grep -rn "openai\.\|anthropic\." backend/ --include=*.py \| grep -v genblaze_client.py` → no hits; `assets/*/evidence/*_generation.json` → `models_used` block |
 
 ---
@@ -27,9 +27,9 @@ Every cell below carries how to verify it yourself — no claim here should be t
 
 - [x] Working hosted URL — `https://bankers-wrapped.arjunganesh.dev` live and verified 2026-07-25 (Vercel domain attached, DNS `configured-correctly`, `/recap/{session_id}` pages return 200, Railway CORS updated to allow the new origin — preflight from `https://bankers-wrapped.arjunganesh.dev` confirmed). `bankers-wrapped.vercel.app` still resolves as a fallback.
 - [x] `make demo` runs clean on a fresh clone — verified 2026-07-25 against the current dependency lock (`genblaze-core` 0.3.7 / `genblaze-s3` 0.3.6 / `genblaze-gmicloud` 0.3.4)
-- [ ] Demo video ≤ 3 min uploaded to YouTube — **public**, no copyrighted music (rules). Shooting script + measured narration ready: [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md)
+- [x] Demo video ≤ 3 min uploaded to YouTube — [youtu.be/eTw1TCcYFk4](https://youtu.be/eTw1TCcYFk4), **2:50**, public, licensed stock music only (no copyrighted tracks), authored English captions. Shot against the custom domain on canonical CSV run `d987fbba`. Shooting script + measured narration: [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md)
 - [ ] Devpost submission form completed
-- [ ] README links to demo video and hosted URL
+- [x] README links to demo video and hosted URL — "▶ Watch" badge and the Submission Links table in [`README.md`](../README.md), mirrored in [`DEVPOST_README.md`](DEVPOST_README.md)
 - [ ] Product feedback filed via [Genblaze GitHub Issues](https://github.com/backblaze-labs/genblaze/issues) — qualifies for one of 10 **Feedback Prizes** (mentorship), winnable in addition to an overall prize
 - [ ] App + APIs stay funded and live through **Aug 11** (end of judging) — see [`COSTS.md`](COSTS.md)
 
@@ -37,13 +37,15 @@ Every cell below carries how to verify it yourself — no claim here should be t
 
 - `bankers-wrapped.arjunganesh.dev` is verified as of 2026-07-25: added in Vercel, DNS
   `configured-correctly`, `/health` and `/recap/{session_id}` return 200, CORS preflight from the
-  new origin succeeds against Railway. **Still pending**: a full end-to-end pipeline run (CSV or
-  Plaid) completed *against the new domain* — do not claim that specific fact until it happens.
+  new origin succeeds against Railway. ✅ **Resolved 2026-07-28** — a full end-to-end CSV run
+  completed against the new domain: session `d987fbba`, 90.4 s, 14 B2 artifacts, filmed for the
+  demo video. Evidence in `assets/csv-run/d987fbba/`.
 - Do not state a test count or coverage percentage without having just run `make test` — both
   numbers move with the codebase and the last-known value goes stale within a session.
-- Do not describe the demo video or Devpost form as "complete" based on this document's checklist
-  alone — both boxes above are unchecked for a reason; check them only after the artifact exists
-  at a real, public URL.
+- The demo-video box is checked because the artifact exists at a real, public URL
+  ([youtu.be/eTw1TCcYFk4](https://youtu.be/eTw1TCcYFk4)) — not because the edit was finished
+  locally. **The Devpost box stays unchecked until the form is actually filed**; do not describe
+  the submission as complete on the strength of this checklist alone.
 - Do not claim PostgreSQL, MCP, or any integration this repo doesn't implement — see `CLAUDE.md`'s
   "Critical Constraints" for the exhaustive list of what's real vs. documented-as-future-only.
 
@@ -89,6 +91,6 @@ index/{session_id}.json                                ← flat session→user i
 | --- | --- |
 | **App** | `https://bankers-wrapped.arjunganesh.dev` ✅ live (verified 2026-07-25) · `bankers-wrapped.vercel.app` still resolves as a fallback |
 | **API** | `https://bankers-wrapped-api-production.up.railway.app` ✅ live |
-| **Demo Video** | `https://youtu.be/eTw1TCcYFk4` ✅ published — 2:50, public, English captions |
+| **Demo Video** | `https://youtu.be/eTw1TCcYFk4` ✅ published — 2:50, **Public** (confirmed in YouTube Studio), authored English captions |
 | **Devpost** | `https://devpost.com/TBD` — not submitted yet |
 | **GitHub** | `https://github.com/iarjunganesh/bankers-wrapped` |
