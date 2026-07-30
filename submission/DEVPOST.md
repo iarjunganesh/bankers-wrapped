@@ -156,6 +156,37 @@ Python, FastAPI, Next.js, Genblaze SDK, GMI Cloud (Seedream + chat), NVIDIA NIM 
 
 `https://github.com/iarjunganesh/bankers-wrapped` (public — no judge access grant needed)
 
+#### Describe Your Contribution
+
+Solo build. Every line was written inside the Hackathon Submission Period — first commit
+**2026-06-24**, **64 commits** through the 2.0.0 submission release, single author, public history
+at [github.com/iarjunganesh/bankers-wrapped](https://github.com/iarjunganesh/bankers-wrapped).
+No pre-existing codebase was reused and nothing was carried in from earlier work.
+
+What I built:
+
+- **A 4-agent typed async pipeline** (Document → Analytics → Narrative → Media) on FastAPI —
+  hand-rolled rather than adopting an agent framework, a decision recorded in ADR-002.
+- **The Genblaze integration end to end**: scene images via `genblaze-gmicloud` → GMI Cloud
+  Seedream (5 in parallel), the narrative LLM through Genblaze chat with automatic NVIDIA NIM
+  fallback, and narration audio through a `GenblazeClient` wrapper around OpenAI TTS. No provider
+  is called directly outside that wrapper (ADR-001, ADR-007).
+- **Backblaze B2 as the source of truth**, not a file dump: a self-contained session manifest plus
+  a flat index so share links survive a full backend redeploy, a SHA-256 per content artifact, and
+  a committed 45-day lifecycle rule (ADR-008, ADR-009).
+- **A memory-bounded FFmpeg compositor.** The original monolithic `xfade` graph was OOM-killed on a
+  0.5 GB container; I redesigned it to render each scene to its own segment and stream-copy concat
+  them, bringing peak memory down to roughly one small encode (ADR-011).
+- **An optional Plaid Sandbox "connect a bank" path** that normalises into the same CSV schema, so
+  the pipeline runs unchanged either way (ADR-010).
+- **The Next.js frontend**: upload portal, live SSE progress with per-step latency, and a public
+  share page listing the full B2 key manifest.
+- **Production scaffolding**: CI with a coverage gate (151 tests, 99.62 %), structured JSON logging,
+  rate limiting, tenacity retry with exponential backoff, a k6 smoke test, and 12 ADRs.
+
+Everything shown in the demo video is a live run against the hosted app — session `d987fbba`,
+90.4 s end to end, with its raw B2 artifacts committed as evidence under `assets/csv-run/d987fbba/`.
+
 #### Providers and Models
 
 | Role | Provider | Model |
