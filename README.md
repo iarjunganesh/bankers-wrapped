@@ -14,7 +14,7 @@
 [![Codecov](https://codecov.io/gh/iarjunganesh/bankers-wrapped/graph/badge.svg?token=GSBUXVREL7)](https://codecov.io/gh/iarjunganesh/bankers-wrapped)
 [![Release](https://img.shields.io/badge/release-latest-2ea44f?logo=github&logoColor=white)](https://github.com/iarjunganesh/bankers-wrapped/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Watch Video](https://img.shields.io/badge/%E2%96%B6_Watch-3--min_demo-FF0000?logo=youtube&logoColor=white)](#)
+[![Watch Video](https://img.shields.io/badge/%E2%96%B6_Watch-3--min_demo-FF0000?logo=youtube&logoColor=white)](https://youtu.be/eTw1TCcYFk4)
 
 <!-- Row 2 — AI & Genblaze core -->
 [![Agent Pattern](https://img.shields.io/badge/Agent_Pattern-asyncio_typed_agents-3776AB?logo=python&logoColor=white)](backend/agents/base.py)
@@ -195,7 +195,7 @@ The personality label opens Scene 1 and drives the entire visual and narrative t
 | --- | --- |
 | **App** | [https://bankers-wrapped.arjunganesh.dev](https://bankers-wrapped.arjunganesh.dev) ✅ live (verified 2026-07-25) — previously `bankers-wrapped.vercel.app`, still live as a fallback |
 | **API** | [https://bankers-wrapped-api-production.up.railway.app](https://bankers-wrapped-api-production.up.railway.app) |
-| **Demo Video** | `https://youtu.be/TBD` *(≤ 3 min, recorded before submission)* |
+| **Demo Video** | [https://youtu.be/eTw1TCcYFk4](https://youtu.be/eTw1TCcYFk4) — 2:50, captions included |
 | **Try It Now** | `make demo` — runs the full pipeline with synthetic data, no real bank account needed |
 
 Hackathon judging criteria and submission checklist: [`submission/SUBMISSION.md`](submission/SUBMISSION.md)

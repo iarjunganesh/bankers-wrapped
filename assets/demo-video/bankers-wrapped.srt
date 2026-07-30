@@ -1,0 +1,93 @@
+1
+00:00:04,054 --> 00:00:09,950
+Banks generate mountains of transaction data
+but deliver it as an unreadable table. Customers disengage.
+
+2
+00:00:09,950 --> 00:00:14,050
+Banker's Wrapped turns that data into a
+personalized, narrated recap video —
+
+3
+00:00:14,050 --> 00:00:19,687
+Genblaze is the sole AI layer, Backblaze B2
+the source of truth for every session.
+
+4
+00:00:23,066 --> 00:00:26,262
+Here's the raw material —
+just rows, dates, and numbers.
+
+5
+00:00:32,052 --> 00:00:34,552
+See it live, right now —
+no mockup, no slides.
+
+6
+00:00:39,034 --> 00:00:43,250
+Connect a bank in one click through Plaid,
+or just upload a CSV.
+
+7
+00:00:43,250 --> 00:00:46,190
+Same pipeline either way —
+zero friction, zero forking.
+
+8
+00:01:00,070 --> 00:01:05,770
+Four typed agents take it from there — parsing,
+analytics, a narrative script, and scene generation —
+
+9
+00:01:05,770 --> 00:01:10,770
+all routed through the Genblaze SDK. GMI Cloud
+Seedream paints five scenes in parallel,
+
+10
+00:01:10,770 --> 00:01:16,531
+OpenAI TTS narrates them, and FFmpeg composes
+the final video, live, in under two minutes.
+
+11
+00:01:36,200 --> 00:01:40,700
+Meet the Financial Builder — your personality,
+your story, playing right now.
+
+12
+00:01:47,054 --> 00:01:53,750
+Every artifact lands on Backblaze B2 — fourteen files,
+ten types, from the input CSV to the final video —
+
+13
+00:01:53,750 --> 00:01:58,625
+each one hashed and verifiable, with full
+generation provenance you can inspect yourself.
+
+14
+00:02:13,300 --> 00:02:17,500
+Refresh the page after a full backend redeploy —
+the recap still plays.
+
+15
+00:02:17,500 --> 00:02:19,400
+B2 is the source of truth.
+
+16
+00:02:22,925 --> 00:02:27,000
+Ninety-nine percent test coverage,
+a hard CI gate, structured logging,
+
+17
+00:02:27,000 --> 00:02:31,079
+and twelve architecture decision records —
+this isn't a prototype.
+
+18
+00:02:38,666 --> 00:02:41,650
+One connection. Five scenes.
+Your financial story —
+
+19
+00:02:41,650 --> 00:02:44,626
+Banker's Wrapped, built on
+Genblaze and Backblaze B2.

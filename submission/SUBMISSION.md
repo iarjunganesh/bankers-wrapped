@@ -89,6 +89,6 @@ index/{session_id}.json                                ← flat session→user i
 | --- | --- |
 | **App** | `https://bankers-wrapped.arjunganesh.dev` ✅ live (verified 2026-07-25) · `bankers-wrapped.vercel.app` still resolves as a fallback |
 | **API** | `https://bankers-wrapped-api-production.up.railway.app` ✅ live |
-| **Demo Video** | `https://youtu.be/TBD` — not recorded yet |
+| **Demo Video** | `https://youtu.be/eTw1TCcYFk4` ✅ published — 2:50, public, English captions |
 | **Devpost** | `https://devpost.com/TBD` — not submitted yet |
 | **GitHub** | `https://github.com/iarjunganesh/bankers-wrapped` |
